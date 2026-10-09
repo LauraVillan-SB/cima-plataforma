@@ -1,0 +1,42 @@
+# ===== Entornos y editores =====
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# ===== Secretos y entorno (NUNCA versionar) =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.*
+
+# ===== Python / FastAPI (backend) =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+dist/
+build/
+
+# ===== Node / Angular (frontend PWA) =====
+node_modules/
+/dist/
+/tmp/
+/out-tsc/
+.angular/
+coverage/
+npm-debug.log*
+yarn-error.log*
+
+# ===== Logs =====
+*.log
+logs/
