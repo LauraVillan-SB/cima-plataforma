@@ -1,0 +1,144 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="cima-aws" name="CIMA - Arquitectura AWS">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="CIMA - Escuela de Sostenibilidad e Inclusion Bolivar (Arquitectura AWS)" style="text;html=1;fontSize=18;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="900" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Usuario -->
+        <mxCell id="user" value="Usuario&#10;(PWA movil)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3E;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.user;" vertex="1" parent="1">
+          <mxGeometry x="60" y="400" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- CloudFront -->
+        <mxCell id="cf" value="CloudFront&#10;(CDN + PWA)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudfront;" vertex="1" parent="1">
+          <mxGeometry x="200" y="260" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- S3 estaticos -->
+        <mxCell id="s3" value="S3&#10;(estaticos PWA)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.simple_storage_service;" vertex="1" parent="1">
+          <mxGeometry x="200" y="400" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway -->
+        <mxCell id="apigw" value="API Gateway&#10;(TLS, rate limit)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
+          <mxGeometry x="360" y="330" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- VPC container -->
+        <mxCell id="vpc" value="VPC (entorno Dev/Stage/Prod)" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#248814;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#AAB7B8;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="500" y="120" width="560" height="620" as="geometry" />
+        </mxCell>
+
+        <!-- ECS Fargate API -->
+        <mxCell id="fargate_api" value="ECS Fargate&#10;Backend API&#10;(servicios de dominio)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.fargate;" vertex="1" parent="1">
+          <mxGeometry x="560" y="200" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ECS Fargate Workers -->
+        <mxCell id="fargate_wrk" value="ECS Fargate&#10;Workers&#10;(IA, STT/TTS)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.fargate;" vertex="1" parent="1">
+          <mxGeometry x="560" y="360" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- SQS -->
+        <mxCell id="sqs" value="SQS&#10;(cola + DLQ)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.simple_queue_service;" vertex="1" parent="1">
+          <mxGeometry x="720" y="280" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- RDS PostgreSQL -->
+        <mxCell id="rds" value="RDS PostgreSQL&#10;+ PgVector" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#2E27AD;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;" vertex="1" parent="1">
+          <mxGeometry x="880" y="200" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ElastiCache -->
+        <mxCell id="redis" value="ElastiCache&#10;(Redis: sesion)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#2E27AD;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elasticache;" vertex="1" parent="1">
+          <mxGeometry x="880" y="360" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Secrets Manager -->
+        <mxCell id="secrets" value="Secrets Manager&#10;+ KMS" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager;" vertex="1" parent="1">
+          <mxGeometry x="560" y="520" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- CloudWatch -->
+        <mxCell id="cw" value="CloudWatch&#10;+ X-Ray" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" vertex="1" parent="1">
+          <mxGeometry x="720" y="520" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- NAT Gateway -->
+        <mxCell id="nat" value="NAT Gateway&#10;(egress allowlist)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.nat_gateway;" vertex="1" parent="1">
+          <mxGeometry x="880" y="520" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Dependencias externas container -->
+        <mxCell id="extbox" value="Dependencias externas (por contrato)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#879196;dashed=1;verticalAlign=top;align=left;spacingLeft=10;fontColor=#879196;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="120" width="420" height="620" as="geometry" />
+        </mxCell>
+
+        <!-- Bedrock -->
+        <mxCell id="bedrock" value="Amazon Bedrock&#10;(LLM) / externo" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="180" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Transcribe -->
+        <mxCell id="transcribe" value="Transcribe&#10;(STT)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.transcribe;" vertex="1" parent="1">
+          <mxGeometry x="1340" y="180" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Polly -->
+        <mxCell id="polly" value="Polly&#10;(TTS)" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.polly;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="320" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- IdP -->
+        <mxCell id="idp" value="IdP institucional&#10;(JWT)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#879196;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1340" y="320" width="80" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Core polizas -->
+        <mxCell id="polizas" value="Core de polizas" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#879196;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="440" width="80" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Pagos -->
+        <mxCell id="pagos" value="Pasarela de pagos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#879196;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1340" y="440" width="80" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Gateway #323 -->
+        <mxCell id="sms" value="Gateway SMS/voz #323" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#879196;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="560" width="120" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- WordPress -->
+        <mxCell id="wp" value="WordPress&#10;sostenibilidadbolivar.com" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#879196;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1340" y="560" width="120" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== Conexiones ===== -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="user" target="cf"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="cf" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="/api/v1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="user" target="apigw"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="apigw" target="fargate_api"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="fargate_api" target="sqs"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="sqs" target="fargate_wrk"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="fargate_api" target="rds"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="fargate_api" target="redis"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="fargate_api" target="secrets"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="fargate_api" target="cw"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e11" value="egress HTTPS&#10;allowlist" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="fargate_wrk" target="nat"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="nat" target="bedrock"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="nat" target="transcribe"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="nat" target="polly"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="nat" target="polizas"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="nat" target="pagos"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="apigw" target="idp"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
