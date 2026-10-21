@@ -21,16 +21,19 @@ el diagrama **no incluye pasarela de pagos ni core de pólizas** (fuera de alcan
 
 ## Contenido del diagrama
 
-- **Borde:** Usuario (PWA) → CloudFront + S3 y API Gateway (`/api/v1`).
-- **VPC:** ECS Fargate (API y Workers), SQS (cola + DLQ), RDS PostgreSQL + PgVector,
-  ElastiCache Redis, Secrets Manager/KMS, CloudWatch/X-Ray, NAT Gateway.
-- **Dependencias externas por contrato:** Bedrock/LLM, Transcribe (STT), Polly (TTS),
-  IdP institucional y WordPress (opcional).
+El diagrama es **un solo flujo de extremo a extremo** (un único sistema), con los pasos
+numerados 1 a 14, organizado en tres fases:
 
-> No aparecen pagos ni core de pólizas porque CIMA solo forma a los usuarios y, a lo sumo,
-> registra el interés en un microseguro como dato de impacto. Coherente con
-> `docs/ARCHITECTURE-AWS.md`. Los servicios (Fargate, Bedrock, Transcribe/Polly) son
-> supuestos por defecto, editables en draw.io si TI/Cloud decide distinto.
+- **Fase A - Carga de la pagina:** Usuario -> CloudFront -> S3 (quien sirve la PWA).
+- **Fase B - Login:** Usuario -> API Gateway -> Auth Service (Fargate), que consulta Redis
+  (intentos/bloqueo), RDS (`clave_hash`) y Secrets Manager (clave de firma), y devuelve la
+  cookie de sesion.
+- **Fase C - Uso de la plataforma:** ya autenticado, Usuario -> API Gateway -> Backend API,
+  que guarda/lee en RDS y encola tareas de IA en SQS; los Workers procesan y salen por el
+  NAT Gateway (HTTPS + allowlist) hacia Transcribe (STT), Bedrock (LLM) y Polly (TTS).
+
+Apoyo transversal: CloudWatch/X-Ray (logs y métricas). Dependencias externas por contrato:
+Bedrock/LLM, Transcribe, Polly e IdP institucional. No hay pagos ni core de pólizas.
 
 ## Paso a paso del flujo (cómo leer el diagrama)
 
