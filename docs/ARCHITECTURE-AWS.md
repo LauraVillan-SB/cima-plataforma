@@ -142,7 +142,46 @@ sequenceDiagram
     Note over SQS: Reintentos y DLQ
 ```
 
-## 6. Supuestos y alternativas (a validar por TI/Cloud)
+## 6. Flujo de login sobre AWS
+
+El login lo maneja el **Auth Service** (ECS Fargate), no un servicio separado. Participan:
+API Gateway (HTTPS, rate limit), Fargate (lógica), RDS (perfil + `clave_hash`), ElastiCache
+(sesión e intentos) y Secrets Manager (clave de firma de tokens).
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario (PWA)
+    participant GW as API Gateway/ALB
+    participant AUTH as Fargate (Auth Service)
+    participant REDIS as ElastiCache (Redis)
+    participant RDS as RDS PostgreSQL
+    participant SM as Secrets Manager
+
+    U->>GW: POST /api/v1/auth/ingreso (telefono + Clave)
+    GW->>AUTH: request + Correlation-ID (HTTPS)
+    AUTH->>REDIS: Consulta intentos fallidos
+    alt Bloqueado (5 fallos)
+        AUTH-->>U: Error de bloqueo temporal (15 min)
+    else No bloqueado
+        AUTH->>RDS: Lee perfil y clave_hash
+        AUTH->>AUTH: Verifica Clave vs hash (bcrypt/argon2)
+        alt Clave correcta
+            AUTH->>SM: Obtiene clave de firma
+            AUTH->>REDIS: Crea sesion + reinicia contador
+            AUTH-->>U: 200 + cookie Secure/HttpOnly/SameSite
+        else Clave incorrecta
+            AUTH->>REDIS: Incrementa contador
+            AUTH-->>U: Error generico (no revela existencia)
+        end
+    end
+```
+
+- **RDS** guarda la Clave solo como hash; **ElastiCache** guarda sesión, contador de intentos
+  y bloqueo (con TTL); **Secrets Manager** provee la clave de firma de los tokens.
+- Cumple el Requirement 1: hash de Clave, bloqueo anti fuerza bruta, tokens cortos con
+  rotación en cookies seguras y errores que no filtran información.
+
+## 7. Supuestos y alternativas (a validar por TI/Cloud)
 
 | Decisión | Por defecto | Alternativa |
 |---|---|---|
@@ -153,7 +192,7 @@ sequenceDiagram
 | Observabilidad | CloudWatch + X-Ray | Datadog |
 | Base de datos | RDS PostgreSQL | Aurora PostgreSQL |
 
-## 7. Trazabilidad
+## 8. Trazabilidad
 
 | Artefacto | Ubicación |
 |---|---|

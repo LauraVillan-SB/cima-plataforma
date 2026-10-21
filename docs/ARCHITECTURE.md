@@ -189,7 +189,53 @@ sequenceDiagram
     SURVEY-->>U: Encuesta opcional (1-5, texto o voz)
 ```
 
-## 8. Resiliencia offline
+## 8. Flujo clave — Login (autenticación sin fricción)
+
+CIMA gestiona su propia autenticación. El **Auth Service** (dentro del backend) valida el
+teléfono y la Clave de 4 dígitos, controla intentos, y emite la sesión. La Clave se guarda
+**solo como hash**; el contador de intentos y la sesión viven en Redis (rápido, con TTL).
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario (PWA)
+    participant GW as API Gateway
+    participant AUTH as Auth Service
+    participant REDIS as Redis (sesion/intentos)
+    participant DB as PostgreSQL
+    participant SM as Secrets Manager
+
+    U->>GW: POST /api/v1/auth/ingreso (telefono + Clave 4 digitos)
+    GW->>AUTH: request + Correlation-ID (HTTPS)
+    AUTH->>REDIS: Consulta intentos fallidos del telefono
+    alt Numero bloqueado (5 fallos en ventana)
+        AUTH-->>U: Error de bloqueo temporal (15 min)
+    else No bloqueado
+        AUTH->>DB: Busca perfil por telefono, lee clave_hash
+        AUTH->>AUTH: Verifica Clave contra el hash (bcrypt/argon2)
+        alt Clave correcta
+            AUTH->>SM: Obtiene clave de firma
+            AUTH->>REDIS: Crea sesion + reinicia contador a 0
+            AUTH-->>U: 200 + cookie Secure/HttpOnly/SameSite (token corto + refresh)
+        else Clave incorrecta
+            AUTH->>REDIS: Incrementa contador de fallos
+            AUTH-->>U: Error generico (no revela si el telefono existe)
+        end
+    end
+```
+
+Puntos clave (Requirement 1):
+
+- **La Clave nunca se guarda ni compara en texto plano:** se almacena como hash (bcrypt/argon2)
+  y en el login se hashea lo ingresado para comparar hashes.
+- **Bloqueo anti fuerza bruta:** 5 intentos fallidos -> bloqueo de 15 min por número; el
+  contador y el bloqueo viven en Redis con expiración.
+- **Sesión segura:** token de acceso corto (<= 15 min) + refresh rotatorio, en cookie
+  `Secure` + `HttpOnly` + `SameSite`. Nunca en `localStorage`.
+- **Errores genéricos:** ante Clave incorrecta no se revela si el teléfono existe.
+- **Ayuda mnemotécnica:** la pantalla de creación de Clave sugiere usar los últimos 4 dígitos
+  de la cédula, pero es solo texto de UI (no se valida ni se almacena la cédula).
+
+## 9. Resiliencia offline
 
 ```mermaid
 graph TB
@@ -206,7 +252,7 @@ graph TB
 El usuario puede seguir aprendiendo sin internet; al reconectar, su progreso se sincroniza
 sin duplicados ni pérdida.
 
-## 9. Seguridad y privacidad (resumen)
+## 10. Seguridad y privacidad (resumen)
 
 | Tema | Mecanismo | Requisitos |
 |---|---|---|
@@ -216,7 +262,7 @@ sin duplicados ni pérdida.
 | IA responsable | Redacción de PII antes del modelo, guardrails, kill switch | R16 |
 | Datos agregados | Supresión de zonas con < 5 usuarios (k-anonimato) | R8, R15, R20 |
 
-## 10. Trazabilidad
+## 11. Trazabilidad
 
 | Artefacto | Ubicación |
 |---|---|
