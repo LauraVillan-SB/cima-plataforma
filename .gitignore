@@ -23,9 +23,11 @@ __pycache__/
 .coverage
 htmlcov/
 .venv/
+.venv-dev/
 venv/
 dist/
 build/
+.hypothesis/
 
 # ===== Node / Angular (frontend PWA) =====
 node_modules/
