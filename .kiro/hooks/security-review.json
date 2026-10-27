@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Revisión de seguridad OWASP antes de escribir",
+      "trigger": "PreToolUse",
+      "matcher": "fs_write|str_replace|fs_append",
+      "action": {
+        "type": "agent",
+        "prompt": "Antes de escribir este archivo, verifica que el contenido cumpla las reglas de codificación segura de Seguros Bolívar (rule-security, OWASP Top 10:2025): validación de entradas en servidor (Pydantic/Zod/Jakarta), autorización por propiedad del recurso (anti-BOLA), queries parametrizadas (nunca concatenar SQL), manejo de errores específico (nunca catch genérico), sin secretos hardcodeados, sin PII en logs ni respuestas (usar DTOs con enmascaramiento) y dependencias con versión fija (sin ^, ~, *, latest). Si detectas una violación, corrige el contenido antes de escribirlo."
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Auto-Changelog al guardar",
+      "trigger": "PostFileSave",
+      "matcher": "\\.(py|ts|js|html|css|scss|yml|yaml|tf|md)$",
+      "action": {
+        "type": "agent",
+        "prompt": "Se guardó un archivo de código o configuración. Evalúa si el cambio es significativo (nueva funcionalidad, fix, cambio de config, dependencia, seguridad o documentación relevante). Si lo es, actualiza CHANGELOG.md en la raíz siguiendo el estándar de la compañía (rule-changelog-standard y rule-auto-changelog): sección [No publicado], categorías en español (Agregado, Cambiado, Obsoleto, Eliminado, Corregido, Seguridad), entradas en tiempo pasado y referencia a Jira si aplica. NUNCA borres ni sobrescribas entradas existentes: solo agrega nuevas. Si el cambio es trivial (typo, formato), no registres nada."
+      }
+    }
+  ]
+}
