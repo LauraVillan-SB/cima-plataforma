@@ -1,0 +1,43 @@
+# CODEOWNERS — CIMA (Escuela de Sostenibilidad e Inclusión Bolívar)
+#
+# Define quién revisa cada área del monorepo. GitHub solicita automáticamente
+# la revisión del owner correspondiente cuando un PR toca sus archivos.
+# Cada línea posterior que haga match tiene prioridad sobre las anteriores.
+
+# ----------------------------------------------------------------------------
+# Fallback global: cualquier archivo sin owner más específico lo revisa el equipo.
+# ----------------------------------------------------------------------------
+*                                   @patriciatapia-bot @LauraVillan-SB @angelamora-tech @useransible25
+
+# ----------------------------------------------------------------------------
+# Distribución por dominio (ver CONTRIBUTING.md)
+# ----------------------------------------------------------------------------
+
+# Dev 1 — Identidad y perfil
+/backend/app/auth/                  @patriciatapia-bot
+/backend/app/profile/               @patriciatapia-bot
+
+# Dev 2 — Aprendizaje y evaluación
+/backend/app/learning/              @LauraVillan-SB
+/backend/app/assessment/            @LauraVillan-SB
+/backend/app/certification/         @LauraVillan-SB
+
+# Dev 3 — IA conversacional y conversión
+/backend/app/chat/                  @angelamora-tech
+/backend/app/conversion/            @angelamora-tech
+/backend/app/gamification/          @angelamora-tech
+
+# Dev 4 — Datos, sync, transversales y frontend
+/backend/app/metrics/               @useransible25
+/backend/app/survey/                @useransible25
+/backend/app/sync/                  @useransible25
+/frontend/                          @useransible25
+
+# ----------------------------------------------------------------------------
+# Piezas compartidas: requieren revisión cruzada de todo el equipo.
+# ----------------------------------------------------------------------------
+/backend/app/common/                @patriciatapia-bot @LauraVillan-SB @angelamora-tech @useransible25
+/backend/app/main.py                @patriciatapia-bot @LauraVillan-SB @angelamora-tech @useransible25
+/backend/pyproject.toml             @patriciatapia-bot @LauraVillan-SB @angelamora-tech @useransible25
+/.kiro/specs/                       @patriciatapia-bot @LauraVillan-SB @angelamora-tech @useransible25
+/.github/                           @patriciatapia-bot @LauraVillan-SB @angelamora-tech @useransible25
