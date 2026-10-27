@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "cima-project": {
+      "command": "python3",
+      "args": ["mcp/cima_mcp_server.py"],
+      "disabled": false,
+      "autoApprove": [
+        "validate_user_profile",
+        "validate_clave",
+        "mask_pii",
+        "list_requirements"
+      ]
+    }
+  }
+}

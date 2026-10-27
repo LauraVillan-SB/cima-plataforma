@@ -1,0 +1,131 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="cima-flujo" name="CIMA - Flujo completo (un solo sistema)">
+    <mxGraphModel dx="3350" dy="1967" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;fontSize=16;fontStyle=1;align=left;verticalAlign=middle;" value="CIMA - Escuela de Sostenibilidad e Inclusion Bolivar (plataforma educativa) - Flujo completo de extremo a extremo" vertex="1">
+          <mxGeometry height="26" width="1300" x="30" y="-340" as="geometry" />
+        </mxCell>
+        <mxCell id="faseA" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#7AA116;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#7AA116;fontSize=12;fontStyle=1;" value="FASE A - Carga de la pagina (quien sirve la PWA)" vertex="1">
+          <mxGeometry height="310" width="810" x="30" y="-282" as="geometry" />
+        </mxCell>
+        <mxCell id="user" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3E;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.user;" value="Usuario&#xa;(PWA movil)" vertex="1">
+          <mxGeometry height="60" width="60" x="90" y="-190" as="geometry" />
+        </mxCell>
+        <mxCell id="cf" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudfront;" value="CloudFront&#xa;(CDN)" vertex="1">
+          <mxGeometry height="60" width="60" x="390" y="-210" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" value="S3&#xa;(estaticos PWA)" vertex="1">
+          <mxGeometry height="60" width="60" x="680" y="-250" as="geometry" />
+        </mxCell>
+        <mxCell id="faseB" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#ED7100;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#ED7100;fontSize=12;fontStyle=1;" value="FASE B - Login (CIMA gestiona su propia autenticacion: telefono + Clave de 4 digitos)" vertex="1">
+          <mxGeometry height="570" width="1150" x="40" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="gw" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" value="API Gateway&#xa;(TLS + rate limit)" vertex="1">
+          <mxGeometry height="60" width="60" x="160" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="auth" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.fargate;" value="Auth Service&#xa;(ECS Fargate)" vertex="1">
+          <mxGeometry height="60" width="60" x="440" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="redis" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#2E27AD;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elasticache;" value="ElastiCache (Redis)&#xa;sesion + intentos&#xa;+ bloqueo (TTL)" vertex="1">
+          <mxGeometry height="60" width="60" x="1040" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="rds" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#2E27AD;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;" value="RDS PostgreSQL&#xa;+ PgVector&#xa;(perfil + clave_hash)" vertex="1">
+          <mxGeometry height="60" width="60" x="580" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="sm" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager;" value="Secrets Manager&#xa;(clave de firma)" vertex="1">
+          <mxGeometry height="60" width="60" x="970" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="faseC" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2E73B8;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#2E73B8;fontSize=12;fontStyle=1;" value="FASE C - Uso de la plataforma (aprendizaje con el asistente de voz)" vertex="1">
+          <mxGeometry height="300" width="1200" x="40" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.fargate;" value="Backend API&#xa;(ECS Fargate)" vertex="1">
+          <mxGeometry height="60" width="60" x="80" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="sqs" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;" value="SQS&#xa;(cola + DLQ)" vertex="1">
+          <mxGeometry height="60" width="60" x="450" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="workers" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.fargate;" value="Workers&#xa;(ECS Fargate)" vertex="1">
+          <mxGeometry height="60" width="60" x="660" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="nat" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.nat_gateway;" value="NAT Gateway&#xa;(egress HTTPS allowlist)" vertex="1">
+          <mxGeometry height="60" width="60" x="820" y="795" as="geometry" />
+        </mxCell>
+        <mxCell id="extbox" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#879196;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#879196;fontSize=12;" value="Dependencias externas (por contrato) - solo para formar: identidad, IA y voz" vertex="1">
+          <mxGeometry height="300" width="330" x="1000" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="bedrock" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" value="Amazon Bedrock&#xa;(LLM) / externo" vertex="1">
+          <mxGeometry height="60" width="60" x="1060" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="transcribe" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.transcribe;" value="Transcribe&#xa;(STT)" vertex="1">
+          <mxGeometry height="60" width="60" x="1200" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="polly" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.polly;" value="Polly&#xa;(TTS)" vertex="1">
+          <mxGeometry height="60" width="60" x="1040" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="idp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F2F2;strokeColor=#879196;fontSize=11;" value="IdP institucional&#xa;(JWT, servicios)" vertex="1">
+          <mxGeometry height="50" width="110" x="1200" y="855" as="geometry" />
+        </mxCell>
+        <mxCell id="cw" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" value="CloudWatch + X-Ray&#xa;(logs, metricas, Correlation-ID)" vertex="1">
+          <mxGeometry height="60" width="60" x="610" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="n1" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="cf" value="1. abre la app (HTTPS)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" edge="1" parent="1" source="cf" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="s3" value="2. sirve PWA (estaticos)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="gw" value="3. ingresa: telefono + Clave">
+          <mxGeometry relative="1" x="-0.5517" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n4" edge="1" parent="1" source="gw" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="auth" value="4. /api/v1/auth/ingreso">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n5" edge="1" parent="1" source="auth" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="redis" value="5. revisa intentos / bloqueo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n6" edge="1" parent="1" source="auth" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="rds" value="6. lee clave_hash">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n7" edge="1" parent="1" source="auth" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;dashed=1;" target="sm" value="7. clave de firma">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n8" edge="1" parent="1" source="auth" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;dashed=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="user" value="8. cookie de sesion (Secure/HttpOnly/SameSite)">
+          <mxGeometry relative="1" x="0.2192" y="-15" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n9" edge="1" parent="1" source="gw" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="backend" value="9. ya autenticado: envia nota de voz / usa la plataforma">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n10" edge="1" parent="1" source="backend" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="rds" value="10. guarda/lee progreso">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n11" edge="1" parent="1" source="backend" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="sqs" value="11. encola tarea de IA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n12" edge="1" parent="1" source="sqs" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="workers" value="12. procesa en background">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n13" edge="1" parent="1" source="workers" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="nat" value="13. salida controlada (HTTPS, allowlist)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n14" edge="1" parent="1" source="nat" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="transcribe" value="14a. STT">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n15" edge="1" parent="1" source="nat" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="bedrock" value="14b. IA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n16" edge="1" parent="1" source="nat" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;" target="polly" value="14c. TTS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n17" edge="1" parent="1" source="backend" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=10;dashed=1;" target="cw" value="logs/metricas (todo el tiempo)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
