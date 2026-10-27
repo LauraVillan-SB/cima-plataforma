@@ -8,6 +8,7 @@ y este proyecto adhiere a [Versionamiento Semántico](https://semver.org/lang/es
 ## [No publicado]
 
 ### Agregado
+- Se agregó el control de cambios en `.github/`: `CODEOWNERS` (solicita automáticamente la revisión de un miembro del equipo al abrir un PR, por rutas) y `pull_request_template.md` (plantilla con resumen, tipo de cambio, requisitos relacionados, qué se probó y checklist de seguridad y changelog), según el estándar de repositorios de la compañía.
 - Se creó el steering file propio del proyecto `.kiro/steering/cima-project.md` (inclusion: always) que da a Kiro el contexto específico de CIMA: alcance (educa y mide interés; sin pagos ni pólizas), fuentes de verdad (spec, diseño, arquitectura, tareas), pila, reglas de dominio no negociables (hash de Clave, enmascaramiento de PII, anti-BOLA, IA responsable, voz-first), el MCP propio `cima-project`, los Agent Hooks y las convenciones de implementación.
 - Se creó el servidor MCP propio del proyecto `cima-project` en `mcp/cima_mcp_server.py`, implementado con la librería estándar de Python (JSON-RPC 2.0 por stdio, sin dependencias externas ni `uv`), con cuatro herramientas de dominio alineadas al spec: `validate_user_profile` (Req 9), `validate_clave` (Req 1), `mask_pii` (Req 5.9/9.4) y `list_requirements` (trazabilidad). Se verificó su funcionamiento con handshake y llamadas a las cuatro herramientas.
 - Se registró el MCP `cima-project` en la configuración de workspace `.kiro/settings/mcp.json`, complementando los MCP institucionales sin reemplazarlos.

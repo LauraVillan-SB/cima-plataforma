@@ -1,0 +1,22 @@
+# CODEOWNERS — CIMA
+#
+# Define quien debe revisar los cambios segun los archivos tocados.
+# Al abrir un Pull Request, GitHub solicita automaticamente la revision
+# del owner correspondiente. Combinado con la proteccion de rama, el merge
+# queda bloqueado hasta que ese revisor apruebe.
+#
+# Nota: este repositorio es de cuenta personal, por lo que se referencian
+# usuarios individuales (no equipos @org/team, que solo existen en
+# organizaciones).
+
+# Propietario por defecto de todo el repositorio.
+*                 @useransible25
+
+# Configuracion de Kiro (steering, specs, hooks, MCP): revision del equipo.
+/.kiro/**         @useransible25 @patriciatapia-bot
+
+# Flujos de GitHub y control de cambios.
+/.github/**       @useransible25
+
+# Documentacion de arquitectura.
+/docs/**          @patriciatapia-bot
