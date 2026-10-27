@@ -13,7 +13,7 @@ import uuid
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.database import get_db
+from app.common.database import get_session
 from app.common.security import get_current_user_id
 from app.profile import service
 from app.profile.dto import ProfileCreate, ProfileResponse
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api/v1/perfiles", tags=["perfiles"])
 @router.post("", response_model=ProfileResponse, status_code=status.HTTP_201_CREATED)
 async def crear_perfil(
     data: ProfileCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
 ) -> ProfileResponse:
     """Crea un Perfil de Usuario con validación estricta y allowlist de campos."""
     return await service.create_profile(db, data)
@@ -32,7 +32,7 @@ async def crear_perfil(
 
 @router.get("/me", response_model=ProfileResponse)
 async def obtener_mi_perfil(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     current_user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> ProfileResponse:
     """Devuelve el Perfil del usuario autenticado, con la PII enmascarada."""
@@ -43,7 +43,7 @@ async def obtener_mi_perfil(
 async def actualizar_perfil(
     perfil_id: uuid.UUID,
     data: ProfileCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     current_user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> ProfileResponse:
     """Actualiza el Perfil propio; rechaza si el recurso pertenece a otro usuario."""
