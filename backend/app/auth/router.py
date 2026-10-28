@@ -95,6 +95,21 @@ async def refresco(
     return SesionResponse(id=profile_id, telefono="")
 
 
+@router.get("/sesion", response_model=SesionResponse)
+async def sesion(
+    current_user_id: uuid.UUID = Depends(get_current_user_id),
+) -> SesionResponse:
+    """Restaura la sesión vigente sin volver a pedir la Clave (Req 2.6).
+
+    Valida el access token de la cookie (vía `get_current_user_id`). Si la
+    sesión expiró o no existe, la dependencia responde con error de autorización
+    para que el cliente redirija al flujo de autenticación conservando el
+    destino (Req 2.7, 10.1, 10.2). El teléfono no se incluye aquí: la identidad
+    la aporta el token y el Perfil se consulta por su propio endpoint.
+    """
+    return SesionResponse(id=current_user_id, telefono="")
+
+
 @router.post("/salir", status_code=status.HTTP_204_NO_CONTENT)
 async def salir(response: Response) -> Response:
     """Cierra la sesión eliminando las cookies de sesión (Req 1.13)."""
