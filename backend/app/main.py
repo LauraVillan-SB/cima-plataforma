@@ -10,6 +10,7 @@ from app.common.config import get_settings
 from app.common.correlation import CorrelationIdMiddleware
 from app.common.errors import register_error_handlers
 from app.common.logging import configure_logging
+from app.auth.router import router as auth_router
 from app.profile.router import router as profile_router
 
 settings = get_settings()
@@ -26,6 +27,7 @@ app.add_middleware(CorrelationIdMiddleware)
 register_error_handlers(app)
 
 # Routers de dominio.
+app.include_router(auth_router)
 app.include_router(profile_router)
 
 

@@ -59,6 +59,18 @@ class RateLimitedError(DomainError):
     public_message = "Vas muy rápido. Espera un momento y vuelve a intentar."
 
 
+class CredencialesInvalidasError(DomainError):
+    """Credenciales de ingreso inválidas (teléfono inexistente o Clave incorrecta).
+
+    Mensaje y código IDÉNTICOS en ambos casos para no revelar si el teléfono
+    está registrado (Req 1.7 / Property 3). El `internal_detail` puede distinguir
+    el caso para el log interno, pero nunca llega al cliente.
+    """
+
+    status_code = 401
+    public_message = "El teléfono o la Clave no coinciden. Verifica e intenta de nuevo."
+
+
 def _error_body(message: str) -> dict[str, str]:
     """Construye el cuerpo de error genérico con el Correlation-ID."""
     return {"detail": message, "correlation_id": get_correlation_id()}
