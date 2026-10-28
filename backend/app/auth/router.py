@@ -10,12 +10,19 @@ Requisitos: 1.2-1.7, 1.10, 1.11, 1.13.
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Cookie, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import service
 from app.auth.cookies import clear_session_cookies, set_session_cookies
-from app.auth.dto import IngresoRequest, RegistroRequest, SesionResponse
+from app.auth.dto import (
+    CambioClaveRequest,
+    IngresoRequest,
+    RegistroRequest,
+    SesionResponse,
+)
 from app.auth.tokens import (
     TOKEN_TYPE_REFRESH,
     TokenInvalidoError,
@@ -25,6 +32,7 @@ from app.auth.tokens import (
 )
 from app.common.database import get_session
 from app.common.errors import CredencialesInvalidasError
+from app.common.security import get_current_user_id
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -93,3 +101,14 @@ async def salir(response: Response) -> Response:
     clear_session_cookies(response)
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
+
+
+@router.put("/clave", status_code=status.HTTP_204_NO_CONTENT)
+async def cambiar_clave(
+    data: CambioClaveRequest,
+    db: AsyncSession = Depends(get_session),
+    current_user_id: uuid.UUID = Depends(get_current_user_id),
+) -> Response:
+    """Cambia la Clave del usuario autenticado; exige la Clave actual (Req 1.15)."""
+    await service.cambiar_clave(db, current_user_id, data)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

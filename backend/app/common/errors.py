@@ -71,6 +71,17 @@ class CredencialesInvalidasError(DomainError):
     public_message = "El teléfono o la Clave no coinciden. Verifica e intenta de nuevo."
 
 
+class CuentaBloqueadaError(DomainError):
+    """Ingreso bloqueado temporalmente por intentos fallidos (Req 1.12).
+
+    Se responde con 429 y un mensaje en español coloquial que no revela si el
+    teléfono existe; solo indica que debe esperar antes de reintentar.
+    """
+
+    status_code = 429
+    public_message = "Por seguridad bloqueamos el ingreso un rato. Espera unos minutos y vuelve a intentar."
+
+
 def _error_body(message: str) -> dict[str, str]:
     """Construye el cuerpo de error genérico con el Correlation-ID."""
     return {"detail": message, "correlation_id": get_correlation_id()}

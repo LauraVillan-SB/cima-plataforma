@@ -16,18 +16,36 @@ Principios aplicados:
 from __future__ import annotations
 
 import logging
+import uuid
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dto import IngresoRequest, RegistroRequest, SesionResponse
+from app.auth.dto import (
+    CambioClaveRequest,
+    IngresoRequest,
+    RegistroRequest,
+    SesionResponse,
+)
 from app.auth.password import hash_clave, verify_clave
-from app.common.errors import CredencialesInvalidasError, ValidationError
+from app.common.config import get_settings
+from app.common.errors import (
+    CredencialesInvalidasError,
+    CuentaBloqueadaError,
+    NotFoundError,
+    ValidationError,
+)
 from app.common.logging import log_event
 from app.common.masking import mask_value
 from app.profile.models import Profile
 
 logger = logging.getLogger("cima.auth")
+
+
+def _esta_bloqueado(profile: Profile, ahora: datetime) -> bool:
+    """Indica si el Perfil tiene un bloqueo de ingreso vigente (Req 1.12)."""
+    return profile.locked_until is not None and profile.locked_until > ahora
 
 # Hash señuelo precomputado para igualar el costo de verificación cuando el
 # teléfono no existe (defensa contra timing oracle, Req 1.7). Se calcula una
@@ -76,6 +94,8 @@ async def ingresar(db: AsyncSession, data: IngresoRequest) -> SesionResponse:
 
     :raises CredencialesInvalidasError: si las credenciales no son válidas.
     """
+    settings = get_settings()
+    ahora = datetime.now(timezone.utc)
     profile = await db.scalar(
         select(Profile).where(Profile.phone_e164 == data.telefono)
     )
@@ -86,14 +106,57 @@ async def ingresar(db: AsyncSession, data: IngresoRequest) -> SesionResponse:
         log_event(logger, "auth_ingreso_fallido", motivo="telefono_no_registrado")
         raise CredencialesInvalidasError(internal_detail="phone not found")
 
+    # Bloqueo vigente: rechazar sin siquiera verificar la Clave (Req 1.12).
+    if _esta_bloqueado(profile, ahora):
+        log_event(logger, "auth_ingreso_bloqueado", profile_id=str(profile.id))
+        raise CuentaBloqueadaError(internal_detail="account temporarily locked")
+
     if not verify_clave(data.clave, profile.clave_hash):
+        # Incrementa el contador de fallos; al alcanzar el umbral, bloquea
+        # durante `lockout_seconds` (Req 1.12).
+        profile.failed_attempts += 1
+        if profile.failed_attempts >= settings.max_failed_attempts:
+            profile.locked_until = ahora + timedelta(seconds=settings.lockout_seconds)
+            log_event(logger, "auth_cuenta_bloqueada", profile_id=str(profile.id))
+        await db.commit()
         log_event(
             logger,
             "auth_ingreso_fallido",
             motivo="clave_incorrecta",
             profile_id=str(profile.id),
+            intentos=profile.failed_attempts,
         )
         raise CredencialesInvalidasError(internal_detail="bad clave")
 
+    # Ingreso exitoso: reinicia el contador y limpia cualquier bloqueo (Req 1.13).
+    if profile.failed_attempts != 0 or profile.locked_until is not None:
+        profile.failed_attempts = 0
+        profile.locked_until = None
+        await db.commit()
+
     log_event(logger, "auth_ingreso_exitoso", profile_id=str(profile.id))
     return SesionResponse(id=profile.id, telefono=mask_value(profile.phone_e164))
+
+
+async def cambiar_clave(
+    db: AsyncSession, current_user_id: uuid.UUID, data: CambioClaveRequest
+) -> None:
+    """Cambia la Clave del Usuario autenticado, exigiendo la Clave actual (Req 1.15).
+
+    Verifica la Clave actual antes de registrar la nueva; si no coincide, rechaza
+    sin modificar nada. La nueva Clave se almacena como hash con sal (Req 1.5).
+
+    :raises NotFoundError: si el Perfil autenticado no existe.
+    :raises CredencialesInvalidasError: si la Clave actual no es válida.
+    """
+    profile = await db.get(Profile, current_user_id)
+    if profile is None:
+        raise NotFoundError(internal_detail=f"profile {current_user_id} not found")
+
+    if not verify_clave(data.clave_actual, profile.clave_hash):
+        log_event(logger, "auth_cambio_clave_fallido", profile_id=str(profile.id))
+        raise CredencialesInvalidasError(internal_detail="current clave mismatch")
+
+    profile.clave_hash = hash_clave(data.clave_nueva)
+    await db.commit()
+    log_event(logger, "auth_cambio_clave_exitoso", profile_id=str(profile.id))
