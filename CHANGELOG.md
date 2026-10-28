@@ -8,6 +8,12 @@ y este proyecto adhiere a [Versionamiento Semántico](https://semver.org/lang/es
 ## [No publicado]
 
 ### Agregado
+- Se implementó la emisión y rotación de tokens de sesión en cookies seguras del Auth Service (Tarea 7.3): módulo de tokens JWT HS256 con access de vida corta (≤ 15 min) y refresh rotable (`app/auth/tokens.py`), utilidad de cookies `Secure`/`HttpOnly`/`SameSite` (`app/auth/cookies.py`), y endpoints `POST /api/v1/auth/refresco` (rota el refresh y emite nuevo access) y `POST /api/v1/auth/salir` (cierra sesión borrando cookies); `registro` e `ingreso` ahora abren sesión por cookies. Se reemplazó la identidad provisional por la validación real del access token de la cookie (`app/common/security.py`). Se añadieron `SESSION_SECRET`, `REFRESH_TOKEN_TTL_SECONDS`, `COOKIE_SECURE` y `COOKIE_SAMESITE` a la configuración y a `.env.example`. Se ancló `pyjwt = "2.10.1"`. Se añadió la prueba de la Property 6 (TTL del access ≤ 900 s y atributos de cookie) y pruebas de separación de tipos, firma alterada y rotación (`tests/auth/test_tokens.py`); 4/4 en verde (Req 1.10, 1.11, 1.13).
+
+### Seguridad
+- Se endurecieron los tokens de sesión: firma HS256 con algoritmo fijo y verificación estricta de `exp`/`iss`/claims requeridos (mitiga confusión de algoritmos), tokens fuera de `localStorage` servidos solo en cookies `HttpOnly`+`Secure`+`SameSite`, refresh con rotación (`jti` único por emisión) y cookie de refresh restringida a la ruta `/api/v1/auth`; el `session_secret` se gestiona vía entorno/Secret Manager, nunca hardcodeado (Req 1.10, 1.11, OWASP A02/A05).
+
+### Agregado (Tarea 7.2)
 - Se implementó el registro e ingreso del Auth Service (Tarea 7.2): endpoints `POST /api/v1/auth/registro` (crea cuenta con teléfono y Clave de doble confirmación, almacena la Clave solo como hash con sal) y `POST /api/v1/auth/ingreso` (autentica por teléfono + Clave), en `app/auth/service.py` y `app/auth/router.py`, cableados en `app/main.py`; respuesta `SesionResponse` con el teléfono enmascarado (`app/auth/dto.py`). Se añadieron las columnas `clave_hash` y `role` (default `usuario`) al modelo `profiles` (`app/profile/models.py`, pieza compartida). Se añadió la prueba de la Property 3 (error de ingreso indistinguible) con Hypothesis y pruebas por ejemplo de registro/ingreso (`tests/auth/test_ingreso.py`). Se ancló `pytest-asyncio = "1.3.0"` y se activó `asyncio_mode = "auto"` en `pyproject.toml` (Req 1.2, 1.3, 1.5, 1.6, 1.7).
 
 ### Seguridad
