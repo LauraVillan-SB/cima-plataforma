@@ -8,6 +8,7 @@ y este proyecto adhiere a [Versionamiento Semántico](https://semver.org/lang/es
 ## [No publicado]
 
 ### Agregado
+- Se creó la skill propia del proyecto `.kiro/skills/revisar-servicio-cima/SKILL.md`, que revisa un servicio de dominio del backend contra las reglas de seguridad y arquitectura de CIMA antes de abrir un PR (validación en servidor, autorización anti-BOLA, enmascaramiento de PII, persistencia parametrizada, manejo de errores específico, rutas versionadas, trazabilidad con el spec, pruebas y versiones ancladas), tomando como molde el patrón del Profile Service.
 - Se implementó la emisión y rotación de tokens de sesión en cookies seguras del Auth Service (Tarea 7.3): módulo de tokens JWT HS256 con access de vida corta (≤ 15 min) y refresh rotable (`app/auth/tokens.py`), utilidad de cookies `Secure`/`HttpOnly`/`SameSite` (`app/auth/cookies.py`), y endpoints `POST /api/v1/auth/refresco` (rota el refresh y emite nuevo access) y `POST /api/v1/auth/salir` (cierra sesión borrando cookies); `registro` e `ingreso` ahora abren sesión por cookies. Se reemplazó la identidad provisional por la validación real del access token de la cookie (`app/common/security.py`). Se añadieron `SESSION_SECRET`, `REFRESH_TOKEN_TTL_SECONDS`, `COOKIE_SECURE` y `COOKIE_SAMESITE` a la configuración y a `.env.example`. Se ancló `pyjwt = "2.10.1"`. Se añadió la prueba de la Property 6 (TTL del access ≤ 900 s y atributos de cookie) y pruebas de separación de tipos, firma alterada y rotación (`tests/auth/test_tokens.py`); 4/4 en verde (Req 1.10, 1.11, 1.13).
 
 ### Seguridad
