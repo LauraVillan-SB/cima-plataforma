@@ -27,20 +27,20 @@ Convenciones:
   - Añadir `fast-check` + Jest para pruebas de lógica pura del frontend
   - _Requirements: 2.1, 2.3, 2.4_
 
-- [ ] 3. Infraestructura transversal: Correlation-ID, logging estructurado y manejo de errores
-  - [ ] 3.1 Implementar middleware de Correlation-ID en el backend
+- [x] 3. Infraestructura transversal: Correlation-ID, logging estructurado y manejo de errores
+  - [x] 3.1 Implementar middleware de Correlation-ID en el backend
     - Generar o propagar `Correlation-ID` entrante; inyectarlo en el contexto de request y en toda invocación saliente
     - _Requirements: 11.1_
     - _Properties: 35_
-  - [ ] 3.2 Implementar logging estructurado con redacción de PII
+  - [x] 3.2 Implementar logging estructurado con redacción de PII
     - Logger JSON hacia servicio centralizado (nunca archivos locales); redacción/enmascaramiento de PII, tokens y secretos
     - _Requirements: 11.2, 9.4_
     - _Properties: 18_
-  - [ ] 3.3 Implementar manejador global de errores y utilidades de enmascaramiento
+  - [x] 3.3 Implementar manejador global de errores y utilidades de enmascaramiento
     - Respuesta genérica en español coloquial con `correlation_id`, sin stack traces ni PII; función reutilizable de enmascaramiento (máx. últimos 4 chars)
     - _Requirements: 9.4, 11.2, 11.6_
     - _Properties: 18_
-  - [ ]* 3.4 Escribir test de propiedad para enmascaramiento de PII
+  - [x]* 3.4 Escribir test de propiedad para enmascaramiento de PII
     - **Property 18: Enmascaramiento de PII en respuestas y logs**
     - **Validates: Requirements 5.9, 9.4**
   - [ ]* 3.5 Escribir test de propiedad para propagación del Correlation-ID
@@ -48,7 +48,7 @@ Convenciones:
     - **Validates: Requirements 11.1**
 
 - [ ] 4. Modelos de datos y migraciones
-  - [ ] 4.1 Definir modelos SQLAlchemy y esquemas Pydantic base
+  - [x] 4.1 Definir modelos SQLAlchemy y esquemas Pydantic base
     - Crear entidades `profiles`, `microcapsules` (con columna `embedding` VECTOR/PgVector), `learning_paths`, `path_progress`, `assessments`, `assessment_attempts`, `certificates`, `incentives`, `conversion_intents`, `metric_events`, `metric_aggregates`, `ai_interactions`, `badges`, `user_badges`, `user_points`, `surveys`, `survey_responses`
     - Tipado estricto, cifrado at-rest de PII (`phone_e164`), restricción UNIQUE(`profile_id`,`path_id`) en certificados, `client_event_id` UUID v4 para idempotencia
     - Gamificación: `badges` (catálogo con `points_value`), `user_badges` con restricción UNIQUE(`profile_id`,`badge_id`) y `client_event_id` UUID v4 para otorgamiento idempotente, y `user_points` (total de puntos por perfil)
@@ -65,11 +65,11 @@ Convenciones:
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Profile Service — Perfil y protección de datos (Req 9)
-  - [ ] 6.1 Implementar validación y normalización del perfil (allowlist, trim)
+  - [x] 6.1 Implementar validación y normalización del perfil (allowlist, trim)
     - Esquema Pydantic con allowlist de campos (teléfono, tipo de cultivo/comercio, zona); rechazo de claves no permitidas; validación teléfono 7–15 dígitos, tipo en lista permitida, zona ≤ 100 chars
     - _Requirements: 9.1, 9.2, 9.3_
     - _Properties: 30, 31_
-  - [ ] 6.2 Implementar endpoints de perfil con DTO allowlist y enmascaramiento
+  - [x] 6.2 Implementar endpoints de perfil con DTO allowlist y enmascaramiento
     - `POST /api/v1/perfiles`, `GET/PUT /api/v1/perfiles/me`; respuestas con DTO autorizado y PII enmascarada
     - _Requirements: 9.1, 9.4, 9.5_
     - _Properties: 18, 32_
@@ -81,16 +81,16 @@ Convenciones:
     - Job que elimina/anonimiza PII con antigüedad ≥ 90 días conservando agregados no identificables
     - _Requirements: 9.8_
     - _Properties: 29_
-  - [ ]* 6.5 Escribir test de propiedad para allowlist de campos del perfil
+  - [x]* 6.5 Escribir test de propiedad para allowlist de campos del perfil
     - **Property 30: Allowlist de campos del Perfil**
     - **Validates: Requirements 9.1**
-  - [ ]* 6.6 Escribir test de propiedad para normalización y validación del perfil
+  - [x]* 6.6 Escribir test de propiedad para normalización y validación del perfil
     - **Property 31: Normalización y validación de campos del Perfil**
     - **Validates: Requirements 9.2, 9.3**
   - [ ]* 6.7 Escribir test de propiedad para DTO con allowlist en respuestas
     - **Property 32: DTO con allowlist en respuestas de Perfil**
     - **Validates: Requirements 9.5**
-  - [ ]* 6.8 Escribir test de propiedad para autorización por propiedad (anti-BOLA)
+  - [x]* 6.8 Escribir test de propiedad para autorización por propiedad (anti-BOLA)
     - **Property 22: Autorización por propiedad del recurso (anti-BOLA)**
     - **Validates: Requirements 6.5, 6.6, 6.7, 9.6**
   - [ ]* 6.9 Escribir test de propiedad para retención a 90 días
@@ -98,15 +98,15 @@ Convenciones:
     - **Validates: Requirements 8.8, 9.8**
 
 - [ ] 7. Auth Service — Autenticación sin fricción (Req 1, Req 10)
-  - [ ] 7.1 Implementar validación y hashing de la Clave de 4 dígitos
+  - [x] 7.1 Implementar validación y hashing de la Clave de 4 dígitos
     - Validación exacta de 4 dígitos; hashing con sal (bcrypt/argon2 vía passlib); nunca texto plano; doble confirmación en registro
     - _Requirements: 1.3, 1.4, 1.5_
     - _Properties: 1, 2_
-  - [ ] 7.2 Implementar registro e ingreso con mensaje de error indistinguible
+  - [x] 7.2 Implementar registro e ingreso con mensaje de error indistinguible
     - `POST /api/v1/auth/registro`, `POST /api/v1/auth/ingreso`; validación E.164; error genérico que no revela existencia del teléfono; mensajes en español coloquial
     - _Requirements: 1.1, 1.2, 1.6, 1.7, 1.8, 1.9_
     - _Properties: 3_
-  - [ ] 7.3 Implementar emisión y rotación de tokens en cookies seguras
+  - [x] 7.3 Implementar emisión y rotación de tokens en cookies seguras
     - Access ≤ 15 min + refresh con rotación; cookies Secure/HttpOnly/SameSite; sin tokens en localStorage; `POST /api/v1/auth/refresco`, `POST /api/v1/auth/salir`
     - _Requirements: 1.10, 1.13_
     - _Properties: 6_
@@ -117,13 +117,13 @@ Convenciones:
   - [ ] 7.5 Implementar restauración de sesión y SSO con WordPress
     - `GET /api/v1/auth/sesion` restaura sesión vigente; SSO valida sesión WordPress contra IdP; redirige conservando destino si expiró o >30 min inactividad
     - _Requirements: 2.6, 2.7, 10.1, 10.2_
-  - [ ]* 7.6 Escribir test de propiedad para validación de la Clave
+  - [x]* 7.6 Escribir test de propiedad para validación de la Clave
     - **Property 1: Validación de la Clave de 4 dígitos**
     - **Validates: Requirements 1.4**
-  - [ ]* 7.7 Escribir test de propiedad para round-trip de hashing
+  - [x]* 7.7 Escribir test de propiedad para round-trip de hashing
     - **Property 2: Round-trip de hashing de la Clave**
     - **Validates: Requirements 1.5**
-  - [ ]* 7.8 Escribir test de propiedad para error de ingreso indistinguible
+  - [x]* 7.8 Escribir test de propiedad para error de ingreso indistinguible
     - **Property 3: Error de ingreso indistinguible**
     - **Validates: Requirements 1.7**
   - [ ]* 7.9 Escribir test de propiedad para bloqueo por intentos fallidos
@@ -132,7 +132,7 @@ Convenciones:
   - [ ]* 7.10 Escribir test de propiedad para reactivación tras expirar el bloqueo
     - **Property 5: Reactivación tras expirar el bloqueo**
     - **Validates: Requirements 1.12**
-  - [ ]* 7.11 Escribir test de propiedad para propiedades del token de sesión
+  - [x]* 7.11 Escribir test de propiedad para propiedades del token de sesión
     - **Property 6: Propiedades del token de sesión**
     - **Validates: Requirements 1.10**
 
@@ -320,11 +320,11 @@ Convenciones:
     - **Validates: Requirements 19.7, 19.8**
 
 - [ ] 18. Metrics Service + Tablero ODS (Req 8, Req 15)
-  - [ ] 18.1 Implementar registro de eventos con asignación de zona idempotente
+  - [x] 18.1 Implementar registro de eventos con asignación de zona idempotente
     - `POST /api/v1/metricas/eventos` con `client_event_id`; tipo, zona (o "sin_zona" no clasificado) y timestamp ISO-8601; reintentos ≤ 3 + cola de pendientes ante fallo
     - _Requirements: 8.1, 8.2, 8.4_
     - _Properties: 15, 26_
-  - [ ] 18.2 Implementar agregados con k-anonimato y sin PII individual
+  - [x] 18.2 Implementar agregados con k-anonimato y sin PII individual
     - `GET /api/v1/metricas/reportes`; frescura ≤ 60 s; supresión de zonas con < 5 Usuarios; conteo cero + ausencia de datos tras supresión; sin campos identificables
     - _Requirements: 8.3, 8.5, 8.6, 8.7_
     - _Properties: 27, 28_
