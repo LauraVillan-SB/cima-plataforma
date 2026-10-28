@@ -23,6 +23,7 @@ bcrypt = "4.0.1"
 pyjwt = "2.10.1"
 python-multipart = "0.0.32"
 httpx = "0.28.1"
+greenlet = "3.2.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "9.1.1"
