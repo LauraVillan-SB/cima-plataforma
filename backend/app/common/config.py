@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # TTL del refresh token (14 días). Con rotación: cada refresco emite uno nuevo.
     refresh_token_ttl_seconds: int = 1209600
     session_inactivity_seconds: int = 1800
+    # Bloqueo por intentos fallidos: umbral y duración del bloqueo (Req 1.12, 1.13).
+    max_failed_attempts: int = 5
+    lockout_seconds: int = 900
     # Secreto de firma de los tokens de sesión. En dev usa un valor por defecto NO
     # apto para producción; en stage/prod proviene de Secret Manager vía entorno.
     session_secret: str = "dev-only-insecure-change-me"

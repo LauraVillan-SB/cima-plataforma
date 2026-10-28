@@ -45,6 +45,16 @@ class Profile(Base):
     # Rol de autorización: `usuario` (default) o `admin` (Tablero ODS, Req 15.5).
     role: Mapped[str] = mapped_column(String(16), default=ROLE_USUARIO)
 
+    # Intentos de ingreso fallidos consecutivos; se reinicia a 0 tras un ingreso
+    # exitoso. Al alcanzar el umbral se fija `locked_until` (Req 1.12).
+    failed_attempts: Mapped[int] = mapped_column(default=0)
+
+    # Instante hasta el cual el ingreso está bloqueado por intentos fallidos.
+    # `None` si no hay bloqueo vigente (Req 1.12, 1.13).
+    locked_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
+
     # Marca de creación para aplicar la política de retención de 90 días (Req 9.8).
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
