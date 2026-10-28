@@ -4,9 +4,10 @@ Define la validación de la Clave de 4 dígitos (Req 1.4) y el DTO de registro
 con doble confirmación de Clave (Req 1.3). La validación ocurre en servidor con
 Pydantic; el teléfono se valida en formato E.164 reducido (7-15 dígitos, Req 1.1).
 """
+import uuid
 from typing import Annotated
 
-from pydantic import BaseModel, Field, StringConstraints, model_validator
+from pydantic import BaseModel, StringConstraints, model_validator
 
 # Clave: exactamente 4 dígitos numéricos (Req 1.4 / Property 1).
 Clave = Annotated[str, StringConstraints(pattern=r"^\d{4}$")]
@@ -60,3 +61,15 @@ class CambioClaveRequest(BaseModel):
         if self.clave_nueva != self.confirmacion_clave_nueva:
             raise ValueError("La nueva Clave y su confirmación no coinciden")
         return self
+
+
+class SesionResponse(BaseModel):
+    """DTO de salida tras registro/ingreso exitoso (Req 1.6, 9.4, 9.5).
+
+    Expone solo el identificador y el teléfono enmascarado (últimos 4 dígitos).
+    No incluye la Clave ni su hash. El `telefono` llega ya enmascarado desde el
+    servicio; este DTO nunca recibe ni expone PII en claro.
+    """
+
+    id: uuid.UUID
+    telefono: str  # Enmascarado por el servicio (p. ej. "******4567").
