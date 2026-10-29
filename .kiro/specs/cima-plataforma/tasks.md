@@ -74,7 +74,7 @@ Convenciones:
     - `POST /api/v1/perfiles`, `GET/PUT /api/v1/perfiles/me`; respuestas con DTO autorizado y PII enmascarada
     - _Requirements: 9.1, 9.4, 9.5_
     - _Properties: 18, 32_
-  - [ ] 6.3 Implementar autorización por propiedad (anti-BOLA) y rate limiting de abuso
+  - [x] 6.3 Implementar autorización por propiedad (anti-BOLA) y rate limiting de abuso
     - Verificación de titularidad en cada request; registro sin PII de intentos ajenos; rate limiting ante patrón repetido
     - _Requirements: 9.6, 9.7_
     - _Properties: 22, 33_
