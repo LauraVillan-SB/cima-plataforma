@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     http_allowlist_domains: str = "sostenibilidadbolivar.com"
     # Retención de datos sensibles: a los 90 días la PII se anonimiza (Req 8.8, 9.8).
     data_retention_days: int = 90
+    # Rate limiting de intentos de acceso a recursos ajenos (anti-BOLA, Req 9.7):
+    # máximo de intentos bloqueados permitidos por ventana, antes de limitar.
+    bola_max_attempts: int = 5
+    bola_window_seconds: int = 60
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

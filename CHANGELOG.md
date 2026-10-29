@@ -8,6 +8,9 @@ y este proyecto adhiere a [Versionamiento Semántico](https://semver.org/lang/es
 ## [No publicado]
 
 ### Agregado
+- Se implementó el rate limiting ante abuso de acceso a Perfiles ajenos (Tarea 6.3): utilidad reutilizable `SlidingWindowRateLimiter` de ventana deslizante en memoria (`app/common/rate_limit.py`) y su integración en `update_own_profile` (`app/profile/service.py`), que ante intentos repetidos cross-user del mismo actor responde con `RateLimitedError` (HTTP 429) y registra el patrón sin PII, manteniendo la verificación de titularidad anti-BOLA previa. Se añadieron los parámetros `bola_max_attempts` (5) y `bola_window_seconds` (60) a la configuración y la prueba de la Property 33 con Hypothesis (`tests/common/test_rate_limit.py`); 6/6 en verde. _Requirements: 9.7, 12.2, 12.5_
+
+### Agregado (sesión previa)
 - Se implementó la retención y anonimización de datos sensibles del Perfil (Tarea 6.4): el job `anonimizar_perfiles_vencidos` (`app/profile/retention.py`) reemplaza de forma no recuperable el teléfono y el hash de la Clave de los Perfiles con antigüedad ≥ 90 días (`created_at`), conservando el registro sin PII para agregados; es idempotente (no re-procesa perfiles ya anonimizados) y registra solo identificadores internos, nunca PII. Se añadió el parámetro `data_retention_days` (default 90) a la configuración y la prueba de la Property 29 con Hypothesis (`tests/profile/test_retention.py`). _Requirements: 8.8, 9.8_
 
 ### Agregado (sesión previa)
