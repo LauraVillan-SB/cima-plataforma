@@ -54,8 +54,9 @@ Convenciones:
     - Gamificación: `badges` (catálogo con `points_value`), `user_badges` con restricción UNIQUE(`profile_id`,`badge_id`) y `client_event_id` UUID v4 para otorgamiento idempotente, y `user_points` (total de puntos por perfil)
     - Encuesta de satisfacción: `surveys` (definición de preguntas con escala 1–5) y `survey_responses` con restricción UNIQUE(`profile_id`,`path_id`) y `client_event_id` UUID v4 para idempotencia de registro, y `rating` en escala 1–5
     - _Requirements: 1.5, 4.1, 4.2, 6.4, 8.1, 8.2, 9.1, 17.4, 19.2, 19.5, 20.3, 20.6_
-  - [ ] 4.2 Crear migraciones Alembic iniciales
+  - [~] 4.2 Crear migraciones Alembic iniciales
     - Migración de creación de tablas, extensión PgVector, índices y roles de BD separados (lectura/escritura/admin)
+    - Nota: infraestructura Alembic y migración inicial (`profiles`, `metric_events` + PgVector) creadas y validadas con `alembic history`. Los roles de BD separados quedan como provisión de infraestructura (no en migración versionada). Se extenderá al crear el resto de modelos (4.1 completa).
     - _Requirements: 8.1, 17.4_
   - [ ]* 4.3 Escribir pruebas unitarias de los esquemas de datos
     - Validar restricciones, tipos y defaults (p. ej. `pass_threshold` default 70)
