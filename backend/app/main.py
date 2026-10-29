@@ -13,6 +13,7 @@ from app.common.logging import configure_logging
 from app.auth.router import router as auth_router
 from app.metrics.router import router as metrics_router
 from app.profile.router import router as profile_router
+from app.survey.router import router as survey_router
 
 settings = get_settings()
 configure_logging(settings.log_level)
@@ -31,6 +32,7 @@ register_error_handlers(app)
 app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(metrics_router)
+app.include_router(survey_router)
 
 
 @app.get("/api/v1/health", tags=["health"])
