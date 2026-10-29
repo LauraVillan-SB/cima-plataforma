@@ -78,7 +78,7 @@ Convenciones:
     - Verificación de titularidad en cada request; registro sin PII de intentos ajenos; rate limiting ante patrón repetido
     - _Requirements: 9.6, 9.7_
     - _Properties: 22, 33_
-  - [ ] 6.4 Implementar proceso de retención de datos sensibles a 90 días
+  - [x] 6.4 Implementar proceso de retención de datos sensibles a 90 días
     - Job que elimina/anonimiza PII con antigüedad ≥ 90 días conservando agregados no identificables
     - _Requirements: 9.8_
     - _Properties: 29_
@@ -94,7 +94,7 @@ Convenciones:
   - [x]* 6.8 Escribir test de propiedad para autorización por propiedad (anti-BOLA)
     - **Property 22: Autorización por propiedad del recurso (anti-BOLA)**
     - **Validates: Requirements 6.5, 6.6, 6.7, 9.6**
-  - [ ]* 6.9 Escribir test de propiedad para retención a 90 días
+  - [x]* 6.9 Escribir test de propiedad para retención a 90 días
     - **Property 29: Retención de datos sensibles a 90 días**
     - **Validates: Requirements 8.8, 9.8**
 
