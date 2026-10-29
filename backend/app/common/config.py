@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     cookie_samesite: str = "lax"
     http_allowlist_domains: str = "sostenibilidadbolivar.com"
+    # Retención de datos sensibles: a los 90 días la PII se anonimiza (Req 8.8, 9.8).
+    data_retention_days: int = 90
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

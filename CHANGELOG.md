@@ -8,6 +8,9 @@ y este proyecto adhiere a [Versionamiento Semántico](https://semver.org/lang/es
 ## [No publicado]
 
 ### Agregado
+- Se implementó la retención y anonimización de datos sensibles del Perfil (Tarea 6.4): el job `anonimizar_perfiles_vencidos` (`app/profile/retention.py`) reemplaza de forma no recuperable el teléfono y el hash de la Clave de los Perfiles con antigüedad ≥ 90 días (`created_at`), conservando el registro sin PII para agregados; es idempotente (no re-procesa perfiles ya anonimizados) y registra solo identificadores internos, nunca PII. Se añadió el parámetro `data_retention_days` (default 90) a la configuración y la prueba de la Property 29 con Hypothesis (`tests/profile/test_retention.py`). _Requirements: 8.8, 9.8_
+
+### Agregado (sesión previa)
 - Se creó la infraestructura de migraciones Alembic y la migración inicial del esquema (Tarea 4.2): entorno asíncrono `backend/alembic/env.py` (URL inyectada desde la configuración/Secret Manager, nunca hardcodeada; importa los modelos para autogenerate), plantilla `script.py.mako`, y la revisión `0001_esquema_inicial` que habilita la extensión PgVector (`CREATE EXTENSION IF NOT EXISTS vector`, Req 17.4) y crea las tablas `profiles` (con `clave_hash`, `role`, `failed_attempts`, `locked_until`) y `metric_events` (idempotente por `client_event_id`) con sus índices y `downgrade` reversible. Validado con `alembic history`/`heads` (head único `0001_esquema_inicial`); el `upgrade` completo y los roles de BD separados (lectura/escritura/admin) se aplican en un entorno con PostgreSQL + PgVector. _Requirements: 8.1, 17.4_
 
 ### Cambiado
