@@ -1,0 +1,32 @@
+{
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": ["/favicon.ico", "/index.html", "/manifest.webmanifest", "/*.css", "/*.js"]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/assets/**", "/*.(svg|png|jpg|jpeg|webp|woff2)"]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-dinamica",
+      "urls": ["/api/v1/**"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 100,
+        "maxAge": "1h",
+        "timeout": "3s"
+      }
+    }
+  ]
+}
