@@ -38,3 +38,16 @@ class NotaDeVozInvalidaError(ValidationError):
         f"{int(VOICE_MIN_SECONDS)} y {int(VOICE_MAX_SECONDS)} segundos y estar "
         "en formato m4a, aac, ogg o mp3."
     )
+
+
+class RedaccionPiiError(ValidationError):
+    """La redacción de PII no pudo completarse con éxito (Req 3.11).
+
+    El contenido NO se envía al modelo de IA. Se pide al Usuario reformular el
+    mensaje sin datos personales; el detalle interno solo lleva el motivo.
+    """
+
+    public_message = (
+        "Por tu seguridad no pudimos enviar tu mensaje. Escríbelo otra vez sin "
+        "datos personales como tu teléfono, cédula, correo o dirección."
+    )

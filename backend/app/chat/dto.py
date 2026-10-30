@@ -32,3 +32,17 @@ class NotaDeVozValida(BaseModel):
     formato: AudioFormat
     duracion_segundos: float
     tamano_bytes: int
+
+
+class TextoRedactado(BaseModel):
+    """Texto apto para el modelo de IA, con la PII detectada ya redactada (Req 3.10).
+
+    `categorias` cuenta cuántas sustituciones hubo por tipo de PII (p. ej.
+    `{"telefono": 1}`). No contiene los valores originales, por lo que se puede
+    usar en el registro auditable sin PII (Req 3.9, 16.4).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    texto: str
+    categorias: dict[str, int]
