@@ -12,7 +12,7 @@ Convenciones:
 
 ## Tasks
 
-- [ ] 1. Configuración del proyecto backend (FastAPI) y base de datos
+- [x] 1. Configuración del proyecto backend (FastAPI) y base de datos
   - Crear estructura de carpetas por dominio (`auth/`, `chat/`, `learning/`, `conversion/`, `certification/`, `assessment/`, `metrics/`, `profile/`, `sync/`, `common/`)
   - Configurar `pyproject.toml` con Poetry y dependencias ancladas a versión exacta desde JFrog (fastapi, sqlalchemy, pydantic, alembic, psycopg2/asyncpg, passlib, httpx, pytest, hypothesis, pgvector)
   - Configurar conexión a PostgreSQL con HikariCP/pool, variables de entorno vía Secret Manager, y extensión PgVector
@@ -20,12 +20,13 @@ Convenciones:
   - Añadir `.gitignore` (`.idea`, `node_modules`, `.vscode`, `dist`, `__pycache__`, `.pytest_cache`)
   - _Requirements: 12.1, 17.4_
 
-- [ ] 2. Configuración del proyecto frontend (Angular PWA)
+- [~] 2. Configuración del proyecto frontend (Angular PWA)
   - Crear proyecto Angular con Angular CLI y Service Worker (`@angular/service-worker`), dependencias ancladas desde JFrog
   - Configurar performance budgets en el build: bundle inicial ≤ 500 KB y visita posterior ≤ 50 KB
   - Configurar estructura por dominio (feature modules) y `HttpClient` con interceptor base
   - Añadir `fast-check` + Jest para pruebas de lógica pura del frontend
   - _Requirements: 2.1, 2.3, 2.4_
+  - Nota: scaffold, Service Worker, interceptor de Correlation-ID, Jest y fast-check listos; budget inicial ≤ 500 KB configurado en `angular.json`. Falta definir y medir el límite de visita posterior ≤ 50 KB.
 
 - [x] 3. Infraestructura transversal: Correlation-ID, logging estructurado y manejo de errores
   - [x] 3.1 Implementar middleware de Correlation-ID en el backend
@@ -74,10 +75,11 @@ Convenciones:
     - `POST /api/v1/perfiles`, `GET/PUT /api/v1/perfiles/me`; respuestas con DTO autorizado y PII enmascarada
     - _Requirements: 9.1, 9.4, 9.5_
     - _Properties: 18, 32_
-  - [ ] 6.3 Implementar autorización por propiedad (anti-BOLA) y rate limiting de abuso
+  - [~] 6.3 Implementar autorización por propiedad (anti-BOLA) y rate limiting de abuso
     - Verificación de titularidad en cada request; registro sin PII de intentos ajenos; rate limiting ante patrón repetido
     - _Requirements: 9.6, 9.7_
     - _Properties: 22, 33_
+    - Nota: verificación de titularidad (anti-BOLA) implementada en el Profile Service. Falta el rate limiting ante patrón repetido (coordinar con Tarea 10.3).
   - [x] 6.4 Implementar proceso de retención de datos sensibles a 90 días
     - Job que elimina/anonimiza PII con antigüedad ≥ 90 días conservando agregados no identificables
     - _Requirements: 9.8_
@@ -111,13 +113,15 @@ Convenciones:
     - Access ≤ 15 min + refresh con rotación; cookies Secure/HttpOnly/SameSite; sin tokens en localStorage; `POST /api/v1/auth/refresco`, `POST /api/v1/auth/salir`
     - _Requirements: 1.10, 1.13_
     - _Properties: 6_
-  - [ ] 7.4 Implementar bloqueo por intentos, reactivación e inactividad
+  - [~] 7.4 Implementar bloqueo por intentos, reactivación e inactividad
     - 5 fallos consecutivos → bloqueo 15 min por teléfono; reactivación con contador en cero; invalidación por 30 min de inactividad; `PUT /api/v1/auth/clave` exige Clave actual
     - _Requirements: 1.11, 1.12, 1.13, 1.14_
     - _Properties: 4, 5_
-  - [ ] 7.5 Implementar restauración de sesión y SSO con WordPress
+    - Nota: bloqueo por intentos, reactivación y `PUT /api/v1/auth/clave` implementados. Falta la invalidación de sesión por 30 min de inactividad.
+  - [~] 7.5 Implementar restauración de sesión y SSO con WordPress
     - `GET /api/v1/auth/sesion` restaura sesión vigente; SSO valida sesión WordPress contra IdP; redirige conservando destino si expiró o >30 min inactividad
     - _Requirements: 2.6, 2.7, 10.1, 10.2_
+    - Nota: `GET /api/v1/auth/sesion` implementado. Falta el SSO con WordPress contra el IdP (depende del cliente HTTP seguro, Tarea 9.1).
   - [x]* 7.6 Escribir test de propiedad para validación de la Clave
     - **Property 1: Validación de la Clave de 4 dígitos**
     - **Validates: Requirements 1.4**
@@ -344,17 +348,18 @@ Convenciones:
     - **Validates: Requirements 8.5, 15.3**
 
 - [ ] 19. Survey Service — Encuesta de satisfacción (Req 20)
-  - [ ] 19.1 Implementar presentación de la encuesta con idempotencia
+  - [x] 19.1 Implementar presentación de la encuesta con idempotencia
     - `GET /api/v1/encuestas/{rutaId}`; presenta la encuesta breve y opcional (escala 1–5) solo si no ha sido respondida ni omitida para esa ruta y Usuario; habilitada al completar la Ruta_de_Aprendizaje o hito (enganche con Learning Service); respuesta por texto o voz coherente con voz-first; omitible sin bloquear
     - _Requirements: 20.1, 20.2, 20.6_
     - _Properties: 44_
-  - [ ] 19.2 Implementar validación en servidor y registro agregado sin PII
+  - [x] 19.2 Implementar validación en servidor y registro agregado sin PII
     - `POST /api/v1/encuestas/{rutaId}/respuestas`; valida tipo/formato/rango (calificación 1–5) antes de registrar, rechazo indicando campo inválido; registra asociado al Perfil_de_Usuario y zona sin PII en ≤ 5 s; reintentos ≤ 3 conservando la respuesta sin pérdida (coordinación con Metrics Service)
     - _Requirements: 20.3, 20.4, 20.5_
     - _Properties: 43_
-  - [ ] 19.3 Implementar reporte agregado de satisfacción por zona y retención
+  - [~] 19.3 Implementar reporte agregado de satisfacción por zona y retención
     - `GET /api/v1/encuestas/reportes`; agregado por zona con supresión k-anonimato ≥ 5; retención/anonimización de respuestas sensibles ≥ 90 días
     - _Requirements: 20.7, 20.8_
+    - Nota: reporte agregado con supresión k-anonimato ≥ 5 implementado. Falta el proceso de retención/anonimización a 90 días (el modelo solo deja la base preparada).
   - [ ]* 19.4 Escribir test de propiedad para validación en servidor de la respuesta
     - **Property 43: Validación en servidor de la respuesta de encuesta**
     - **Validates: Requirements 20.3**
@@ -362,8 +367,8 @@ Convenciones:
     - **Property 44: Idempotencia de presentación/registro de la encuesta**
     - **Validates: Requirements 20.6**
 
-- [ ] 20. Offline Sync Service (Req 18 — backend)
-  - [ ] 20.1 Implementar sincronización idempotente y fusión de progreso
+- [x] 20. Offline Sync Service (Req 18 — backend)
+  - [x] 20.1 Implementar sincronización idempotente y fusión de progreso
     - `POST /api/v1/sync/acciones` aplica lote con `client_event_id` (idempotente); resolver conflictos fusionando pasos completados sin pérdida
     - _Requirements: 18.2, 18.4_
     - _Properties: 36, 37_
@@ -378,24 +383,27 @@ Convenciones:
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 22. Frontend PWA — Shell, caché offline y detección de red (Req 2, Req 18)
-  - [ ] 22.1 Implementar shell de la app y estrategias de Service Worker
+  - [~] 22.1 Implementar shell de la app y estrategias de Service Worker
     - Shell ligero; cache-first para estáticos y microcápsulas descargadas; network-first con timeout para datos dinámicos; fallback sin caché descargando por visita
     - _Requirements: 2.1, 2.4, 2.5, 18.1_
-  - [ ] 22.2 Implementar detección de red, cola local idempotente y precarga
+    - Nota: shell y `ngsw-config.json` con estáticos (prefetch/lazy) y API dinámica `freshness` con timeout 3 s listos. Falta el grupo de caché para microcápsulas descargadas (depende del Learning Service, Tarea 13).
+  - [~] 22.2 Implementar detección de red, cola local idempotente y precarga
     - Indicador de estado ≤ 2 s tras interrupción ≥ 3 s conservando último paso; cola local con `client_event_id` sincronizada vía Offline Sync; precarga de siguiente microcápsula; estado de sincronización en lenguaje simple
     - _Requirements: 2.8, 2.9, 18.2, 18.3, 18.5_
+    - Nota: detección de red (umbral 3 s), indicador de conexión y cola local con `client_event_id` listos. Falta la precarga de la siguiente microcápsula (depende de la Tarea 13).
   - [ ]* 22.3 Escribir test de propiedad (fast-check) para generación de clave de idempotencia de la cola
     - **Property 36: Idempotencia de la sincronización offline** (lógica cliente de la cola)
     - **Validates: Requirements 18.2**
 
 - [ ] 23. Frontend PWA — Autenticación, voz-first y accesibilidad (Req 1, Req 13, Req 14)
-  - [ ] 23.1 Implementar pantallas de autenticación sin fricción
+  - [x] 23.1 Implementar pantallas de autenticación sin fricción
     - Formulario teléfono + Clave de 4 dígitos; restauración de sesión; mensajes en español coloquial; sin correo ni descargas
     - La pantalla de creación de la Clave muestra un texto de ayuda en español coloquial sugiriendo usar los últimos 4 dígitos de la cédula como pista para recordarla, sin validar la Clave contra la cédula ni almacenar la cédula (solo texto de UI)
     - _Requirements: 1.1, 1.3, 1.4, 1.8, 2.6, 2.7_
-  - [ ] 23.2 Implementar interacción voz-first y controles accesibles
+  - [~] 23.2 Implementar interacción voz-first y controles accesibles
     - Modo primario por voz con texto alternativo en el mismo flujo; controles de voz ≥ 44×44 px operables con una mano; reproducción TTS; captura y envío de notas de voz
     - _Requirements: 14.1, 14.2, 14.3, 14.4_
+    - Nota: control de voz con objetivos táctiles ≥ 44×44 px listo. Faltan la captura real (MediaRecorder), el envío al pipeline STT y la reproducción TTS (dependen de la Tarea 11.4).
   - [ ] 23.3 Implementar flujos de aprendizaje/evaluación/conversión en UI
     - Consumo de endpoints de learning, assessment, certification y conversion; indicador de procesamiento de IA; mínimos pasos de interacción
     - _Requirements: 3.6, 3.7, 13.1_
