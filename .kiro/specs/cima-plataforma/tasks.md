@@ -172,10 +172,11 @@ Convenciones:
     - _Requirements: 11.5, 11.6, 12.3_
 
 - [ ] 11. Conversational Agent Service — Pipeline de IA responsable y voz-first (Req 3, Req 14, Req 16)
-  - [ ] 11.1 Implementar validación de entrada de texto y de nota de voz
+  - [x] 11.1 Implementar validación de entrada de texto y de nota de voz
     - Rechazar texto vacío (tras trim) o > 2000 chars sin invocar el modelo, conservando contenido; rechazar audio fuera de {m4a/aac, ogg, mp3} o duración fuera de [1, 120] s sin invocar STT ni modelo
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
     - _Properties: 7, 8_
+    - Nota: validación pura en `app/chat/validation.py` (formato real por firma binaria, tamaño máx. 5 MiB). La duración debe medirse en el servidor; el endpoint de la Tarea 11.3 debe invocar estas funciones antes de encolar STT o inferencia.
   - [ ] 11.2 Implementar redacción de PII previa al modelo
     - Detección y redacción de PII antes de enviar al LLM; si la redacción falla, no enviar y solicitar reformular
     - _Requirements: 3.10, 3.11, 14.6_
