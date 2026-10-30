@@ -177,10 +177,11 @@ Convenciones:
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
     - _Properties: 7, 8_
     - Nota: validación pura en `app/chat/validation.py` (formato real por firma binaria, tamaño máx. 5 MiB). La duración debe medirse en el servidor; el endpoint de la Tarea 11.3 debe invocar estas funciones antes de encolar STT o inferencia.
-  - [ ] 11.2 Implementar redacción de PII previa al modelo
+  - [x] 11.2 Implementar redacción de PII previa al modelo
     - Detección y redacción de PII antes de enviar al LLM; si la redacción falla, no enviar y solicitar reformular
     - _Requirements: 3.10, 3.11, 14.6_
     - _Properties: 9_
+    - Nota: `redactar_pii` en `app/chat/redaction.py` (detector por patrones: correo, dirección, coordenadas, nombre tras "me llamo"/"mi nombre es" y secuencias ≥ 6 dígitos; conserva montos). Verifica que no quede PII y, si queda, lanza `RedaccionPiiError`. No detecta nombres sin frase introductoria ni municipios/veredas. La conservación/eliminación del audio (Req 14.6) corresponde al STT de la Tarea 11.4.
   - [ ] 11.3 Implementar inferencia asíncrona con cola/worker y endpoints de chat
     - `POST /api/v1/chat/mensajes` encola inferencia y responde 202; `GET /api/v1/chat/mensajes/{id}` y `GET /api/v1/chat/historial`; indicador de procesamiento hasta 60 s y error de servicio no disponible conservando historial
     - _Requirements: 3.1, 3.5, 3.6, 3.7, 3.8, 12.4_
