@@ -14,13 +14,29 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.errors import ForbiddenError, NotFoundError, ValidationError
+from app.common.config import get_settings
+from app.common.errors import (
+    ForbiddenError,
+    NotFoundError,
+    RateLimitedError,
+    ValidationError,
+)
 from app.common.logging import log_event
 from app.common.masking import mask_value
+from app.common.rate_limit import SlidingWindowRateLimiter
 from app.profile.dto import ProfileCreate, ProfileResponse
 from app.profile.models import Profile
 
 logger = logging.getLogger("cima.profile")
+
+# Limitador de intentos de acceso a Perfiles ajenos (anti-BOLA, Req 9.7). La
+# clave es el id del actor autenticado; es en memoria por proceso (ver nota en
+# rate_limit.py sobre el almacén compartido para escalado horizontal).
+_settings = get_settings()
+_bola_limiter = SlidingWindowRateLimiter(
+    max_hits=_settings.bola_max_attempts,
+    window_seconds=_settings.bola_window_seconds,
+)
 
 
 def _to_response(profile: Profile) -> ProfileResponse:
@@ -85,6 +101,16 @@ async def update_own_profile(
             actor_id=str(current_user_id),
             target_id=str(target_id),
         )
+        # Rate limiting ante intentos repetidos de acceso a recursos ajenos: si el
+        # actor supera el umbral en la ventana, se responde 429 en vez de 403 y se
+        # registra el patrón para análisis de seguridad, sin exponer PII (Req 9.7).
+        if not _bola_limiter.allow(str(current_user_id)):
+            log_event(
+                logger,
+                "bola_rate_limited",
+                actor_id=str(current_user_id),
+            )
+            raise RateLimitedError(internal_detail="bola attempts rate-limited")
         raise ForbiddenError(internal_detail="cross-user profile modification blocked")
 
     profile = await db.get(Profile, current_user_id)

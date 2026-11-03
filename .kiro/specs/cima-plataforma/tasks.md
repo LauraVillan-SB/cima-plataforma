@@ -75,11 +75,11 @@ Convenciones:
     - `POST /api/v1/perfiles`, `GET/PUT /api/v1/perfiles/me`; respuestas con DTO autorizado y PII enmascarada
     - _Requirements: 9.1, 9.4, 9.5_
     - _Properties: 18, 32_
-  - [~] 6.3 Implementar autorización por propiedad (anti-BOLA) y rate limiting de abuso
+  - [x] 6.3 Implementar autorización por propiedad (anti-BOLA) y rate limiting de abuso
     - Verificación de titularidad en cada request; registro sin PII de intentos ajenos; rate limiting ante patrón repetido
     - _Requirements: 9.6, 9.7_
     - _Properties: 22, 33_
-    - Nota: verificación de titularidad (anti-BOLA) implementada en el Profile Service. Falta el rate limiting ante patrón repetido (coordinar con Tarea 10.3).
+    - Nota: verificación de titularidad (anti-BOLA) y rate limiting de abuso implementados en el Profile Service (`SlidingWindowRateLimiter`, 429 ante patrón repetido). El rate limiting global de componentes core sigue en la Tarea 10.3.
   - [x] 6.4 Implementar proceso de retención de datos sensibles a 90 días
     - Job que elimina/anonimiza PII con antigüedad ≥ 90 días conservando agregados no identificables
     - _Requirements: 9.8_
