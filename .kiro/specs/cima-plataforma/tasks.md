@@ -299,10 +299,11 @@ Convenciones:
     - `POST /api/v1/conversion/incentivos/{rutaId}`; entrega ≤ 5 s con confirmación observable; reintentos ≤ 3 (intervalo ≥ 5 s) conservando completitud; tras 3 fallos → "pendiente" y registro por `profile_id`
     - _Requirements: 5.1, 5.2, 5.3_
     - _Properties: 16_
-  - [ ] 16.2 Implementar oferta de microseguros y registro de intención
+  - [x] 16.2 Implementar oferta de microseguros y registro de intención
     - `GET /api/v1/conversion/microseguros` (1–5 por tipo de perfil; sin perfil, el agente lo solicita; sin oferta, informa y registra ausencia con el tipo); `POST /api/v1/conversion/intenciones` idempotente; enmascaramiento de PII en respuestas
     - _Requirements: 5.4, 5.5, 5.6, 5.7, 5.8, 5.9_
     - _Properties: 17, 18_
+    - Nota: implementado en `app/conversion/` con catálogo estático (`constants.py`), modelos `conversion_intents` y `no_offer_events` + migración `0002`. Las rutas llevan la ruta de aprendizaje: `GET /api/v1/conversion/microseguros/{ruta_id}` y `POST /api/v1/conversion/intenciones/{ruta_id}`. El titular sale de la cookie de sesión (el cliente no envía `profile_id`). Req 5.7: `activity_type` es obligatorio en el Perfil, por lo que el caso "sin tipo" no llega al servicio. Req 5.6: el servicio es idempotente por `client_event_id`; conservar la opción para reintentar es responsabilidad de la UI (Tarea 23.3).
   - [ ]* 16.3 Escribir test de propiedad para estado de entrega de incentivo
     - **Property 16: Invariante de estado de entrega de incentivo**
     - **Validates: Requirements 5.1, 5.2, 5.3**
