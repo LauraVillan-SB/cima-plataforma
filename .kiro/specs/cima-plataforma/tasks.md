@@ -312,10 +312,11 @@ Convenciones:
     - **Validates: Requirements 5.4**
 
 - [ ] 17. Gamification Service — Insignias y puntos (Req 19)
-  - [ ] 17.1 Implementar otorgamiento idempotente de insignias y puntos
+  - [~] 17.1 Implementar otorgamiento idempotente de insignias y puntos
     - `POST /api/v1/gamificacion/reconocimientos`; otorga al completar microcápsula o ruta (disparado por el Learning Service en tarea 13.3); reglas de otorgamiento ejecutadas exclusivamente en backend; idempotente por `client_event_id` + insignia (no duplica, conserva el registro existente); reintentos ≤ 3 conservando el evento sin pérdida; reconocimiento visible ≤ 5 s; validación de elegibilidad de beneficio sobre microseguro en backend (coordinación con Conversion Service, Tarea 16)
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6_
     - _Properties: 41_
+    - Nota: motor de otorgamiento implementado en `app/gamification/` (`service.grant_recognition`): reglas solo en backend (`RECOGNITION_RULES`, catálogo de ejemplo pendiente de validar por negocio), idempotente por `client_event_id` y por (perfil, insignia), puntos sumados una sola vez, hasta 3 intentos ante conflictos de concurrencia y `ReconocimientoPendienteError` si persisten. Modelos `user_badges` y `user_points` + migración `0003`. **Pendiente:** (1) **No se expuso `POST /api/v1/gamificacion/reconocimientos` a usuarios**: un endpoint abierto permitiría darse insignias y puntos sin completar nada (Req 19.3) y hoy no hay forma de verificar una finalización ni autenticación entre servicios; el Learning Service (13.3) debe invocar `grant_recognition` dentro del backend. Si se necesita un endpoint HTTP, requiere autenticación servicio a servicio (o rol `admin`). (2) Req 19.4 (elegibilidad de beneficio sobre Microseguro): ninguna Insignia otorga beneficios, por lo que no se aplica ninguno; falta definir la regla de negocio. (3) Req 19.6: no hay cola durable; el invocador conserva el evento y reintenta con el mismo `client_event_id`. (4) Se usó un catálogo estático en código en lugar de la tabla `badges` del diseño.
   - [ ] 17.2 Implementar consulta de reconocimientos con autorización por titular
     - `GET /api/v1/gamificacion/reconocimientos`; lista las insignias y el total de puntos del titular autenticado; acceso a reconocimientos ajenos → error de autorización sin exponer PII
     - _Requirements: 19.7, 19.8_

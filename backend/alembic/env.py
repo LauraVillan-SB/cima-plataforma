@@ -22,6 +22,8 @@ from app.common.database import Base
 # A medida que se creen modelos en otros dominios, se importan aquí.
 from app.profile import models as _profile_models  # noqa: F401
 from app.metrics import models as _metric_models  # noqa: F401
+from app.conversion import models as _conversion_models  # noqa: F401
+from app.gamification import models as _gamification_models  # noqa: F401
 
 config = context.config
 
