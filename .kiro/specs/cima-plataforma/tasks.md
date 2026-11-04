@@ -219,37 +219,37 @@ Convenciones:
 - [ ] 12. Checkpoint — Verificar pipeline de IA voz-first con dependencias mockeadas
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 13. Learning Service — Micro-aprendizaje y adaptativo (Req 4, Req 17)
-  - [ ] 13.1 Implementar selección personalizada de microcápsulas
+- [x] 13. Learning Service — Micro-aprendizaje y adaptativo (Req 4, Req 17)
+  - [x] 13.1 Implementar selección personalizada de microcápsulas
     - `GET /api/v1/aprendizaje/microcapsulas`; máx. 10 por tipo de perfil, orden por relevancia desc. y fecha desc.; duración 180–300 s; clasificación en exactamente un tema
     - _Requirements: 4.1, 4.2, 4.3_
     - _Properties: 10, 11, 12_
-  - [ ] 13.2 Implementar fallback a tema general y solicitud de perfil incompleto
+  - [x] 13.2 Implementar fallback a tema general y solicitud de perfil incompleto
     - Sin coincidencias → tema "adaptación al clima" + notificación; perfil incompleto → el agente solicita cultivo/comercio hasta 3 veces y luego tema general sin personalización
     - _Requirements: 4.4, 4.5, 4.8, 4.9_
     - _Properties: 13_
-  - [ ] 13.3 Implementar finalización de microcápsula y completitud de ruta
+  - [x] 13.3 Implementar finalización de microcápsula y completitud de ruta
     - `POST /api/v1/aprendizaje/microcapsulas/{id}/finalizar` idempotente con reintentos ≤ 3; marcar ruta completada cuando todas las microcápsulas tienen finalización
     - Al registrar la finalización de una microcápsula o la completitud de una ruta, disparar el otorgamiento de insignias/puntos del Gamification Service (ver Tarea 17)
     - Análogamente, la completitud de una ruta habilita la presentación de la Encuesta_de_Satisfaccion del Survey Service (ver nueva Tarea 19)
     - _Requirements: 4.6, 4.7, 4.10_
     - _Properties: 14, 15_
-  - [ ] 13.4 Implementar lógica de adaptación en backend (ritmo/simplificación)
+  - [x] 13.4 Implementar lógica de adaptación en backend (ritmo/simplificación)
     - `GET /api/v1/aprendizaje/rutas/{id}`; adaptar siguiente microcápsula por repetición/exceso de tiempo/fallo de comprensión usando solo señales ya capturadas; evolucionable a PgVector sin cambiar contrato; default a ruta estándar sin señales
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
-  - [ ]* 13.5 Escribir test de propiedad para duración de microcápsula
+  - [x]* 13.5 Escribir test de propiedad para duración de microcápsula
     - **Property 10: Invariante de duración de microcápsula**
     - **Validates: Requirements 4.1**
-  - [ ]* 13.6 Escribir test de propiedad para clasificación temática única
+  - [x]* 13.6 Escribir test de propiedad para clasificación temática única
     - **Property 11: Clasificación temática única**
     - **Validates: Requirements 4.2**
-  - [ ]* 13.7 Escribir test de propiedad para selección acotada y ordenada
+  - [x]* 13.7 Escribir test de propiedad para selección acotada y ordenada
     - **Property 12: Selección personalizada acotada y ordenada**
     - **Validates: Requirements 4.3**
-  - [ ]* 13.8 Escribir test de propiedad para fallback a tema general
+  - [x]* 13.8 Escribir test de propiedad para fallback a tema general
     - **Property 13: Fallback a tema general sin coincidencias**
     - **Validates: Requirements 4.4, 4.5, 4.9**
-  - [ ]* 13.9 Escribir test de propiedad para completitud de ruta
+  - [x]* 13.9 Escribir test de propiedad para completitud de ruta
     - **Property 14: Completitud de ruta como bicondicional**
     - **Validates: Requirements 4.10**
   - [ ]* 13.10 Escribir test de propiedad para resiliencia de registro con reintentos
