@@ -42,3 +42,7 @@ RECOGNITION_RULES: dict[str, BadgeRule] = {
         code="ruta_completada", name="Ruta completada", points=50
     ),
 }
+
+# Nombre legible por código de Insignia, derivado del catálogo (una sola fuente
+# de verdad). Se usa al listar los reconocimientos de un Perfil (Req 19.7).
+BADGE_NAMES: dict[str, str] = {rule.code: rule.name for rule in RECOGNITION_RULES.values()}

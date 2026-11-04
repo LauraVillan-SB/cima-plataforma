@@ -317,10 +317,11 @@ Convenciones:
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6_
     - _Properties: 41_
     - Nota: motor de otorgamiento implementado en `app/gamification/` (`service.grant_recognition`): reglas solo en backend (`RECOGNITION_RULES`, catálogo de ejemplo pendiente de validar por negocio), idempotente por `client_event_id` y por (perfil, insignia), puntos sumados una sola vez, hasta 3 intentos ante conflictos de concurrencia y `ReconocimientoPendienteError` si persisten. Modelos `user_badges` y `user_points` + migración `0003`. **Pendiente:** (1) **No se expuso `POST /api/v1/gamificacion/reconocimientos` a usuarios**: un endpoint abierto permitiría darse insignias y puntos sin completar nada (Req 19.3) y hoy no hay forma de verificar una finalización ni autenticación entre servicios; el Learning Service (13.3) debe invocar `grant_recognition` dentro del backend. Si se necesita un endpoint HTTP, requiere autenticación servicio a servicio (o rol `admin`). (2) Req 19.4 (elegibilidad de beneficio sobre Microseguro): ninguna Insignia otorga beneficios, por lo que no se aplica ninguno; falta definir la regla de negocio. (3) Req 19.6: no hay cola durable; el invocador conserva el evento y reintenta con el mismo `client_event_id`. (4) Se usó un catálogo estático en código en lugar de la tabla `badges` del diseño.
-  - [ ] 17.2 Implementar consulta de reconocimientos con autorización por titular
+  - [x] 17.2 Implementar consulta de reconocimientos con autorización por titular
     - `GET /api/v1/gamificacion/reconocimientos`; lista las insignias y el total de puntos del titular autenticado; acceso a reconocimientos ajenos → error de autorización sin exponer PII
     - _Requirements: 19.7, 19.8_
     - _Properties: 42_
+    - Nota: implementado en `app/gamification/` (`service.get_recognitions`, `router.py`). El titular sale de la cookie de sesión. Se aceptó un parámetro opcional `perfil_id` solo para cumplir el Req 19.8: si no coincide con el Usuario autenticado se responde 403 antes de consultar la BD (idéntico exista o no ese Perfil) y se registra el intento solo con ids internos. La respuesta (`RecognitionSummary`) no incluye el id del Perfil ni PII. El endpoint no se probó con un cliente HTTP real (solo la lógica del servicio con sesión simulada).
   - [ ]* 17.3 Escribir test de propiedad para idempotencia del otorgamiento
     - **Property 41: Idempotencia del otorgamiento de insignias**
     - **Validates: Requirements 19.5**
