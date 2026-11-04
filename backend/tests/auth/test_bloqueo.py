@@ -68,15 +68,22 @@ async def test_property_4_bloqueo_tras_umbral_de_fallos(fallos_previos: int) -> 
     perfil = _perfil(failed=fallos_previos)
     sesion = _FakeSession(stored=perfil)
 
+    alcanza_umbral = fallos_previos + 1 >= _MAX
+    # El intento que alcanza el umbral ya informa el bloqueo; los anteriores
+    # responden credenciales inválidas (Req 1.12).
+    error_esperado = CuentaBloqueadaError if alcanza_umbral else CredencialesInvalidasError
+
     # When falla un ingreso con Clave incorrecta
-    with pytest.raises(CredencialesInvalidasError):
+    with pytest.raises(error_esperado) as err:
         await service.ingresar(sesion, IngresoRequest(telefono=_TELEFONO, clave=_CLAVE_MALA))
 
     # Then el contador se incrementó en 1
     assert perfil.failed_attempts == fallos_previos + 1
     # And se fija el bloqueo si y solo si se alcanzó el umbral (Req 1.12)
-    if perfil.failed_attempts >= _MAX:
+    if alcanza_umbral:
         assert perfil.locked_until is not None
+        # And el mensaje indica los minutos de espera
+        assert "minuto" in err.value.public_message
     else:
         assert perfil.locked_until is None
 
