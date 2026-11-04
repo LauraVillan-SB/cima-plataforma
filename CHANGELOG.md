@@ -7,7 +7,11 @@ y este proyecto adhiere a [Versionamiento Semántico](https://semver.org/lang/es
 
 ## [No publicado]
 
+### Agregado
+- Se agregó la pantalla de inicio tras entrar (`src/app/home/home-page.component.ts`, ruta `inicio` en `src/app/app.routes.ts`) como destino del login y del registro (Tarea 23, Req 2.6): confirma que la sesión está iniciada, con la identidad del Design System, y permite cerrar sesión (invoca `AuthService.salir()` y vuelve a `entrar`). Es un marcador de posición mientras se implementan las vistas de dominio (aprendizaje, perfil, conversación); no muestra PII.
+
 ### Corregido
+- Se corrigió que, tras un ingreso o registro exitoso, la pantalla de autenticación no reaccionaba: `enviar()` llamaba al Auth Service pero no navegaba a ninguna ruta, así que el Usuario se quedaba en la misma pantalla sin señal de que había entrado (Tarea 23, Req 2.6). Ahora, al completarse el login o registro, se navega a `inicio` con el `Router` (`src/app/auth/auth-page.component.ts`). La navegación va dentro del bloque que ya maneja los errores del backend, de modo que un fallo (credenciales inválidas, bloqueo 429) no redirige y conserva el mensaje para el Usuario.
 - Se corrigió el formulario de ingreso del frontend que no habilitaba el botón "Entrar" (Tarea 23, Req 1.1): los campos de teléfono y Clave usaban `[(ngModel)]` enlazado directamente a `signal()`, por lo que al escribir no se actualizaba el valor del signal y `formularioValido()` quedaba siempre en falso, dejando el botón deshabilitado. Se cambió a enlace unidireccional con `[ngModel]="campo()"` y `(ngModelChange)="campo.set($event)"` en `src/app/auth/auth-page.component.ts`, de modo que los signals reflejan lo que escribe el Usuario y el botón se habilita al completar celular y Clave válidos. El bug se introdujo al aplicar el Design System y solo afectaba la presentación; el backend ya autenticaba correctamente.
 
 ### Agregado

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { AuthService } from './auth.service';
 import { esClaveValida, normalizarTelefono, CLAVE_LONGITUD } from './clave';
@@ -167,6 +168,7 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
 })
 export class AuthPageComponent {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly longitudClave = CLAVE_LONGITUD;
   readonly modoRegistro = signal<boolean>(false);
@@ -197,6 +199,7 @@ export class AuthPageComponent {
       } else {
         await this.auth.ingresar(tel, this.clave());
       }
+      await this.router.navigate(['/inicio']);
     } catch (error: unknown) {
       this.mensaje.set(this.mensajeDeError(error));
     } finally {

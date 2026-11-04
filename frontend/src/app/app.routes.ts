@@ -12,5 +12,12 @@ export const routes: Routes = [
       import('./auth/auth-page.component').then((m) => m.AuthPageComponent),
     title: 'Entrar a CIMA',
   },
+  {
+    path: 'inicio',
+    loadComponent: () =>
+      import('./home/home-page.component').then((m) => m.HomePageComponent),
+    title: 'CIMA',
+  },
   { path: '', redirectTo: 'entrar', pathMatch: 'full' },
+  { path: '**', redirectTo: 'entrar' },
 ];
