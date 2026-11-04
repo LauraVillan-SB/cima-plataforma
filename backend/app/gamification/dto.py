@@ -26,3 +26,25 @@ class RecognitionGrantResult(BaseModel):
     badge_name: str
     total_points: int
     newly_awarded: bool
+
+
+class BadgeOut(BaseModel):
+    """Insignia dentro del listado de reconocimientos del titular (Req 19.7)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    badge_code: str
+    badge_name: str
+
+
+class RecognitionSummary(BaseModel):
+    """Insignias y total de puntos del titular autenticado (Req 19.7).
+
+    Allowlist de campos: no incluye el identificador del Perfil ni PII, de modo
+    que la respuesta no revela nada de otros Perfiles (Req 19.8).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    badges: list[BadgeOut]
+    total_points: int

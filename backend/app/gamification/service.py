@@ -8,9 +8,11 @@ vuelven a sumar (Req 19.5). Ante conflictos de concurrencia reintenta hasta 3
 veces y, de persistir, lanza `ReconocimientoPendienteError` para que el evento
 origen se conserve y se reintente con el mismo `client_event_id` (Req 19.6).
 
-Estas funciones las invoca el Learning Service (Tarea 13.3) dentro del backend:
-el otorgamiento NO se expone al cliente, porque permitiría darse reconocimientos
-sin completar nada. Usa el ORM con consultas parametrizadas y no registra PII.
+El otorgamiento (`grant_recognition`) lo invoca el Learning Service (Tarea 13.3)
+dentro del backend y NO se expone al cliente, porque permitiría darse
+reconocimientos sin completar nada. La consulta (`get_recognitions`) sí se expone
+al titular autenticado y rechaza el acceso a reconocimientos de otro Perfil
+(Req 19.7, 19.8). Usa el ORM con consultas parametrizadas y no registra PII.
 """
 
 from __future__ import annotations
@@ -22,10 +24,15 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.errors import NotFoundError, ValidationError
+from app.common.errors import ForbiddenError, NotFoundError, ValidationError
 from app.common.logging import log_event
-from app.gamification.constants import MAX_GRANT_ATTEMPTS, RECOGNITION_RULES, BadgeRule
-from app.gamification.dto import RecognitionGrantResult
+from app.gamification.constants import (
+    BADGE_NAMES,
+    MAX_GRANT_ATTEMPTS,
+    RECOGNITION_RULES,
+    BadgeRule,
+)
+from app.gamification.dto import BadgeOut, RecognitionGrantResult, RecognitionSummary
 from app.gamification.errors import ReconocimientoPendienteError
 from app.gamification.models import UserBadge, UserPoints
 from app.profile.models import Profile
@@ -215,3 +222,82 @@ async def _get_points(
     if lock:
         stmt = stmt.with_for_update()
     return await db.scalar(stmt)
+
+
+async def get_recognitions(
+    db: AsyncSession,
+    current_user_id: uuid.UUID,
+    requested_profile_id: uuid.UUID | None = None,
+) -> RecognitionSummary:
+    """Lista las Insignias y el total de puntos del titular autenticado (Req 19.7).
+
+    Solo devuelve datos del Usuario autenticado. Si se pide el reconocimiento de
+    otro Perfil se rechaza antes de consultar la base de datos, por lo que la
+    respuesta es la misma exista o no ese Perfil (Req 19.8).
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: Usuario autenticado, tomado del token de sesión.
+        requested_profile_id: Perfil solicitado por el cliente, si lo indicó; solo
+            se acepta si coincide con el Usuario autenticado.
+
+    Returns:
+        Las Insignias y el total de puntos del titular, sin PII.
+
+    Raises:
+        ForbiddenError: si el Perfil solicitado no es el del Usuario autenticado.
+    """
+    _ensure_own_profile(current_user_id, requested_profile_id)
+    badges = await _list_badges(db, current_user_id)
+    points = await _get_points(db, current_user_id)
+    return RecognitionSummary(
+        badges=[
+            BadgeOut(
+                badge_code=badge.badge_code,
+                badge_name=BADGE_NAMES.get(badge.badge_code, badge.badge_code),
+            )
+            for badge in badges
+        ],
+        total_points=points.total_points if points is not None else 0,
+    )
+
+
+def _ensure_own_profile(
+    current_user_id: uuid.UUID, requested_profile_id: uuid.UUID | None
+) -> None:
+    """Rechaza el acceso a reconocimientos de otro Perfil y registra el intento (Req 19.8).
+
+    Args:
+        current_user_id: Usuario autenticado.
+        requested_profile_id: Perfil solicitado por el cliente, o None si no indicó.
+
+    Raises:
+        ForbiddenError: si el Perfil solicitado es distinto del autenticado.
+    """
+    if requested_profile_id is None or requested_profile_id == current_user_id:
+        return
+    log_event(
+        logger,
+        "gamification_bola_attempt_blocked",
+        actor_id=str(current_user_id),
+        target_id=str(requested_profile_id),
+    )
+    raise ForbiddenError(internal_detail="cross-user recognitions access blocked")
+
+
+async def _list_badges(db: AsyncSession, profile_id: uuid.UUID) -> list[UserBadge]:
+    """Lista las Insignias de un Perfil en el orden en que se otorgaron.
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: Perfil titular.
+
+    Returns:
+        Las Insignias del Perfil, de la más antigua a la más reciente.
+    """
+    result = await db.scalars(
+        select(UserBadge)
+        .where(UserBadge.profile_id == profile_id)
+        .order_by(UserBadge.awarded_at)
+    )
+    return list(result.all())
