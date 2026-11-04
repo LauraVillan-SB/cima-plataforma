@@ -39,6 +39,23 @@ poetry run pytest
 
 Healthcheck: `GET /api/v1/health`
 
+## Migraciones (Alembic)
+
+```bash
+poetry run alembic upgrade head   # aplica las migraciones pendientes
+poetry run alembic heads          # debe mostrar UN solo head
+poetry run alembic history        # historial de revisiones
+```
+
+- Las revisiones están en `alembic/versions/` y forman una cadena (`0001`, `0002`, ...).
+  Cada migración nueva debe apuntar (`down_revision`) a la última existente.
+- Antes de abrir un PR con una migración, corre `alembic heads`. Si muestra más de un
+  head (dos personas crearon una migración a partir de la misma), hay que acordar el
+  orden y encadenarlas antes de fusionar.
+- Los modelos de cada dominio se registran en `alembic/env.py` para `--autogenerate`.
+- La nota de la Tarea 4.2 en `.kiro/specs/cima-plataforma/tasks.md` indica qué tablas
+  aún no tienen migración.
+
 ## Convenciones
 
 - Rutas versionadas con prefijo `/api/v1/`; OpenAPI como fuente de verdad.
