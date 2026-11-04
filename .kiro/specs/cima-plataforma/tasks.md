@@ -57,7 +57,7 @@ Convenciones:
     - _Requirements: 1.5, 4.1, 4.2, 6.4, 8.1, 8.2, 9.1, 17.4, 19.2, 19.5, 20.3, 20.6_
   - [~] 4.2 Crear migraciones Alembic iniciales
     - Migración de creación de tablas, extensión PgVector, índices y roles de BD separados (lectura/escritura/admin)
-    - Nota: infraestructura Alembic y migración inicial (`profiles`, `metric_events` + PgVector) creadas y validadas con `alembic history`. Los roles de BD separados quedan como provisión de infraestructura (no en migración versionada). Se extenderá al crear el resto de modelos (4.1 completa).
+    - Nota: infraestructura Alembic y migraciones `0001` (`profiles`, `metric_events` + PgVector) y `0002` (`conversion_intents`, `no_offer_events`) creadas; un solo head (`0002_conversion_microseguros`). Los roles de BD separados quedan como provisión de infraestructura (no en migración versionada). **Pendiente:** faltan las migraciones de `surveys` y `survey_responses` (Survey Service), `sync_actions` y `sync_path_progress` (Sync Service): tienen modelo ORM pero ninguna migración las crea, por lo que fallarían en una base creada con `alembic upgrade head`. Tampoco existen aún los modelos de `ai_interactions`, `incentives`, `badges`, `user_badges` ni `user_points`.
     - _Requirements: 8.1, 17.4_
   - [ ]* 4.3 Escribir pruebas unitarias de los esquemas de datos
     - Validar restricciones, tipos y defaults (p. ej. `pass_threshold` default 70)
