@@ -39,8 +39,24 @@ climática y la conversión a microseguros para agricultores y tenderos colombia
 
 ## Estado
 
-Scaffold inicial del monorepo. La implementación se ejecuta siguiendo
-`.kiro/specs/cima-plataforma/tasks.md`.
+En desarrollo. La implementación sigue `.kiro/specs/cima-plataforma/tasks.md`, donde cada
+tarea indica su estado (`[x]` completa, `[~]` parcial con una nota de lo pendiente) y la
+cadena de dependencias. Los cambios se registran en `CHANGELOG.md`.
+
+Con código en `develop`:
+
+- **Backend:** autenticación, perfil, métricas, encuestas, sincronización offline,
+  conversión (oferta de microseguros e intención) y gamificación (otorgamiento y consulta
+  de insignias y puntos). El chat tiene la validación de entrada y la redacción de PII;
+  falta el pipeline de IA.
+- **Frontend:** PWA con shell offline, autenticación sin fricción y control de voz.
+
+Pendiente: micro-aprendizaje, evaluaciones y certificación (carpetas `learning/`,
+`assessment/` y `certification/` aún vacías), el pipeline de IA (STT, LLM, TTS) y la
+integración final.
+
+Para colaborar, ver `CONTRIBUTING.md`. Para las colecciones de prueba de los endpoints,
+ver `postmanCollections/`.
 
 ## Autores
 

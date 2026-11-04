@@ -1,0 +1,178 @@
+{
+  "info": {
+    "name": "CIMA - Conversion (microseguros)",
+    "description": "Operaciones del Conversion Service (Tarea 16.2, Req 5.4-5.9). Ver postmanCollections/README.md para la configuracion local. No usar credenciales reales: completar las variables solo en el entorno local.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "telefono", "value": "" },
+    { "key": "clave", "value": "" },
+    { "key": "rutaId", "value": "11111111-1111-4111-8111-111111111111" },
+    { "key": "optionCode", "value": "ms_cafe_clima" },
+    { "key": "clientEventId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Ingreso (obtiene la cookie de sesion)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"telefono\": \"{{telefono}}\",\n  \"clave\": \"{{clave}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/ingreso",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "auth", "ingreso"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ingreso exitoso (200)', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Se establecio la cookie de sesion', function () {",
+              "  pm.expect(pm.cookies.has('cima_access')).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Oferta de microseguros (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/conversion/microseguros/{{rutaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "conversion", "microseguros", "{{rutaId}}"]
+        },
+        "description": "Devuelve entre 1 y 5 opciones segun el tipo de cultivo o comercio del Perfil autenticado. Si no hay oferta, devuelve la lista vacia y registra la ausencia (Req 5.8)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "pm.test('Estructura esperada', function () {",
+              "  pm.expect(body).to.have.all.keys('path_id', 'activity_type', 'options');",
+              "});",
+              "pm.test('Maximo 5 opciones', function () {",
+              "  pm.expect(body.options.length).to.be.within(0, 5);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Registrar intencion (POST)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Reutiliza el mismo client_event_id para probar la idempotencia.",
+              "if (!pm.collectionVariables.get('clientEventId')) {",
+              "  pm.collectionVariables.set('clientEventId', pm.variables.replaceIn('{{$guid}}'));",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Intencion registrada', function () {",
+              "  pm.expect(pm.response.json().registered).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"client_event_id\": \"{{clientEventId}}\",\n  \"option_code\": \"{{optionCode}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/conversion/intenciones/{{rutaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "conversion", "intenciones", "{{rutaId}}"]
+        },
+        "description": "Registra la intencion de conversion. Es idempotente por client_event_id. CIMA no emite polizas ni cobra. Ajustar optionCode a una opcion del tipo de actividad del Perfil."
+      }
+    },
+    {
+      "name": "3. Rechazo: opcion fuera del catalogo (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"client_event_id\": \"{{$guid}}\",\n  \"option_code\": \"opcion_inexistente\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/conversion/intenciones/{{rutaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "conversion", "intenciones", "{{rutaId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Rechaza con 422', function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Rechazo: campo no permitido profile_id (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"client_event_id\": \"{{$guid}}\",\n  \"option_code\": \"{{optionCode}}\",\n  \"profile_id\": \"{{$guid}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/conversion/intenciones/{{rutaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "conversion", "intenciones", "{{rutaId}}"]
+        },
+        "description": "El cliente no puede enviar profile_id: el titular sale de la cookie de sesion (anti-BOLA)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Rechaza el campo extra con 422', function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
