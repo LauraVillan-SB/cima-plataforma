@@ -18,7 +18,32 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [
               { "glob": "**/*", "input": "public" },
-              "src/manifest.webmanifest"
+              "src/manifest.webmanifest",
+              {
+                "glob": "sb-ui-seguros-bolivar.min.css",
+                "input": "node_modules/@seguros-bolivar/ui-bundle/dist",
+                "output": "/"
+              },
+              {
+                "glob": "sb-ui-seguros-bolivar.min.js",
+                "input": "node_modules/@seguros-bolivar/ui-bundle/dist",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@seguros-bolivar/ui-bundle/dist/logos",
+                "output": "/logos"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@seguros-bolivar/ui-bundle/dist/fonts",
+                "output": "/fonts"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@seguros-bolivar/ui-bundle/dist/webfonts",
+                "output": "/webfonts"
+              }
             ],
             "styles": ["src/styles.css"],
             "serviceWorker": "ngsw-config.json"
@@ -49,6 +74,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": { "buildTarget": "cima-frontend:build:production" },
             "development": { "buildTarget": "cima-frontend:build:development" }
@@ -57,5 +85,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }
