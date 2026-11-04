@@ -56,7 +56,8 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
                 inputmode="numeric"
                 autocomplete="tel"
                 class="sb-ui-input"
-                [(ngModel)]="telefono"
+                [ngModel]="telefono()"
+                (ngModelChange)="telefono.set($event)"
                 placeholder="Ej: 3001234567"
                 aria-describedby="ayuda-telefono"
               />
@@ -73,7 +74,8 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
                 autocomplete="one-time-code"
                 maxlength="4"
                 class="sb-ui-input"
-                [(ngModel)]="clave"
+                [ngModel]="clave()"
+                (ngModelChange)="clave.set($event)"
                 aria-describedby="ayuda-clave"
               />
               @if (modoRegistro()) {
