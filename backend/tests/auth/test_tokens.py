@@ -88,11 +88,19 @@ def test_access_y_refresh_tienen_tipos_distintos() -> None:
 
 
 def test_token_con_firma_alterada_es_rechazado() -> None:
-    """Un token manipulado (firma inválida) se rechaza (integridad, A02)."""
+    """Un token manipulado (payload alterado) se rechaza (integridad, A02).
+
+    Se corrompe un carácter del segmento de payload, no el último de la firma:
+    en base64url sin padding varios caracteres finales decodifican a los mismos
+    bytes de firma, por lo que alterar solo el último carácter no garantiza
+    invalidar el token. Alterar el payload modifica los bytes firmados y fuerza
+    siempre el fallo de verificación.
+    """
     pid = uuid.uuid4()
     token = tokens.crear_access_token(pid)
-    # Alterar el último carácter del token invalida la firma.
-    alterado = token[:-1] + ("a" if token[-1] != "a" else "b")
+    header, payload, signature = token.split(".")
+    alterado_payload = payload[:5] + ("A" if payload[5] != "A" else "B") + payload[6:]
+    alterado = f"{header}.{alterado_payload}.{signature}"
     try:
         tokens.decodificar_token(alterado, tokens.TOKEN_TYPE_ACCESS)
         raise AssertionError("se esperaba TokenInvalidoError por firma inválida")
