@@ -295,18 +295,20 @@ Convenciones:
     - **Validates: Requirements 6.4**
 
 - [ ] 16. Conversion Service — Incentivos y microseguros (Req 5)
-  - [ ] 16.1 Implementar entrega de incentivo con reintentos y estado pendiente
+  - [x] 16.1 Implementar entrega de incentivo con reintentos y estado pendiente
     - `POST /api/v1/conversion/incentivos/{rutaId}`; entrega ≤ 5 s con confirmación observable; reintentos ≤ 3 (intervalo ≥ 5 s) conservando completitud; tras 3 fallos → "pendiente" y registro por `profile_id`
     - _Requirements: 5.1, 5.2, 5.3_
     - _Properties: 16_
+    - Nota: implementado en `app/conversion/` (modelo `incentives` único por `(profile_id, path_id)` con `delivery_status`/`retry_count` + migración `0007`, head único). `POST /api/v1/conversion/incentivos/{ruta_id}` entrega solo si la ruta está completa (verifica `path_progress` del Learning, anti-BOLA), idempotente (no reentrega), con confirmación observable; ante fallo incrementa `retry_count` dejando `pendiente` sin tocar la completitud, y tras 3 intentos queda pendiente definitivo con la falla registrada por `profile_id` sin PII (Property 16 verificada). El canal de entrega es inyectable (placeholder por defecto); el intervalo de 5 s entre reintentos lo aplica el worker que reinvoca el servicio, no la petición (no bloquea). 7 pruebas en `tests/conversion/test_incentivos.py`.
   - [x] 16.2 Implementar oferta de microseguros y registro de intención
     - `GET /api/v1/conversion/microseguros` (1–5 por tipo de perfil; sin perfil, el agente lo solicita; sin oferta, informa y registra ausencia con el tipo); `POST /api/v1/conversion/intenciones` idempotente; enmascaramiento de PII en respuestas
     - _Requirements: 5.4, 5.5, 5.6, 5.7, 5.8, 5.9_
     - _Properties: 17, 18_
     - Nota: implementado en `app/conversion/` con catálogo estático (`constants.py`), modelos `conversion_intents` y `no_offer_events` + migración `0002`. Las rutas llevan la ruta de aprendizaje: `GET /api/v1/conversion/microseguros/{ruta_id}` y `POST /api/v1/conversion/intenciones/{ruta_id}`. El titular sale de la cookie de sesión (el cliente no envía `profile_id`). Req 5.7: `activity_type` es obligatorio en el Perfil, por lo que el caso "sin tipo" no llega al servicio. Req 5.6: el servicio es idempotente por `client_event_id`; conservar la opción para reintentar es responsabilidad de la UI (Tarea 23.3).
-  - [ ]* 16.3 Escribir test de propiedad para estado de entrega de incentivo
+  - [x]* 16.3 Escribir test de propiedad para estado de entrega de incentivo
     - **Property 16: Invariante de estado de entrega de incentivo**
     - **Validates: Requirements 5.1, 5.2, 5.3**
+    - Nota: Property 16 cubierta en `tests/conversion/test_incentivos.py` (reintentos ≤ 3, pendiente definitivo tras 3 fallos, completitud de ruta conservada), con stub de sesión en memoria y canal de entrega inyectable; 7/7 en verde.
   - [ ]* 16.4 Escribir test de propiedad para opciones de microseguro acotadas
     - **Property 17: Opciones de microseguro acotadas y pertinentes**
     - **Validates: Requirements 5.4**

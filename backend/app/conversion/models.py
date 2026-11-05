@@ -16,10 +16,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, UniqueConstraint, func
+from sqlalchemy import DateTime, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.common.database import Base
+from app.conversion.constants import INCENTIVE_STATUS_PENDIENTE
 
 
 class ConversionIntent(Base):
@@ -67,4 +68,48 @@ class NoOfferEvent(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class Incentive(Base):
+    """Incentivo asociado a una ruta completada y su estado de entrega (Req 5.1–5.3).
+
+    Único por (profile_id, path_id): a cada Usuario le corresponde un único
+    incentivo por ruta. `delivery_status` es `entregado` o `pendiente`;
+    `retry_count` cuenta los intentos de entrega fallidos (máx. 3 antes de quedar
+    pendiente definitivo para resolución posterior). El estado de completitud de
+    la ruta vive en el Learning Service (`path_progress`) y nunca se altera aquí
+    (Req 5.2, 5.3). No contiene PII: solo identificadores internos y metadatos.
+    """
+
+    __tablename__ = "incentives"
+    __table_args__ = (
+        UniqueConstraint("profile_id", "path_id", name="uq_incentive_profile_path"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+
+    # Titular, verificado contra el Usuario autenticado (anti-BOLA).
+    profile_id: Mapped[uuid.UUID] = mapped_column(index=True)
+
+    # Ruta de aprendizaje completada que origina el incentivo.
+    path_id: Mapped[uuid.UUID] = mapped_column(index=True)
+
+    # Tipo de incentivo asociado a la ruta (metadato, sin precio ni emisión).
+    incentive_type: Mapped[str] = mapped_column(String(64))
+
+    # Estado de entrega: `entregado` o `pendiente` (default pendiente hasta
+    # confirmar la entrega observable, Req 5.1).
+    delivery_status: Mapped[str] = mapped_column(
+        String(16), default=INCENTIVE_STATUS_PENDIENTE
+    )
+
+    # Número de intentos de entrega fallidos acumulados (0–3, Req 5.2, 5.3).
+    retry_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
