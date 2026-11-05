@@ -58,6 +58,9 @@ class _IssueSession:
         return None
 
     async def refresh(self, obj: Certificate) -> None:
+        # Simula la asignación de PK y timestamp por la BD tras el flush/commit.
+        if obj.id is None:
+            obj.id = uuid.uuid4()
         if obj.issued_at is None:
             obj.issued_at = datetime.now(timezone.utc)
 

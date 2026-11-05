@@ -275,22 +275,22 @@ Convenciones:
     - **Property 25: Validación de respuestas de evaluación en servidor**
     - **Validates: Requirements 7.6, 7.7**
 
-- [ ] 15. Certification Service — Certificación (Req 6)
-  - [ ] 15.1 Implementar emisión de certificado condicionada e idempotente
+- [x] 15. Certification Service — Certificación (Req 6)
+  - [x] 15.1 Implementar emisión de certificado condicionada e idempotente
     - `POST /api/v1/certificados` emite si ruta completa y puntaje ≥ umbral; rechazo con mensaje si < umbral; idempotencia por (perfil, ruta); formato con fecha ISO-8601 y código 16–64 chars alfanumérico
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
     - _Properties: 19, 20, 21_
-  - [ ] 15.2 Implementar consulta de certificado con autorización por titular
+  - [x] 15.2 Implementar consulta de certificado con autorización por titular
     - `GET /api/v1/certificados/{id}`; solo titular; inexistente → mensaje sin filtrar otros perfiles; no titular → error de autorización + registro del intento con solicitante y fecha ISO-8601
     - _Requirements: 6.5, 6.6, 6.7_
     - _Properties: 22_
-  - [ ]* 15.3 Escribir test de propiedad para emisión condicionada al umbral
+  - [x]* 15.3 Escribir test de propiedad para emisión condicionada al umbral
     - **Property 19: Emisión de certificado condicionada al umbral**
     - **Validates: Requirements 6.1, 6.2**
-  - [ ]* 15.4 Escribir test de propiedad para formato del certificado
+  - [x]* 15.4 Escribir test de propiedad para formato del certificado
     - **Property 20: Formato del certificado emitido**
     - **Validates: Requirements 6.3**
-  - [ ]* 15.5 Escribir test de propiedad para idempotencia de emisión
+  - [x]* 15.5 Escribir test de propiedad para idempotencia de emisión
     - **Property 21: Idempotencia de emisión de certificado**
     - **Validates: Requirements 6.4**
 
