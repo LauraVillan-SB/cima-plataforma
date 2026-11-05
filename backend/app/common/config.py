@@ -24,6 +24,14 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     cookie_samesite: str = "lax"
     http_allowlist_domains: str = "sostenibilidadbolivar.com"
+    # Control de SSRF para consumo externo (Req 10.4, 10.5): timeout bajo y
+    # máximo de redirecciones permitidas en llamadas salientes.
+    http_timeout_seconds: float = 5.0
+    http_max_redirects: int = 2
+    # Circuit breaker para dependencias externas (Req 11.5, 11.6): fallos
+    # consecutivos antes de abrir el circuito y segundos antes de reintentar.
+    circuit_failure_threshold: int = 5
+    circuit_reset_seconds: float = 30.0
     # Retención de datos sensibles: a los 90 días la PII se anonimiza (Req 8.8, 9.8).
     data_retention_days: int = 90
     # Rate limiting de intentos de acceso a recursos ajenos (anti-BOLA, Req 9.7):
