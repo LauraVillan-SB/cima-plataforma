@@ -125,3 +125,19 @@ MICROINSURANCE_CATALOG: dict[str, list[MicroinsuranceOption]] = {
         },
     ],
 }
+
+
+# --- Entrega de incentivos (Tarea 16.1, Req 5.1, 5.2, 5.3) -------------------
+
+# Estados de entrega de un incentivo asociado a una ruta completada.
+INCENTIVE_STATUS_ENTREGADO = "entregado"
+INCENTIVE_STATUS_PENDIENTE = "pendiente"
+
+# Máximo de intentos de entrega antes de dejar el incentivo en pendiente
+# definitivo para resolución posterior (Req 5.2, 5.3).
+MAX_INCENTIVE_DELIVERY_ATTEMPTS = 3
+
+# Intervalo mínimo entre reintentos de entrega, en segundos (Req 5.2). El
+# scheduler/worker que ejecuta los reintentos debe respetar este intervalo; el
+# servicio lo expone como política, no bloquea la petición del Usuario con él.
+INCENTIVE_RETRY_INTERVAL_SECONDS = 5

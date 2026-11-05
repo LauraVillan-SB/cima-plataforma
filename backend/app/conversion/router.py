@@ -20,10 +20,33 @@ from app.conversion import service
 from app.conversion.dto import (
     ConversionIntentCreate,
     ConversionIntentResult,
+    IncentiveDeliveryRequest,
+    IncentiveDeliveryResult,
     MicroinsuranceOffer,
 )
 
 router = APIRouter(prefix="/api/v1/conversion", tags=["conversion"])
+
+
+@router.post(
+    "/incentivos/{ruta_id}",
+    response_model=IncentiveDeliveryResult,
+    status_code=status.HTTP_200_OK,
+)
+async def entregar_incentivo(
+    ruta_id: uuid.UUID,
+    data: IncentiveDeliveryRequest,
+    db: AsyncSession = Depends(get_session),
+    current_user_id: uuid.UUID = Depends(get_current_user_id),
+) -> IncentiveDeliveryResult:
+    """Entrega el incentivo de una ruta completada por el Usuario autenticado.
+
+    Devuelve el estado de entrega (`entregado`/`pendiente`) con la confirmación
+    observable; si la ruta no está completada, responde 422. Los reintentos
+    automáticos (≤ 3, intervalo ≥ 5 s) los ejecuta un worker que reinvoca el
+    servicio; esta petición no se bloquea esperándolos (Req 5.1, 5.2, 5.3).
+    """
+    return await service.entregar_incentivo(db, ruta_id, current_user_id, data)
 
 
 @router.get("/microseguros/{ruta_id}", response_model=MicroinsuranceOffer)

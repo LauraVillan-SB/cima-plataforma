@@ -12,21 +12,36 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Awaitable, Callable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.errors import NotFoundError, ValidationError
 from app.common.logging import log_event
-from app.conversion.constants import MAX_MICROINSURANCE_OPTIONS, MICROINSURANCE_CATALOG
+from app.conversion.constants import (
+    INCENTIVE_STATUS_ENTREGADO,
+    INCENTIVE_STATUS_PENDIENTE,
+    MAX_INCENTIVE_DELIVERY_ATTEMPTS,
+    MAX_MICROINSURANCE_OPTIONS,
+    MICROINSURANCE_CATALOG,
+)
 from app.conversion.dto import (
     ConversionIntentCreate,
     ConversionIntentResult,
+    IncentiveDeliveryRequest,
+    IncentiveDeliveryResult,
     MicroinsuranceOffer,
     MicroinsuranceOptionOut,
 )
-from app.conversion.models import ConversionIntent, NoOfferEvent
+from app.conversion.models import ConversionIntent, Incentive, NoOfferEvent
+from app.learning.models import PathProgress
 from app.profile.models import Profile
+
+# Un canal de entrega del incentivo: devuelve True si la entrega fue exitosa.
+# Se inyecta para poder simular éxito/fallo en pruebas sin un backend real. El
+# canal real (p. ej. notificación/beneficio) se conecta en integración.
+IncentiveDeliveryChannel = Callable[[Incentive], Awaitable[bool]]
 
 logger = logging.getLogger("cima.conversion")
 
@@ -183,4 +198,171 @@ def _to_result(intent: ConversionIntent) -> ConversionIntentResult:
         path_id=intent.path_id,
         option_code=intent.option_code,
         registered=True,
+    )
+
+
+async def _default_delivery_channel(_incentive: Incentive) -> bool:
+    """Canal de entrega por defecto. Placeholder hasta conectar el canal real.
+
+    Devuelve True (entrega exitosa) para no bloquear el flujo en desarrollo. En
+    integración se inyecta el canal real (notificación/beneficio), que puede
+    fallar y así ejercitar la política de reintentos (Req 5.2, 5.3).
+    """
+    return True
+
+
+async def entregar_incentivo(
+    db: AsyncSession,
+    path_id: uuid.UUID,
+    current_user_id: uuid.UUID,
+    data: IncentiveDeliveryRequest,
+    delivery_channel: IncentiveDeliveryChannel | None = None,
+) -> IncentiveDeliveryResult:
+    """Entrega (o reintenta) el incentivo de una ruta completada (Req 5.1–5.3).
+
+    Flujo:
+    - Verifica que el Usuario autenticado haya completado al 100% la ruta
+      (Req 5.1); si no, se rechaza sin crear incentivo.
+    - Obtiene o crea el incentivo de forma idempotente por (profile_id, path_id):
+      un incentivo ya entregado se devuelve tal cual (no se entrega dos veces).
+    - Realiza UN intento de entrega por invocación (no bloquea con esperas). Si
+      tiene éxito, marca `entregado`. Si falla, incrementa `retry_count` y lo
+      deja `pendiente`; al alcanzar 3 intentos queda pendiente definitivo y la
+      falla queda registrada por `profile_id` para resolución posterior (Req 5.3).
+    - El estado de completitud de la ruta nunca se altera aquí (Req 5.2, 5.3).
+
+    El intervalo de 5 s entre reintentos (Req 5.2) lo aplica el scheduler/worker
+    que vuelve a invocar esta función, no la petición del Usuario.
+
+    Args:
+        db: sesión de base de datos.
+        path_id: ruta de aprendizaje completada.
+        current_user_id: id del Usuario autenticado.
+        data: datos validados del disparo de entrega.
+        delivery_channel: canal de entrega inyectable (por defecto, placeholder).
+
+    Returns:
+        El estado de la entrega, con la confirmación observable.
+
+    Raises:
+        ValidationError: si la ruta no está completada por el Usuario (Req 5.1).
+    """
+    channel = delivery_channel or _default_delivery_channel
+
+    await _verificar_ruta_completada(db, path_id, current_user_id)
+
+    incentive = await _get_or_create_incentive(db, path_id, current_user_id, data)
+
+    # Si ya fue entregado, es idempotente: no se entrega de nuevo (Req 5.1).
+    if incentive.delivery_status == INCENTIVE_STATUS_ENTREGADO:
+        return _to_delivery_result(incentive)
+
+    # Si ya se agotaron los intentos, permanece pendiente definitivo (Req 5.3).
+    if incentive.retry_count >= MAX_INCENTIVE_DELIVERY_ATTEMPTS:
+        return _to_delivery_result(incentive)
+
+    entregado = await channel(incentive)
+    if entregado:
+        incentive.delivery_status = INCENTIVE_STATUS_ENTREGADO
+        await db.commit()
+        await db.refresh(incentive)
+        log_event(
+            logger,
+            "incentive_delivered",
+            incentive_id=str(incentive.id),
+            path_id=str(incentive.path_id),
+        )
+        return _to_delivery_result(incentive)
+
+    # Fallo de entrega: cuenta el intento, conserva pendiente (Req 5.2).
+    incentive.retry_count += 1
+    incentive.delivery_status = INCENTIVE_STATUS_PENDIENTE
+    await db.commit()
+    await db.refresh(incentive)
+
+    if incentive.retry_count >= MAX_INCENTIVE_DELIVERY_ATTEMPTS:
+        # Tras 3 intentos, queda pendiente definitivo; la falla se registra por
+        # profile_id para resolución posterior, sin PII (Req 5.3).
+        log_event(
+            logger,
+            "incentive_delivery_exhausted",
+            incentive_id=str(incentive.id),
+            profile_id=str(incentive.profile_id),
+            retry_count=incentive.retry_count,
+        )
+    else:
+        log_event(
+            logger,
+            "incentive_delivery_failed",
+            incentive_id=str(incentive.id),
+            retry_count=incentive.retry_count,
+        )
+    return _to_delivery_result(incentive)
+
+
+async def _verificar_ruta_completada(
+    db: AsyncSession, path_id: uuid.UUID, current_user_id: uuid.UUID
+) -> None:
+    """Valida que el Usuario autenticado completó al 100% la ruta (Req 5.1, anti-BOLA).
+
+    La completitud la mantiene el Learning Service en `path_progress`, anclada al
+    titular. Si no existe progreso completado para (profile_id, path_id), la
+    entrega del incentivo no procede.
+    """
+    progress = await db.scalar(
+        select(PathProgress).where(
+            PathProgress.profile_id == current_user_id,
+            PathProgress.path_id == path_id,
+        )
+    )
+    if progress is None or not progress.completed:
+        raise ValidationError(internal_detail="learning path not completed by user")
+
+
+async def _get_or_create_incentive(
+    db: AsyncSession,
+    path_id: uuid.UUID,
+    current_user_id: uuid.UUID,
+    data: IncentiveDeliveryRequest,
+) -> Incentive:
+    """Obtiene el incentivo de la ruta para el Usuario o lo crea (idempotente).
+
+    Idempotente por (profile_id, path_id): un segundo disparo para la misma ruta
+    reutiliza el incentivo existente en lugar de crear otro.
+    """
+    incentive = await db.scalar(
+        select(Incentive).where(
+            Incentive.profile_id == current_user_id,
+            Incentive.path_id == path_id,
+        )
+    )
+    if incentive is not None:
+        return incentive
+
+    incentive = Incentive(
+        profile_id=current_user_id,
+        path_id=path_id,
+        incentive_type=data.incentive_type,
+        delivery_status=INCENTIVE_STATUS_PENDIENTE,
+        retry_count=0,
+    )
+    db.add(incentive)
+    await db.commit()
+    await db.refresh(incentive)
+    return incentive
+
+
+def _to_delivery_result(incentive: Incentive) -> IncentiveDeliveryResult:
+    """Construye el DTO de salida del estado de entrega (sin PII, Req 5.9)."""
+    delivered = incentive.delivery_status == INCENTIVE_STATUS_ENTREGADO
+    exhausted = (
+        not delivered and incentive.retry_count >= MAX_INCENTIVE_DELIVERY_ATTEMPTS
+    )
+    return IncentiveDeliveryResult(
+        id=incentive.id,
+        path_id=incentive.path_id,
+        status=incentive.delivery_status,
+        delivered=delivered,
+        retry_count=incentive.retry_count,
+        exhausted=exhausted,
     )
