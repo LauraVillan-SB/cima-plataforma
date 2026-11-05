@@ -12,27 +12,24 @@ import { OfflineQueueService } from '../core/offline-queue.service';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div
-      class="estado"
-      [class.estado--offline]="esSinConexion()"
-      role="status"
-      aria-live="polite"
-    >
-      {{ mensaje() }}
+    <!-- La region viva existe siempre para que el lector de pantalla anuncie
+         los cambios; el texto solo aparece cuando hay algo que avisar. -->
+    <div role="status" aria-live="polite">
+      @if (hayAviso()) {
+        <div
+          class="sb-ui-alert estado"
+          [class.sb-ui-alert--error]="esSinConexion()"
+          [class.sb-ui-alert--info]="!esSinConexion()"
+        >
+          {{ mensaje() }}
+        </div>
+      }
     </div>
   `,
   styles: [
     `
       .estado {
-        padding: 8px 12px;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        background: #e7f6ec;
-        color: #0a5a2c;
-      }
-      .estado--offline {
-        background: #fdecec;
-        color: #8a1f1f;
+        margin: 0.75rem 1rem 0;
       }
     `,
   ],
@@ -41,6 +38,9 @@ export class ConnectionStatusComponent {
   private readonly cola = inject(OfflineQueueService);
 
   readonly esSinConexion = computed(() => this.cola.estado() === 'sin_conexion');
+
+  /** Solo se avisa cuando hay algo relevante; "al dia" no muestra nada. */
+  readonly hayAviso = computed(() => this.cola.estado() !== 'al_dia');
 
   /** Traduce el estado tecnico a un mensaje simple para el Usuario. */
   readonly mensaje = computed<string>(() => {

@@ -81,6 +81,18 @@ class CuentaBloqueadaError(DomainError):
     status_code = 429
     public_message = "Por seguridad bloqueamos el ingreso un rato. Espera unos minutos y vuelve a intentar."
 
+    def __init__(self, minutos: int | None = None, internal_detail: str | None = None) -> None:
+        super().__init__(internal_detail)
+        # Si se conocen los minutos restantes, el mensaje los indica (Req 1.12).
+        # Es un entero calculado en el servidor, nunca dato del cliente.
+        if minutos is not None:
+            minutos = max(1, int(minutos))
+            unidad = "minuto" if minutos == 1 else "minutos"
+            self.public_message = (
+                "Tu cuenta está bloqueada por seguridad. "
+                f"Intenta de nuevo en {minutos} {unidad}."
+            )
+
 
 def _error_body(message: str) -> dict[str, str]:
     """Construye el cuerpo de error genérico con el Correlation-ID."""
