@@ -31,3 +31,24 @@ AUDIO_HEADER_MIN_BYTES = 12
 
 # Marcas ("brands") del contenedor MP4 aceptadas como audio m4a.
 M4A_BRANDS: frozenset[bytes] = frozenset({b"M4A ", b"M4B ", b"mp42", b"isom"})
+
+
+# --- Inferencia asíncrona y estados del mensaje (Tarea 11.3, Req 3.5–3.8) ----
+
+# Estados del ciclo de vida de un mensaje de chat encolado para inferencia.
+MSG_STATUS_PENDIENTE = "pendiente"      # Encolado, aún sin procesar.
+MSG_STATUS_PROCESANDO = "procesando"    # El worker lo tomó y está infiriendo.
+MSG_STATUS_LISTO = "listo"              # La respuesta del Agente está disponible.
+MSG_STATUS_FALLIDO = "fallido"          # No hubo respuesta dentro del tope de tiempo.
+
+# Umbral tras el cual el cliente debe mostrar un indicador de procesamiento
+# visible (Req 3.7): si a los 15 s no hay respuesta, se muestra el indicador.
+PROCESSING_INDICATOR_SECONDS = 15
+
+# Tiempo máximo de espera de una respuesta; superado, el mensaje se marca
+# fallido y se informa servicio no disponible conservando el historial (Req 3.8).
+INFERENCE_TIMEOUT_SECONDS = 60
+
+# Origen de la entrada del mensaje: texto directo o transcripción de voz.
+MSG_SOURCE_TEXTO = "texto"
+MSG_SOURCE_VOZ = "voz"

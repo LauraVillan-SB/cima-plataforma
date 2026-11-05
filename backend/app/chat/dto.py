@@ -9,6 +9,7 @@ permitido, sin reenviar el contenido del Usuario en la respuesta.
 
 from __future__ import annotations
 
+import uuid
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, StrictStr
@@ -46,3 +47,54 @@ class TextoRedactado(BaseModel):
 
     texto: str
     categorias: dict[str, int]
+
+
+class ChatMessageEnqueueIn(BaseModel):
+    """Entrada para encolar un mensaje de texto para inferencia (Tarea 11.3).
+
+    `client_event_id` da idempotencia al envío (reintentos no duplican). No
+    incluye `profile_id`: el titular se resuelve desde la cookie de sesión
+    (anti-BOLA). El texto se valida y redacta en el servidor antes de encolar.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    client_event_id: uuid.UUID
+    text: StrictStr
+
+
+class ChatMessageStatusOut(BaseModel):
+    """Estado de un mensaje de chat y su respuesta cuando está lista (Req 3.5–3.8).
+
+    No expone PII: `redacted_input` es la entrada ya redactada. `show_indicator`
+    le dice al cliente si debe mostrar el indicador de procesamiento (Req 3.7).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    id: uuid.UUID
+    status: str
+    source: str
+    redacted_input: str
+    response: str | None
+    show_indicator: bool
+
+
+class ChatHistoryItem(BaseModel):
+    """Elemento del historial de conversación del Usuario (Req 3.8); sin PII."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: uuid.UUID
+    status: str
+    source: str
+    redacted_input: str
+    response: str | None
+
+
+class ChatHistory(BaseModel):
+    """Historial de conversación del Usuario autenticado, más reciente primero."""
+
+    model_config = ConfigDict(frozen=True)
+
+    items: list[ChatHistoryItem]

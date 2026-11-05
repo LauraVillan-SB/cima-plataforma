@@ -182,9 +182,10 @@ Convenciones:
     - _Requirements: 3.10, 3.11, 14.6_
     - _Properties: 9_
     - Nota: `redactar_pii` en `app/chat/redaction.py` (detector por patrones: correo, dirección, coordenadas, nombre tras "me llamo"/"mi nombre es" y secuencias ≥ 6 dígitos; conserva montos). Verifica que no quede PII y, si queda, lanza `RedaccionPiiError`. No detecta nombres sin frase introductoria ni municipios/veredas. La conservación/eliminación del audio (Req 14.6) corresponde al STT de la Tarea 11.4.
-  - [ ] 11.3 Implementar inferencia asíncrona con cola/worker y endpoints de chat
+  - [x] 11.3 Implementar inferencia asíncrona con cola/worker y endpoints de chat
     - `POST /api/v1/chat/mensajes` encola inferencia y responde 202; `GET /api/v1/chat/mensajes/{id}` y `GET /api/v1/chat/historial`; indicador de procesamiento hasta 60 s y error de servicio no disponible conservando historial
     - _Requirements: 3.1, 3.5, 3.6, 3.7, 3.8, 12.4_
+    - Nota: implementado en `app/chat/` (models/dto/service/router) con modelos `chat_messages` (idempotente por `client_event_id`, guarda solo entrada redactada) y `ai_interactions` (registro auditable sin PII) + migración `0008` (head único). `POST /mensajes` valida (11.1), redacta (11.2) y encola, respondiendo 202; `GET /mensajes/{id}` calcula `show_indicator` (≥15 s) y marca `fallido` tras 60 s conservando el historial; `GET /historial` lista los mensajes del titular. Todo anti-BOLA (mensaje ajeno → NotFound). La cola es una interfaz inyectable `InferenceQueue` con implementación nula; el broker/worker real y la actualización a `listo`/`fallido` van en integración (Tareas 11.4–11.6). 9 pruebas en `tests/chat/test_inferencia.py`.
   - [ ] 11.4 Implementar STT/TTS y ramificación por confianza
     - Pipeline STT → redacción → LLM (mensajes system/developer/user separados) → TTS; confianza STT < umbral solicita confirmación/repetición en lenguaje simple; audio conservado solo durante transcripción
     - _Requirements: 3.3, 14.2, 14.3, 14.5, 14.6_
