@@ -123,8 +123,10 @@ async def ingresar(db: AsyncSession, data: IngresoRequest) -> SesionResponse:
 
     if not verify_clave(data.clave, profile.clave_hash):
         # Incrementa el contador de fallos; al alcanzar el umbral, bloquea
-        # durante `lockout_seconds` (Req 1.12).
-        profile.failed_attempts += 1
+        # durante `lockout_seconds` (Req 1.12). El `default=0` del modelo solo
+        # aplica al persistir, así que en memoria el contador puede ser None
+        # (p. ej. un Perfil recién construido); se normaliza a 0 antes de sumar.
+        profile.failed_attempts = (profile.failed_attempts or 0) + 1
         bloqueada_ahora = profile.failed_attempts >= settings.max_failed_attempts
         if bloqueada_ahora:
             profile.locked_until = ahora + timedelta(seconds=settings.lockout_seconds)
