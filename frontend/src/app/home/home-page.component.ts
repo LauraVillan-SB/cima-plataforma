@@ -20,12 +20,19 @@ import { AuthService } from '../auth/auth.service';
         <div class="sb-ui-card__body">
           <h1 class="titulo">¡Entraste a CIMA!</h1>
           <p class="texto">
-            Tu sesión está iniciada. Pronto verás aquí tus rutas de aprendizaje y
-            tu asistente. Por ahora estamos construyendo esas pantallas.
+            Tu sesión está iniciada. Empieza por tus microcápsulas de
+            aprendizaje; pronto sumaremos tu asistente y más.
           </p>
           <button
             type="button"
-            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill salir"
+            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill accion"
+            (click)="irAAprendizaje()"
+          >
+            Ver mis microcápsulas
+          </button>
+          <button
+            type="button"
+            class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill salir"
             [disabled]="saliendo()"
             (click)="salir()"
           >
@@ -57,6 +64,12 @@ import { AuthService } from '../auth/auth.service';
         margin: 0 0 1.5rem;
         line-height: 1.5;
       }
+      .accion {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 0.75rem;
+      }
       .salir {
         display: block;
         width: 100%;
@@ -70,6 +83,10 @@ export class HomePageComponent {
   private readonly router = inject(Router);
 
   readonly saliendo = signal<boolean>(false);
+
+  async irAAprendizaje(): Promise<void> {
+    await this.router.navigate(['/aprendizaje']);
+  }
 
   async salir(): Promise<void> {
     this.saliendo.set(true);

@@ -416,9 +416,10 @@ Convenciones:
     - Modo primario por voz con texto alternativo en el mismo flujo; controles de voz ≥ 44×44 px operables con una mano; reproducción TTS; captura y envío de notas de voz
     - _Requirements: 14.1, 14.2, 14.3, 14.4_
     - Nota: control de voz con objetivos táctiles ≥ 44×44 px listo. Faltan la captura real (MediaRecorder), el envío al pipeline STT y la reproducción TTS (dependen de la Tarea 11.4).
-  - [ ] 23.3 Implementar flujos de aprendizaje/evaluación/conversión en UI
+  - [~] 23.3 Implementar flujos de aprendizaje/evaluación/conversión en UI
     - Consumo de endpoints de learning, assessment, certification y conversion; indicador de procesamiento de IA; mínimos pasos de interacción
     - _Requirements: 3.6, 3.7, 13.1_
+    - Nota: implementada la vista de aprendizaje en `frontend/src/app/aprendizaje/` (`LearningService` + `LearningPageComponent`, ruta lazy `aprendizaje`, acceso desde inicio): lista las microcápsulas de `GET /api/v1/aprendizaje/microcapsulas` con el Design System, aviso de contenido general (Req 4.5), estados de carga/error accesibles y sin PII; solo presentación (la lógica vive en el backend). `ng build` dentro de presupuesto y `jest` en verde. **Pendiente:** flujos de evaluación (assessment) y conversión en la UI, indicador de procesamiento de IA del chat, y la finalización de microcápsula con cola offline.
   - [ ] 23.4 Aplicar conformidad de accesibilidad WCAG 2.1 AA
     - Contraste y tamaños de fuente AA; objetivos táctiles ≥ 44×44 px; operable a 320 px y 3G; textos en español coloquial
     - _Requirements: 13.2, 13.3, 13.5, 13.6_
