@@ -256,22 +256,22 @@ Convenciones:
     - **Property 15: Resiliencia de registro con reintentos acotados**
     - **Validates: Requirements 4.7, 8.4**
 
-- [ ] 14. Assessment Service — Evaluaciones (Req 7)
-  - [ ] 14.1 Implementar presentación de evaluación y validación de respuestas en servidor
+- [x] 14. Assessment Service — Evaluaciones (Req 7)
+  - [x] 14.1 Implementar presentación de evaluación y validación de respuestas en servidor
     - `GET /api/v1/evaluaciones/{rutaId}`; `POST .../respuestas` valida tipo, formato y rango antes de calcular; respuesta inválida → rechazo sin puntaje
     - _Requirements: 7.1, 7.6, 7.7_
     - _Properties: 25_
-  - [ ] 14.2 Implementar cálculo de puntaje, umbral, reintentos y enfriamiento
+  - [x] 14.2 Implementar cálculo de puntaje, umbral, reintentos y enfriamiento
     - Puntaje 0–100; aprobado si ≥ umbral (default 70); hasta 3 reintentos; agotados → enfriamiento 24 h y reinicio de contador
     - _Requirements: 7.2, 7.3, 7.4, 7.5_
     - _Properties: 23, 24_
-  - [ ]* 14.3 Escribir test de propiedad para puntaje y aprobación
+  - [x]* 14.3 Escribir test de propiedad para puntaje y aprobación
     - **Property 23: Puntaje de evaluación y aprobación**
     - **Validates: Requirements 7.2, 7.3**
-  - [ ]* 14.4 Escribir test de propiedad para reintentos y enfriamiento
+  - [x]* 14.4 Escribir test de propiedad para reintentos y enfriamiento
     - **Property 24: Reintentos de evaluación y enfriamiento**
     - **Validates: Requirements 7.4, 7.5**
-  - [ ]* 14.5 Escribir test de propiedad para validación de respuestas en servidor
+  - [x]* 14.5 Escribir test de propiedad para validación de respuestas en servidor
     - **Property 25: Validación de respuestas de evaluación en servidor**
     - **Validates: Requirements 7.6, 7.7**
 
