@@ -31,3 +31,20 @@ AUDIO_HEADER_MIN_BYTES = 12
 
 # Marcas ("brands") del contenedor MP4 aceptadas como audio m4a.
 M4A_BRANDS: frozenset[bytes] = frozenset({b"M4A ", b"M4B ", b"mp42", b"isom"})
+
+
+# --- Inferencia asíncrona (Tarea 11.3, Req 3.5-3.8, 12.4) -------------------
+
+# Estados del ciclo de vida de una inferencia encolada.
+ESTADO_ENCOLADO = "encolado"
+ESTADO_PROCESANDO = "procesando"
+ESTADO_LISTO = "listo"
+ESTADO_ERROR = "error"
+
+# Umbral tras el cual el cliente debe mostrar un indicador de procesamiento
+# (Req 3.7): la respuesta deberia llegar antes de 15 s.
+PROCESSING_INDICATOR_SECONDS = 15
+
+# Tiempo maximo de espera de una inferencia (Req 3.8): superado, se marca error
+# de servicio no disponible conservando el historial.
+INFERENCE_TIMEOUT_SECONDS = 60
