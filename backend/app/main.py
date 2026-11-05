@@ -11,6 +11,7 @@ from app.common.correlation import CorrelationIdMiddleware
 from app.common.errors import register_error_handlers
 from app.common.logging import configure_logging
 from app.auth.router import router as auth_router
+from app.certification.router import router as certification_router
 from app.conversion.router import router as conversion_router
 from app.gamification.router import router as gamification_router
 from app.metrics.router import router as metrics_router
@@ -33,6 +34,7 @@ register_error_handlers(app)
 
 # Routers de dominio.
 app.include_router(auth_router)
+app.include_router(certification_router)
 app.include_router(profile_router)
 app.include_router(conversion_router)
 app.include_router(gamification_router)
