@@ -26,6 +26,14 @@ export const routes: Routes = [
       ),
     title: 'Aprendizaje - CIMA',
   },
+  {
+    path: 'evaluacion/:rutaId',
+    loadComponent: () =>
+      import('./evaluacion/assessment-page.component').then(
+        (m) => m.AssessmentPageComponent,
+      ),
+    title: 'Evaluación - CIMA',
+  },
   { path: '', redirectTo: 'entrar', pathMatch: 'full' },
   { path: '**', redirectTo: 'entrar' },
 ];
