@@ -341,10 +341,11 @@ Convenciones:
     - `GET /api/v1/metricas/reportes`; frescura ≤ 60 s; supresión de zonas con < 5 Usuarios; conteo cero + ausencia de datos tras supresión; sin campos identificables
     - _Requirements: 8.3, 8.5, 8.6, 8.7_
     - _Properties: 27, 28_
-  - [ ] 18.3 Implementar Tablero de Impacto ODS con autorización de rol
+  - [x] 18.3 Implementar Tablero de Impacto ODS con autorización de rol
     - `GET /api/v1/impacto/tablero`; solo rol administrativo (verificado en backend); datos agregados/anonimizados vinculados a ODS 8/10/13; servido desde vista precalculada vía Data Operativa (GraphQL)
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
     - _Properties: 27, 28_
+    - Nota: implementado como módulo nuevo `app/impact/` (constants/dto/service/router) que consume `metric_events` del Metrics Service sin duplicar su tabla. `GET /api/v1/impacto/tablero` exige rol admin con la nueva dependencia `require_admin` en `app/common/security.py` (verifica el rol del Perfil del token, nunca del cliente; 403 + registro sin PII si no es admin, Req 15.5/15.6). Agrega por zona vinculando a ODS 8/10/13, reutiliza el k-anonimato del Metrics (suprime zonas < 5 Usuarios, excluye `sin_zona`) y no expone PII. La vista precalculada vía GraphQL (Req 15.7) queda como optimización de infraestructura sin cambiar el contrato. 7 pruebas en `tests/impact/test_dashboard.py`. `app/metrics/` es dominio de `@useransible25`; el tablero se aisló en `impact/` para minimizar el solape, pero el PR toca `common/security.py` (revisión cruzada).
   - [ ]* 18.4 Escribir test de propiedad para asignación de zona en eventos
     - **Property 26: Asignación de zona en eventos de métrica**
     - **Validates: Requirements 8.1, 8.2**

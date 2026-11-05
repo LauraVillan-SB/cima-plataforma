@@ -16,6 +16,7 @@ from app.chat.router import router as chat_router
 from app.certification.router import router as certification_router
 from app.conversion.router import router as conversion_router
 from app.gamification.router import router as gamification_router
+from app.impact.router import router as impact_router
 from app.learning.router import router as learning_router
 from app.metrics.router import router as metrics_router
 from app.profile.router import router as profile_router
@@ -43,6 +44,7 @@ app.include_router(chat_router)
 app.include_router(profile_router)
 app.include_router(conversion_router)
 app.include_router(gamification_router)
+app.include_router(impact_router)
 app.include_router(learning_router)
 app.include_router(metrics_router)
 app.include_router(survey_router)
