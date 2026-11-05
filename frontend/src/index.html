@@ -2,14 +2,19 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>CIMA</title>
+    <title>CIMA — Escuela de Sostenibilidad e Inclusión</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0a7d3c" />
+    <meta name="theme-color" content="#009056" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- Design System Seguros Bolívar. `data-beasties-skip`: el CSS se sirve como
+         asset en runtime, no se procesa como estilo crítico en el build. -->
+    <link rel="stylesheet" href="sb-ui-seguros-bolivar.min.css" data-beasties-skip />
   </head>
-  <body>
+  <body data-brand="seguros-bolivar">
     <cima-root></cima-root>
+    <!-- Design System Seguros Bolívar — Web Components -->
+    <script type="module" src="sb-ui-seguros-bolivar.min.js"></script>
   </body>
 </html>
