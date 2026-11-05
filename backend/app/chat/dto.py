@@ -34,6 +34,19 @@ class NotaDeVozValida(BaseModel):
     tamano_bytes: int
 
 
+class ModelResult(BaseModel):
+    """Resultado de una invocación al modelo de IA generativa (Tarea 11.3).
+
+    Lo devuelve la implementación de `GenerativeModel`. `model_version` queda en
+    el registro auditable (Req 16.4). No contiene PII.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    text: str
+    model_version: str
+
+
 class TextoRedactado(BaseModel):
     """Texto apto para el modelo de IA, con la PII detectada ya redactada (Req 3.10).
 
@@ -46,3 +59,52 @@ class TextoRedactado(BaseModel):
 
     texto: str
     categorias: dict[str, int]
+
+
+class ChatMessageAccepted(BaseModel):
+    """Acuse de recibo (202) tras encolar la inferencia (Req 3.5, 12.4).
+
+    `processing_after_seconds` indica al cliente a partir de cuántos segundos
+    mostrar el indicador de procesamiento (Req 3.7).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    id: uuid.UUID
+    status: str
+    processing_after_seconds: int
+
+
+class ChatMessageResult(BaseModel):
+    """Estado o resultado de una inferencia encolada (Req 3.6, 3.7, 3.8).
+
+    `response_text` solo viene cuando `status == "listo"`; mientras tanto es
+    None. No incluye PII: el contenido ya fue redactado antes de persistir.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    id: uuid.UUID
+    status: str
+    input_channel: str
+    response_text: str | None = None
+
+
+class ChatHistoryItem(BaseModel):
+    """Entrada del historial de conversación del Usuario (Req 3.8)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: uuid.UUID
+    status: str
+    input_channel: str
+    input_redacted: str
+    response_text: str | None = None
+
+
+class ChatHistory(BaseModel):
+    """Historial de la conversación del Usuario autenticado (Req 3.8)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    items: list[ChatHistoryItem]
