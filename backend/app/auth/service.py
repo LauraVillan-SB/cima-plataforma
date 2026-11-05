@@ -16,6 +16,7 @@ Principios aplicados:
 from __future__ import annotations
 
 import logging
+import math
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -46,6 +47,12 @@ logger = logging.getLogger("cima.auth")
 def _esta_bloqueado(profile: Profile, ahora: datetime) -> bool:
     """Indica si el Perfil tiene un bloqueo de ingreso vigente (Req 1.12)."""
     return profile.locked_until is not None and profile.locked_until > ahora
+
+
+def _minutos_restantes(locked_until: datetime, ahora: datetime) -> int:
+    """Minutos que faltan para que expire el bloqueo, redondeando hacia arriba."""
+    segundos = (locked_until - ahora).total_seconds()
+    return max(1, math.ceil(segundos / 60))
 
 # Hash señuelo precomputado para igualar el costo de verificación cuando el
 # teléfono no existe (defensa contra timing oracle, Req 1.7). Se calcula una
@@ -109,13 +116,17 @@ async def ingresar(db: AsyncSession, data: IngresoRequest) -> SesionResponse:
     # Bloqueo vigente: rechazar sin siquiera verificar la Clave (Req 1.12).
     if _esta_bloqueado(profile, ahora):
         log_event(logger, "auth_ingreso_bloqueado", profile_id=str(profile.id))
-        raise CuentaBloqueadaError(internal_detail="account temporarily locked")
+        raise CuentaBloqueadaError(
+            minutos=_minutos_restantes(profile.locked_until, ahora),
+            internal_detail="account temporarily locked",
+        )
 
     if not verify_clave(data.clave, profile.clave_hash):
         # Incrementa el contador de fallos; al alcanzar el umbral, bloquea
         # durante `lockout_seconds` (Req 1.12).
         profile.failed_attempts += 1
-        if profile.failed_attempts >= settings.max_failed_attempts:
+        bloqueada_ahora = profile.failed_attempts >= settings.max_failed_attempts
+        if bloqueada_ahora:
             profile.locked_until = ahora + timedelta(seconds=settings.lockout_seconds)
             log_event(logger, "auth_cuenta_bloqueada", profile_id=str(profile.id))
         await db.commit()
@@ -126,6 +137,12 @@ async def ingresar(db: AsyncSession, data: IngresoRequest) -> SesionResponse:
             profile_id=str(profile.id),
             intentos=profile.failed_attempts,
         )
+        if bloqueada_ahora:
+            # El intento que activa el bloqueo ya informa el tiempo de espera.
+            raise CuentaBloqueadaError(
+                minutos=_minutos_restantes(profile.locked_until, ahora),
+                internal_detail="account locked after max failed attempts",
+            )
         raise CredencialesInvalidasError(internal_detail="bad clave")
 
     # Ingreso exitoso: reinicia el contador y limpia cualquier bloqueo (Req 1.13).
