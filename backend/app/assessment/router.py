@@ -26,10 +26,14 @@ router = APIRouter(prefix="/api/v1/evaluaciones", tags=["evaluaciones"])
 async def obtener_evaluacion(
     ruta_id: uuid.UUID,
     db: AsyncSession = Depends(get_session),
-    _current_user_id: uuid.UUID = Depends(get_current_user_id),
+    current_user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> AssessmentOut:
-    """Presenta la evaluación de la ruta, sin revelar las respuestas correctas (Req 7.1)."""
-    return await service.get_assessment(db, ruta_id)
+    """Presenta la evaluación de la ruta, sin revelar las respuestas correctas.
+
+    Solo cuando el Usuario autenticado terminó todas las lecciones de la ruta
+    (Req 7.1); antes responde 409.
+    """
+    return await service.get_assessment(db, current_user_id, ruta_id)
 
 
 @router.post("/{ruta_id}/respuestas", response_model=AttemptResult)
