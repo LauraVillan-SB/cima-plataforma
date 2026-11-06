@@ -186,10 +186,11 @@ Convenciones:
     - `POST /api/v1/chat/mensajes` encola inferencia y responde 202; `GET /api/v1/chat/mensajes/{id}` y `GET /api/v1/chat/historial`; indicador de procesamiento hasta 60 s y error de servicio no disponible conservando historial
     - _Requirements: 3.1, 3.5, 3.6, 3.7, 3.8, 12.4_
     - Nota: implementado en `app/chat/` (`service.py`, `router.py`, `models.py` + migración `0008`). El POST valida (11.1), redacta PII (11.2) y persiste en `ai_interactions` estado "encolado" (202); el worker procesa vía `CircuitBreaker` ("llm") con timeout 60 s y deja "listo" o "error" conservando el historial; consulta por id e historial con anti-BOLA. Solo canal texto; la Nota de Voz (STT) llega en la Tarea 11.4. El modelo real se inyecta por `GenerativeModel` (Protocol); por defecto responde `SafeFallbackModel`. **Pendiente para completar:** la inferencia corre con `BackgroundTasks` en el mismo proceso, no en una cola/worker dedicados con reintentos ni almacén compartido (Req 12.3); hay que moverla a la cola real del diseño sin cambiar el contrato.
-  - [ ] 11.4 Implementar STT/TTS y ramificación por confianza
+  - [~] 11.4 Implementar STT/TTS y ramificación por confianza
     - Pipeline STT → redacción → LLM (mensajes system/developer/user separados) → TTS; confianza STT < umbral solicita confirmación/repetición en lenguaje simple; audio conservado solo durante transcripción
     - _Requirements: 3.3, 14.2, 14.3, 14.5, 14.6_
     - _Properties: 9, 38_
+    - Nota: implementado en `app/chat/` (`service.encolar_nota_de_voz`, endpoint `POST /api/v1/chat/mensajes/voz`). STT y TTS inyectables por `Protocol` (`inference.py`) con respaldos seguros (`UnavailableStt` fuerza repetición, `NoopTts` no degrada el texto); circuit breaker para STT; confianza < umbral (0.6) o transcripción vacía → estado `repetir_voz` sin invocar el modelo; redacción de PII de la transcripción antes de persistir/modelo; el audio NO se persiste (Req 14.6); TTS de la respuesta guardado como `response_audio_ref` (migración `0009`). **Pendiente:** la separación de mensajes system/developer/user del LLM y el proveedor real de STT/TTS (hoy respaldos); la duración la mide el cliente y el servidor la valida (no se remide el audio en el servidor).
   - [ ] 11.5 Implementar guardrails, validación de salida, kill switch y transparencia
     - Guardrails de entrada; validación de salida vs reglas de negocio para ofertas/incentivos; derivación a canal humano/respuesta segura; kill switch; indicación reconocible de IA
     - _Requirements: 16.1, 16.2, 16.3, 16.5, 16.6_

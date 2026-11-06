@@ -9,6 +9,7 @@ permitido, sin reenviar el contenido del Usuario en la respuesta.
 
 from __future__ import annotations
 
+import uuid
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, StrictStr
@@ -45,6 +46,33 @@ class ModelResult(BaseModel):
 
     text: str
     model_version: str
+
+
+class TranscriptionResult(BaseModel):
+    """Resultado de transcribir una Nota de Voz con STT (Req 14.2, 14.5).
+
+    `confidence` es la confianza del STT en [0, 1]. El texto AÚN PUEDE CONTENER
+    PII: la redacción se aplica después, antes del modelo (Req 14.6). No se
+    persiste tal cual; solo se usa dentro del pipeline.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    text: str
+    confidence: float
+
+
+class TtsResult(BaseModel):
+    """Resultado de sintetizar la respuesta como audio con TTS (Req 14.3).
+
+    `audio_ref` es una referencia a la ubicación del audio generado (no el
+    binario), para que el cliente lo reproduzca. No contiene PII.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    audio_ref: str
+    duracion_segundos: float
 
 
 class TextoRedactado(BaseModel):
@@ -88,6 +116,7 @@ class ChatMessageResult(BaseModel):
     status: str
     input_channel: str
     response_text: str | None = None
+    response_audio_ref: str | None = None
 
 
 class ChatHistoryItem(BaseModel):

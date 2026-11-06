@@ -43,6 +43,10 @@ class AiInteraction(Base):
     # Respuesta del modelo cuando el estado es "listo"; nula mientras tanto.
     response_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Referencia al audio TTS de la respuesta (no el binario); nula si no hay
+    # audio o si el canal fue solo texto (Req 14.3).
+    response_audio_ref: Mapped[str | None] = mapped_column(String(256), nullable=True)
+
     # Versión del modelo que generó la respuesta (Req 16.4); nula hasta responder.
     model_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
