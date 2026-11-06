@@ -196,10 +196,11 @@ Convenciones:
     - _Requirements: 16.1, 16.2, 16.3, 16.5, 16.6_
     - _Properties: 39_
     - Nota: implementado en `app/chat/guardrails.py` e integrado en el worker (`service.procesar_inferencia`). Guardrail de entrada por patrones (bloquea contenido inseguro/fuera de dominio, Req 16.1); validación de salida que exige respaldo del backend para ofertas (Req 16.2, hoy `oferta_respaldada=False` hasta coordinar con Conversion); derivación por tema sensible o baja confianza (Req 16.3); kill switch vía `chat_agent_enabled` en config (Req 16.6); marca de IA en la respuesta (Req 16.5); decisión del guardrail persistida en `guardrail_decision` (migración `0010`) para el registro auditable de la 11.6. **Pendiente:** los guardrails son por patrones/heurística, no un clasificador; la confianza de la respuesta del LLM está fija en 1.0 hasta que el proveedor real la provea (11.4); conectar `oferta_respaldada` al Conversion Service (Req 5.4, 16.2).
-  - [ ] 11.6 Implementar registro auditable de IA sin PII
+  - [x] 11.6 Implementar registro auditable de IA sin PII
     - Registrar entrada redactada, salida, versión del modelo y decisión del guardrail con Correlation-ID, sin PII
     - _Requirements: 3.9, 16.4_
     - _Properties: 40_
+    - Nota: `registrar_auditoria` en `app/chat/audit.py` emite un único evento estructurado (`chat_ai_interaction_audit`) por interacción al log central, con entrada redactada, salida, versión del modelo, decisión del guardrail y Correlation-ID (vía `log_event`). No incluye `profile_id` ni PII y acota el contenido a 2000 chars. Se invoca en los tres finales del worker (listo, error y respaldo). Se añadieron 6 pruebas (`tests/chat/test_audit.py`).
   - [ ]* 11.7 Escribir test de propiedad para validación de longitud de texto
     - **Property 7: Validación de longitud del mensaje de texto**
     - **Validates: Requirements 3.2**
