@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.common.database import get_session
 from app.common.security import get_current_user_id
 from app.profile import service
-from app.profile.dto import ProfileCreate, ProfileResponse
+from app.profile.dto import ProfileCreate, ProfileResponse, ProfileUpdate
 
 router = APIRouter(prefix="/api/v1/perfiles", tags=["perfiles"])
 
@@ -42,9 +42,9 @@ async def obtener_mi_perfil(
 @router.put("/{perfil_id}", response_model=ProfileResponse)
 async def actualizar_perfil(
     perfil_id: uuid.UUID,
-    data: ProfileCreate,
+    data: ProfileUpdate,
     db: AsyncSession = Depends(get_session),
     current_user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> ProfileResponse:
-    """Actualiza el Perfil propio; rechaza si el recurso pertenece a otro usuario."""
+    """Actualiza el Perfil propio (cultivo/comercio y zona); rechaza si es de otro usuario."""
     return await service.update_own_profile(db, current_user_id, perfil_id, data)
