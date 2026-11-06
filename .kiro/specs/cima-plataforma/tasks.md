@@ -230,6 +230,7 @@ Convenciones:
     - _Properties: 10, 11, 12_
   - [x] 13.2 Implementar fallback a tema general y solicitud de perfil incompleto
     - Sin coincidencias → tema "adaptación al clima" + notificación; perfil incompleto → el agente solicita cultivo/comercio hasta 3 veces y luego tema general sin personalización
+    - Nota: el tope de 3 solicitudes se aplica con el contador `profile_activity_prompts` (migración `0012`, incremento atómico). Antes `MAX_PROFILE_PROMPTS` existía sin usarse y el agente pedía la actividad indefinidamente. Cuenta cada consulta con el Perfil incompleto, no cada pregunta realmente hecha.
     - _Requirements: 4.4, 4.5, 4.8, 4.9_
     - _Properties: 13_
   - [x] 13.3 Implementar finalización de microcápsula y completitud de ruta
@@ -240,6 +241,7 @@ Convenciones:
     - _Properties: 14, 15_
   - [x] 13.4 Implementar lógica de adaptación en backend (ritmo/simplificación)
     - `GET /api/v1/aprendizaje/rutas/{id}`; adaptar siguiente microcápsula por repetición/exceso de tiempo/fallo de comprensión usando solo señales ya capturadas; evolucionable a PgVector sin cambiar contrato; default a ruta estándar sin señales
+    - Nota: la adaptación real (señales de repetición, tiempo y evaluación fallida; campos `simplify` y `pace`) se implementó con la migración `0012`. Antes `adapted` solo significaba "tiene progreso" y `difficulty` solo se copiaba. **Pendiente:** (1) no hay variantes simplificadas del contenido: el backend entrega la indicación y el front debe aplicarla; (2) `EXPECTED_TIME_FACTOR = 2` es un valor de referencia pendiente de validar con negocio; (3) el tiempo lo mide el cliente y no es verificable, por lo que solo influye en el ritmo del propio usuario; (4) no se implementó la recuperación por similitud con PgVector (Req 17.4).
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
   - [x]* 13.5 Escribir test de propiedad para duración de microcápsula
     - **Property 10: Invariante de duración de microcápsula**

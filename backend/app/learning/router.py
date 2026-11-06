@@ -23,8 +23,6 @@ from app.learning.dto import (
     MicrocapsuleSelection,
     PathStatusResponse,
 )
-from app.profile.models import Profile
-
 router = APIRouter(prefix="/api/v1/aprendizaje", tags=["aprendizaje"])
 
 
@@ -39,9 +37,7 @@ async def listar_microcapsulas(
     nunca se acepta del cliente. Si el Perfil no tiene actividad, la respuesta
     marca `prompt_activity` para que el agente la solicite (Req 4.8, 4.9).
     """
-    profile = await db.get(Profile, current_user_id)
-    activity_type = profile.activity_type if profile else None
-    return await service.select_microcapsules(db, activity_type)
+    return await service.select_for_user(db, current_user_id)
 
 
 @router.post(
