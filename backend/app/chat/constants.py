@@ -62,3 +62,49 @@ STT_CONFIDENCE_THRESHOLD = 0.6
 # Estado cuando la transcripción no es suficientemente confiable: el cliente
 # debe pedir al Usuario que repita el mensaje de voz (Req 14.5).
 ESTADO_REPETIR_VOZ = "repetir_voz"
+
+
+# --- Guardrails, validación de salida y kill switch (Tarea 11.5, Req 16) ---
+
+# Decisiones del guardrail, registradas de forma auditable (Req 16.4).
+GUARDRAIL_PERMITIDO = "permitido"
+GUARDRAIL_BLOQUEO_ENTRADA = "bloqueo_entrada"
+GUARDRAIL_SALIDA_NO_VALIDADA = "salida_no_validada"
+GUARDRAIL_DERIVADO = "derivado_humano"
+GUARDRAIL_KILL_SWITCH = "kill_switch"
+
+# Marca reconocible de que responde una IA (Req 16.5). Se antepone a la respuesta.
+AI_DISCLOSURE_PREFIX = "🤖 Asistente de CIMA (IA): "
+
+# Respuesta segura de respaldo cuando se deriva o se degrada el agente (Req 16.3, 16.6).
+SAFE_FALLBACK_RESPONSE = (
+    "Para darte una respuesta segura, voy a conectarte con una persona del "
+    "equipo de CIMA. También puedes intentarlo de nuevo más tarde."
+)
+
+# Patrones de temas fuera de dominio o inseguros que se bloquean en la entrada
+# (Req 16.1). Allowlist de dominio: CIMA educa en finanzas, riesgos y clima; se
+# bloquea lo que induzca decisiones financieras indebidas o quede fuera de ámbito.
+BLOCKED_INPUT_PATTERNS: tuple[str, ...] = (
+    r"\bgaranti[az]\w*\s+(ganancia|retorno|rentabilidad)",
+    r"\binvierte?\s+todo\b",
+    r"\bpr[eé]stamo\s+gota\s+a\s+gota\b",
+    r"\bc[oó]mo\s+(fabricar|hacer)\s+(un\s+)?(arma|explosivo|bomba)",
+)
+
+# Palabras que marcan una oferta/incentivo en la salida del modelo: si aparecen,
+# la respuesta debe validarse contra el backend antes de presentarla (Req 16.2).
+OFFER_OUTPUT_MARKERS: tuple[str, ...] = (
+    "microseguro",
+    "incentivo",
+    "descuento",
+    "beneficio",
+    "promoci",
+)
+
+# Temas sensibles que derivan a canal humano / respuesta segura (Req 16.3).
+SENSITIVE_TOPIC_PATTERNS: tuple[str, ...] = (
+    r"\bsuicid\w*\b",
+    r"\bviolencia\s+(intrafamiliar|dom[eé]stica)\b",
+    r"\bamenaza\w*\s+de\s+muerte\b",
+)
