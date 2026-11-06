@@ -347,15 +347,18 @@ Convenciones:
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
     - _Properties: 27, 28_
     - Nota: implementado como módulo nuevo `app/impact/` (constants/dto/service/router) que consume `metric_events` del Metrics Service sin duplicar su tabla. `GET /api/v1/impacto/tablero` exige rol admin con la nueva dependencia `require_admin` en `app/common/security.py` (verifica el rol del Perfil del token, nunca del cliente; 403 + registro sin PII si no es admin, Req 15.5/15.6). Agrega por zona vinculando a ODS 8/10/13, reutiliza el k-anonimato del Metrics (suprime zonas < 5 Usuarios, excluye `sin_zona`) y no expone PII. La vista precalculada vía GraphQL (Req 15.7) queda como optimización de infraestructura sin cambiar el contrato. 7 pruebas en `tests/impact/test_dashboard.py`. `app/metrics/` es dominio de `@useransible25`; el tablero se aisló en `impact/` para minimizar el solape, pero el PR toca `common/security.py` (revisión cruzada).
-  - [ ]* 18.4 Escribir test de propiedad para asignación de zona en eventos
+  - [x]* 18.4 Escribir test de propiedad para asignación de zona en eventos
     - **Property 26: Asignación de zona en eventos de métrica**
     - **Validates: Requirements 8.1, 8.2**
-  - [ ]* 18.5 Escribir test de propiedad para k-anonimato en reportes
+    - Nota: cubierta en `tests/metrics/test_eventos.py` (con zona → clasificado con la zona normalizada; sin zona → "sin_zona" no clasificado), más la idempotencia por `client_event_id`.
+  - [x]* 18.5 Escribir test de propiedad para k-anonimato en reportes
     - **Property 27: k-anonimato en reportes agregados**
     - **Validates: Requirements 8.6, 15.4**
-  - [ ]* 18.6 Escribir test de propiedad para reportes sin PII individual
+    - Nota: cubierta en `tests/metrics/test_reportes.py` (una zona aparece si y solo si tiene ≥ K Usuarios distintos; el límite exacto no se suprime), con stub de sesión que agrega como la BD.
+  - [x]* 18.6 Escribir test de propiedad para reportes sin PII individual
     - **Property 28: Reportes sin PII individual**
     - **Validates: Requirements 8.5, 15.3**
+    - Nota: cubierta en `tests/metrics/test_reportes.py` (el DTO `ZoneAggregate` solo expone campos agregados: zona, tipo, conteo y Usuarios distintos; nunca `profile_id`).
 
 - [ ] 19. Survey Service — Encuesta de satisfacción (Req 20)
   - [x] 19.1 Implementar presentación de la encuesta con idempotencia
