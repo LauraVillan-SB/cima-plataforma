@@ -25,6 +25,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    UniqueConstraint,
     Uuid,
     func,
 )
@@ -93,6 +94,10 @@ class PathProgress(Base):
     """
 
     __tablename__ = "path_progress"
+    __table_args__ = (
+        # Una sola fila de progreso por Usuario y ruta (ya creada en la migración 0004).
+        UniqueConstraint("profile_id", "path_id", name="uq_path_progress_profile_path"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
 
