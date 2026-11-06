@@ -66,7 +66,7 @@ import {
           }
           <button
             type="submit"
-            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill"
+            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large enviar"
             [disabled]="enviando() || !completa(ev)"
           >
             {{ enviando() ? 'Enviando...' : 'Enviar respuestas' }}
@@ -88,28 +88,44 @@ import {
         margin: 0 auto;
       }
       .titulo {
-        font-size: 1.25rem;
         margin: 0 0 1rem;
       }
       .pregunta {
-        border: 1px solid #ddd;
+        border: 1px solid #d0d0d0;
         border-radius: 8px;
         padding: 1rem;
-        margin: 0 0 1rem;
+        margin: 0 0 1.25rem;
+        background: #fff;
       }
       .enunciado {
-        font-weight: 600;
+        font-size: 1.25rem;
+        font-weight: 700;
         padding: 0 0.25rem;
       }
+      /* Toda la fila se puede tocar (56 px de alto) y el radio mide 1.5rem. */
       .opcion {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        min-height: 44px;
+        gap: 0.75rem;
+        min-height: 56px;
+        font-size: 1.125rem;
         line-height: 1.4;
+        cursor: pointer;
+      }
+      .opcion input {
+        flex: none;
+        width: 1.5rem;
+        height: 1.5rem;
+        accent-color: var(--cima-verde, #0a7d3c);
       }
       .estado {
-        line-height: 1.5;
+        font-size: 1.125rem;
+        line-height: 1.6;
+      }
+      .enviar {
+        display: block;
+        width: 100%;
+        margin-top: 0.5rem;
       }
     `,
   ],

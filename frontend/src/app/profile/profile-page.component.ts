@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { UserContextService } from '../core/user-context.service';
 import { ProfileService, type Perfil } from './profile.service';
 import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
 
@@ -12,10 +13,13 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
  * tal como lo envía el backend (solo lectura); el Usuario edita el tipo de
  * cultivo o comercio y la zona. Solo presentación: la validación y la
  * autorización por propiedad del recurso (anti-BOLA) son del backend.
+ *
+ * Al cargar o guardar el Perfil se comparte con el contexto de la sesión para
+ * que el saludo del inicio y el menú de la cuenta se actualicen al instante.
+ * Campos y botones grandes (variantes `--large` del Design System, Req 13.2, 13.3).
  */
 @Component({
   selector: 'cima-profile-page',
-  standalone: true,
   imports: [FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -45,7 +49,7 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
                 <select
                   id="actividad"
                   name="actividad"
-                  class="sb-ui-input"
+                  class="sb-ui-input sb-ui-input--large"
                   [ngModel]="actividad()"
                   (ngModelChange)="actividad.set($event)"
                   aria-describedby="ayuda-actividad"
@@ -67,7 +71,7 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
                   name="zona"
                   type="text"
                   maxlength="100"
-                  class="sb-ui-input"
+                  class="sb-ui-input sb-ui-input--large"
                   [ngModel]="zona()"
                   (ngModelChange)="zona.set($event)"
                   placeholder="Ej: Vereda El Carmen, Huila"
@@ -80,7 +84,7 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
 
               <button
                 type="submit"
-                class="sb-ui-button sb-ui-button--primary sb-ui-button--fill guardar"
+                class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large guardar"
                 [disabled]="!formularioValido() || guardando()"
               >
                 {{ guardando() ? 'Guardando...' : 'Guardar' }}
@@ -102,7 +106,7 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
           <div class="volver">
             <button
               type="button"
-              class="sb-ui-button sb-ui-button--primary sb-ui-button--text"
+              class="sb-ui-button sb-ui-button--primary sb-ui-button--text sb-ui-button--large"
               (click)="volver()"
             >
               Volver al inicio
@@ -117,29 +121,29 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
       .pantalla {
         display: flex;
         justify-content: center;
-        padding: 2.5rem 1rem;
+        padding: 2rem 1rem;
       }
       .tarjeta {
         width: 100%;
-        max-width: 480px;
+        max-width: 560px;
         padding: 2rem 1.5rem;
         background: #fff;
       }
       .titulo {
         margin: 0 0 1.5rem;
         text-align: center;
-        font-size: 1.25rem;
       }
       .texto {
         text-align: center;
+        font-size: 1.125rem;
       }
       .campo {
-        margin-bottom: 1rem;
+        margin-bottom: 1.25rem;
       }
       .dato {
         margin: 0.25rem 0;
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1.25rem;
       }
       .guardar {
         display: block;
@@ -160,6 +164,7 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
 export class ProfilePageComponent {
   private readonly profiles = inject(ProfileService);
   private readonly router = inject(Router);
+  private readonly contexto = inject(UserContextService);
 
   readonly tiposActividad = TIPOS_ACTIVIDAD;
 
@@ -188,6 +193,7 @@ export class ProfilePageComponent {
     try {
       const perfil = await this.profiles.obtenerMiPerfil();
       this.perfil.set(perfil);
+      this.contexto.establecer(perfil);
       this.actividad.set(perfil.activity_type);
       this.zona.set(perfil.geo_zone);
     } catch (error: unknown) {
@@ -219,6 +225,7 @@ export class ProfilePageComponent {
         ? await this.profiles.actualizar(actual.id, datos)
         : await this.profiles.crear(datos);
       this.perfil.set(guardado);
+      this.contexto.establecer(guardado);
       this.actividad.set(guardado.activity_type);
       this.zona.set(guardado.geo_zone);
       this.mensajeOk.set('Guardamos tus cambios.');
