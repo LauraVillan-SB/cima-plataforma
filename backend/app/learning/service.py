@@ -32,12 +32,14 @@ from app.common.logging import log_event
 from app.learning.constants import (
     EXPECTED_TIME_FACTOR,
     FALLBACK_TOPIC,
+    GENERAL_TAG,
     MAX_DRAIN_BATCH,
     MAX_EVENT_RETRIES,
     MAX_PROFILE_PROMPTS,
     MAX_SELECTION,
     PACE_SLOW,
     PACE_STANDARD,
+    YOUTUBE_EMBED_BASE_URL,
 )
 from app.learning.dto import (
     FinalizeRequest,
@@ -45,6 +47,7 @@ from app.learning.dto import (
     MicrocapsuleResponse,
     MicrocapsuleSelection,
     PathStatusResponse,
+    VideoOut,
 )
 from app.learning.models import (
     LearningEventOutbox,
@@ -79,6 +82,22 @@ _NOTICE_SIN_CONTENIDO = (
 )
 
 
+def _to_video(capsule: Microcapsule) -> VideoOut | None:
+    """Construye el video de apoyo de una cápsula, o None si no tiene.
+
+    El DTO valida el formato del identificador; la dirección de incrustación la fija el
+    backend con un dominio constante, no el cliente ni el dato almacenado.
+    """
+    if not capsule.video_id:
+        return None
+    return VideoOut(
+        video_id=capsule.video_id,
+        title=capsule.video_title or "",
+        channel=capsule.video_channel or "",
+        embed_url=f"{YOUTUBE_EMBED_BASE_URL}{capsule.video_id}",
+    )
+
+
 def _to_microcapsule_response(capsule: Microcapsule) -> MicrocapsuleResponse:
     """Construye el DTO de salida de una microcápsula (allowlist de campos)."""
     return MicrocapsuleResponse(
@@ -87,6 +106,11 @@ def _to_microcapsule_response(capsule: Microcapsule) -> MicrocapsuleResponse:
         activity_tags=list(capsule.activity_tags or []),
         duration_sec=capsule.duration_sec,
         difficulty=capsule.difficulty,
+        title=capsule.title,
+        summary=capsule.summary,
+        paragraphs=list(capsule.paragraphs or []),
+        key_points=list(capsule.key_points or []),
+        video=_to_video(capsule),
     )
 
 
@@ -180,7 +204,7 @@ async def select_microcapsules(
     if not normalized:
         # Perfil incompleto: se solicita la actividad y se entrega el tema general
         # como comportamiento por defecto, sin personalización (Req 4.8, 4.9).
-        general = await _fetch_by_topic(db, FALLBACK_TOPIC)
+        general = await _fetch_general(db)
         log_event(logger, "learning_selection_profile_incomplete", may_prompt=may_prompt)
         return MicrocapsuleSelection(
             items=[_to_microcapsule_response(c) for c in _ordered_top(general)],
@@ -204,7 +228,7 @@ async def select_microcapsules(
         )
 
     # Sin coincidencias para la actividad declarada → fallback al tema general.
-    general = await _fetch_by_topic(db, FALLBACK_TOPIC)
+    general = await _fetch_general(db)
     log_event(logger, "learning_selection_fallback")
     return MicrocapsuleSelection(
         items=[_to_microcapsule_response(c) for c in _ordered_top(general)],
@@ -223,9 +247,21 @@ async def _fetch_by_activity(db: AsyncSession, activity_type: str) -> list[Micro
     return list(rows.scalars().all())
 
 
-async def _fetch_by_topic(db: AsyncSession, topic: str) -> list[Microcapsule]:
-    """Recupera microcápsulas de un tema dado (consulta parametrizada)."""
-    rows = await db.execute(select(Microcapsule).where(Microcapsule.topic == topic))
+async def _fetch_general(db: AsyncSession) -> list[Microcapsule]:
+    """Recupera las microcápsulas del tema general de adaptación al clima (Req 4.4, 4.9).
+
+    Prefiere las etiquetadas como generales, para no entregar contenido de un cultivo o
+    comercio ajeno. Si el catálogo aún no tiene ninguna etiquetada, cae al tema completo
+    para no dejar al Usuario sin contenido. Consultas parametrizadas.
+    """
+    stmt = select(Microcapsule).where(
+        Microcapsule.topic == FALLBACK_TOPIC,
+        literal(GENERAL_TAG) == any_(Microcapsule.activity_tags),
+    )
+    general = list((await db.execute(stmt)).scalars().all())
+    if general:
+        return general
+    rows = await db.execute(select(Microcapsule).where(Microcapsule.topic == FALLBACK_TOPIC))
     return list(rows.scalars().all())
 
 
