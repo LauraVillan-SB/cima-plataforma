@@ -189,6 +189,10 @@ async def finalize_microcapsule(
 
     progress = await _get_or_create_progress(db, current_user_id, data.path_id)
 
+    # Estado previo: permite detectar la transición a "completada" en esta llamada
+    # y emitir el evento de completitud una sola vez (no en reintentos).
+    was_completed = bool(progress.completed)
+
     done: set[uuid.UUID] = set(progress.completed_microcapsules or [])
     if microcapsule_id not in done:
         done.add(microcapsule_id)
@@ -204,12 +208,22 @@ async def finalize_microcapsule(
     await db.commit()
     await db.refresh(progress)
 
+    # Enganche de completitud de ruta: al pasar de no-completada a completada se
+    # registra un evento de dominio `ruta_completada` (Req 4.6, 8.1). Ese evento
+    # es el punto de integración que consumen Gamification (Req 19.1) y la
+    # Encuesta de Satisfacción (Req 20.1). La emisión es idempotente por
+    # `client_event_id` y solo ocurre en la transición (no en reintentos).
+    just_completed = progress.completed and not was_completed
+    if just_completed:
+        await _emit_path_completed_event(db, current_user_id, data.client_event_id)
+
     log_event(
         logger,
         "microcapsule_finalized",
         path_completed=progress.completed,
         completed_count=len(done),
         total_count=len(path_capsules),
+        path_just_completed=just_completed,
     )
     return FinalizeResponse(
         path_id=data.path_id,
@@ -218,6 +232,40 @@ async def finalize_microcapsule(
         completed_count=len(done),
         total_count=len(path_capsules),
     )
+
+
+async def _emit_path_completed_event(
+    db: AsyncSession, current_user_id: uuid.UUID, client_event_id: uuid.UUID
+) -> None:
+    """Registra el evento de dominio `ruta_completada` para el Usuario (Req 4.6, 8.1).
+
+    Delega en el Metrics Service, que registra el evento de forma idempotente por
+    `client_event_id` (reintentos no duplican, Req 8.4) y lo asocia a la zona del
+    Perfil, o a "sin_zona" si no la tiene (Req 8.2). Es el punto de integración
+    que luego consumen Gamification (Req 19.1) y la Encuesta de Satisfacción
+    (Req 20.1). La zona se resuelve en el servidor desde el Perfil; nunca del
+    cliente. No se registra PII: el evento solo lleva identificadores y la zona.
+    """
+    # Import diferido del Metrics Service y del modelo Profile: evita acoplar la
+    # carga de este módulo a la de `metrics`/`profile` y solo resuelve la
+    # dependencia cuando se emite el evento.
+    from app.metrics import service as metrics_service
+    from app.metrics.dto import MetricEventCreate
+    from app.profile.models import Profile
+
+    profile = await db.get(Profile, current_user_id)
+    geo_zone = profile.geo_zone if profile else None
+
+    await metrics_service.record_event(
+        db,
+        MetricEventCreate(
+            client_event_id=client_event_id,
+            profile_id=current_user_id,
+            event_type="ruta_completada",
+            geo_zone=geo_zone,
+        ),
+    )
+    log_event(logger, "path_completed_event_emitted")
 
 
 async def get_path_status(

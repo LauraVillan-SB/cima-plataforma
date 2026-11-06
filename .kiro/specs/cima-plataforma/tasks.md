@@ -191,10 +191,11 @@ Convenciones:
     - _Requirements: 3.3, 14.2, 14.3, 14.5, 14.6_
     - _Properties: 9, 38_
     - Nota: implementado en `app/chat/` (`service.encolar_nota_de_voz`, endpoint `POST /api/v1/chat/mensajes/voz`). STT y TTS inyectables por `Protocol` (`inference.py`) con respaldos seguros (`UnavailableStt` fuerza repetición, `NoopTts` no degrada el texto); circuit breaker para STT; confianza < umbral (0.6) o transcripción vacía → estado `repetir_voz` sin invocar el modelo; redacción de PII de la transcripción antes de persistir/modelo; el audio NO se persiste (Req 14.6); TTS de la respuesta guardado como `response_audio_ref` (migración `0009`). **Pendiente:** la separación de mensajes system/developer/user del LLM y el proveedor real de STT/TTS (hoy respaldos); la duración la mide el cliente y el servidor la valida (no se remide el audio en el servidor).
-  - [ ] 11.5 Implementar guardrails, validación de salida, kill switch y transparencia
+  - [~] 11.5 Implementar guardrails, validación de salida, kill switch y transparencia
     - Guardrails de entrada; validación de salida vs reglas de negocio para ofertas/incentivos; derivación a canal humano/respuesta segura; kill switch; indicación reconocible de IA
     - _Requirements: 16.1, 16.2, 16.3, 16.5, 16.6_
     - _Properties: 39_
+    - Nota: implementado en `app/chat/guardrails.py` e integrado en el worker (`service.procesar_inferencia`). Guardrail de entrada por patrones (bloquea contenido inseguro/fuera de dominio, Req 16.1); validación de salida que exige respaldo del backend para ofertas (Req 16.2, hoy `oferta_respaldada=False` hasta coordinar con Conversion); derivación por tema sensible o baja confianza (Req 16.3); kill switch vía `chat_agent_enabled` en config (Req 16.6); marca de IA en la respuesta (Req 16.5); decisión del guardrail persistida en `guardrail_decision` (migración `0010`) para el registro auditable de la 11.6. **Pendiente:** los guardrails son por patrones/heurística, no un clasificador; la confianza de la respuesta del LLM está fija en 1.0 hasta que el proveedor real la provea (11.4); conectar `oferta_respaldada` al Conversion Service (Req 5.4, 16.2).
   - [ ] 11.6 Implementar registro auditable de IA sin PII
     - Registrar entrada redactada, salida, versión del modelo y decisión del guardrail con Correlation-ID, sin PII
     - _Requirements: 3.9, 16.4_
@@ -369,16 +370,18 @@ Convenciones:
     - `POST /api/v1/encuestas/{rutaId}/respuestas`; valida tipo/formato/rango (calificación 1–5) antes de registrar, rechazo indicando campo inválido; registra asociado al Perfil_de_Usuario y zona sin PII en ≤ 5 s; reintentos ≤ 3 conservando la respuesta sin pérdida (coordinación con Metrics Service)
     - _Requirements: 20.3, 20.4, 20.5_
     - _Properties: 43_
-  - [~] 19.3 Implementar reporte agregado de satisfacción por zona y retención
+  - [x] 19.3 Implementar reporte agregado de satisfacción por zona y retención
     - `GET /api/v1/encuestas/reportes`; agregado por zona con supresión k-anonimato ≥ 5; retención/anonimización de respuestas sensibles ≥ 90 días
     - _Requirements: 20.7, 20.8_
-    - Nota: reporte agregado con supresión k-anonimato ≥ 5 implementado. Falta el proceso de retención/anonimización a 90 días (el modelo solo deja la base preparada).
-  - [ ]* 19.4 Escribir test de propiedad para validación en servidor de la respuesta
+    - Nota: reporte agregado con supresión k-anonimato ≥ 5 y retención/anonimización a 90 días implementados. El job `anonimizar_respuestas_vencidas` (`app/survey/retention.py`) rompe el enlace con el Perfil y descarta el texto libre de `answers` a los `data_retention_days`, conservando `rating`/`geo_zone` para el reporte; idempotente y sin PII en logs. Pruebas en `tests/survey/test_retention.py`.
+  - [x]* 19.4 Escribir test de propiedad para validación en servidor de la respuesta
     - **Property 43: Validación en servidor de la respuesta de encuesta**
     - **Validates: Requirements 20.3**
-  - [ ]* 19.5 Escribir test de propiedad para idempotencia de presentación/registro
+    - Nota: cubierta en `tests/survey/test_validation.py` (rango 1–5, allowlist `extra=forbid`, tipos inválidos y zona que excede el máximo).
+  - [x]* 19.5 Escribir test de propiedad para idempotencia de presentación/registro
     - **Property 44: Idempotencia de presentación/registro de la encuesta**
     - **Validates: Requirements 20.6**
+    - Nota: cubierta en `tests/survey/test_idempotencia.py` (mismo `client_event_id` no duplica ni re-persiste; `already_answered` según respuesta previa), con stub de sesión que inspecciona la sentencia ORM.
 
 - [x] 20. Offline Sync Service (Req 18 — backend)
   - [x] 20.1 Implementar sincronización idempotente y fusión de progreso
@@ -419,9 +422,10 @@ Convenciones:
     - Modo primario por voz con texto alternativo en el mismo flujo; controles de voz ≥ 44×44 px operables con una mano; reproducción TTS; captura y envío de notas de voz
     - _Requirements: 14.1, 14.2, 14.3, 14.4_
     - Nota: control de voz con objetivos táctiles ≥ 44×44 px listo. Faltan la captura real (MediaRecorder), el envío al pipeline STT y la reproducción TTS (dependen de la Tarea 11.4).
-  - [ ] 23.3 Implementar flujos de aprendizaje/evaluación/conversión en UI
+  - [~] 23.3 Implementar flujos de aprendizaje/evaluación/conversión en UI
     - Consumo de endpoints de learning, assessment, certification y conversion; indicador de procesamiento de IA; mínimos pasos de interacción
     - _Requirements: 3.6, 3.7, 13.1_
+    - Nota: implementadas las vistas de aprendizaje y evaluación. Aprendizaje en `frontend/src/app/aprendizaje/` (`LearningService` + `LearningPageComponent`, ruta lazy `aprendizaje`, acceso desde inicio): lista las microcápsulas de `GET /api/v1/aprendizaje/microcapsulas` con el Design System, aviso de contenido general (Req 4.5), estados de carga/error accesibles y sin PII. Evaluación en `frontend/src/app/evaluacion/` (`AssessmentService` + `AssessmentPageComponent`, ruta lazy `evaluacion/:rutaId`): carga el cuestionario de `GET /api/v1/evaluaciones/{ruta_id}`, envía respuestas a `POST .../respuestas` y muestra el resultado (puntaje, aprobado, intentos restantes, cooldown). Todo es solo presentación (la lógica vive en el backend). `ng build` dentro de presupuesto y `jest` en verde. **Pendiente:** flujo de conversión en la UI, indicador de procesamiento de IA del chat, y la finalización de microcápsula con cola offline.
   - [ ] 23.4 Aplicar conformidad de accesibilidad WCAG 2.1 AA
     - Contraste y tamaños de fuente AA; objetivos táctiles ≥ 44×44 px; operable a 320 px y 3G; textos en español coloquial
     - _Requirements: 13.2, 13.3, 13.5, 13.6_

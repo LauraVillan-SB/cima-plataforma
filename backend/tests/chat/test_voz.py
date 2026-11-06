@@ -162,7 +162,8 @@ async def test_worker_sintetiza_audio_de_la_respuesta() -> None:
     db.rows.append(inter)
     await service.procesar_inferencia(db, inter.id, modelo=_ModeloOk(), tts=_Tts())
     assert inter.status == ESTADO_LISTO
-    assert inter.response_text == "respuesta"
+    # La respuesta lleva la marca de IA (Req 16.5), por eso se verifica con "in".
+    assert "respuesta" in inter.response_text
     assert inter.response_audio_ref == "audio://resp-1"
 
 
@@ -178,5 +179,6 @@ async def test_worker_sin_tts_conserva_texto() -> None:
     db.rows.append(inter)
     await service.procesar_inferencia(db, inter.id, modelo=_ModeloOk(), tts=_TtsFalla())
     assert inter.status == ESTADO_LISTO
-    assert inter.response_text == "respuesta"
+    # La respuesta lleva la marca de IA (Req 16.5), por eso se verifica con "in".
+    assert "respuesta" in inter.response_text
     assert inter.response_audio_ref is None
