@@ -18,6 +18,22 @@ export const routes: Routes = [
       import('./home/home-page.component').then((m) => m.HomePageComponent),
     title: 'CIMA',
   },
+  {
+    path: 'aprendizaje',
+    loadComponent: () =>
+      import('./aprendizaje/learning-page.component').then(
+        (m) => m.LearningPageComponent,
+      ),
+    title: 'Aprendizaje - CIMA',
+  },
+  {
+    path: 'evaluacion/:rutaId',
+    loadComponent: () =>
+      import('./evaluacion/assessment-page.component').then(
+        (m) => m.AssessmentPageComponent,
+      ),
+    title: 'Evaluación - CIMA',
+  },
   { path: '', redirectTo: 'entrar', pathMatch: 'full' },
   { path: '**', redirectTo: 'entrar' },
 ];
