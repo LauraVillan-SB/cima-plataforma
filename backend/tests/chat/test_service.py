@@ -142,7 +142,8 @@ async def test_worker_marca_listo_con_respuesta() -> None:
     inter = _nueva_interaccion(db)
     await service.procesar_inferencia(db, inter.id, modelo=_ModeloOk())
     assert inter.status == ESTADO_LISTO
-    assert inter.response_text == "respuesta de prueba"
+    # La respuesta lleva la marca de IA (Req 16.5), por eso se verifica con "in".
+    assert "respuesta de prueba" in inter.response_text
     assert inter.model_version == "test-v1"
 
 

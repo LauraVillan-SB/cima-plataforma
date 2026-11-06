@@ -191,10 +191,11 @@ Convenciones:
     - _Requirements: 3.3, 14.2, 14.3, 14.5, 14.6_
     - _Properties: 9, 38_
     - Nota: implementado en `app/chat/` (`service.encolar_nota_de_voz`, endpoint `POST /api/v1/chat/mensajes/voz`). STT y TTS inyectables por `Protocol` (`inference.py`) con respaldos seguros (`UnavailableStt` fuerza repetición, `NoopTts` no degrada el texto); circuit breaker para STT; confianza < umbral (0.6) o transcripción vacía → estado `repetir_voz` sin invocar el modelo; redacción de PII de la transcripción antes de persistir/modelo; el audio NO se persiste (Req 14.6); TTS de la respuesta guardado como `response_audio_ref` (migración `0009`). **Pendiente:** la separación de mensajes system/developer/user del LLM y el proveedor real de STT/TTS (hoy respaldos); la duración la mide el cliente y el servidor la valida (no se remide el audio en el servidor).
-  - [ ] 11.5 Implementar guardrails, validación de salida, kill switch y transparencia
+  - [~] 11.5 Implementar guardrails, validación de salida, kill switch y transparencia
     - Guardrails de entrada; validación de salida vs reglas de negocio para ofertas/incentivos; derivación a canal humano/respuesta segura; kill switch; indicación reconocible de IA
     - _Requirements: 16.1, 16.2, 16.3, 16.5, 16.6_
     - _Properties: 39_
+    - Nota: implementado en `app/chat/guardrails.py` e integrado en el worker (`service.procesar_inferencia`). Guardrail de entrada por patrones (bloquea contenido inseguro/fuera de dominio, Req 16.1); validación de salida que exige respaldo del backend para ofertas (Req 16.2, hoy `oferta_respaldada=False` hasta coordinar con Conversion); derivación por tema sensible o baja confianza (Req 16.3); kill switch vía `chat_agent_enabled` en config (Req 16.6); marca de IA en la respuesta (Req 16.5); decisión del guardrail persistida en `guardrail_decision` (migración `0010`) para el registro auditable de la 11.6. **Pendiente:** los guardrails son por patrones/heurística, no un clasificador; la confianza de la respuesta del LLM está fija en 1.0 hasta que el proveedor real la provea (11.4); conectar `oferta_respaldada` al Conversion Service (Req 5.4, 16.2).
   - [ ] 11.6 Implementar registro auditable de IA sin PII
     - Registrar entrada redactada, salida, versión del modelo y decisión del guardrail con Correlation-ID, sin PII
     - _Requirements: 3.9, 16.4_
@@ -347,15 +348,18 @@ Convenciones:
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
     - _Properties: 27, 28_
     - Nota: implementado como módulo nuevo `app/impact/` (constants/dto/service/router) que consume `metric_events` del Metrics Service sin duplicar su tabla. `GET /api/v1/impacto/tablero` exige rol admin con la nueva dependencia `require_admin` en `app/common/security.py` (verifica el rol del Perfil del token, nunca del cliente; 403 + registro sin PII si no es admin, Req 15.5/15.6). Agrega por zona vinculando a ODS 8/10/13, reutiliza el k-anonimato del Metrics (suprime zonas < 5 Usuarios, excluye `sin_zona`) y no expone PII. La vista precalculada vía GraphQL (Req 15.7) queda como optimización de infraestructura sin cambiar el contrato. 7 pruebas en `tests/impact/test_dashboard.py`. `app/metrics/` es dominio de `@useransible25`; el tablero se aisló en `impact/` para minimizar el solape, pero el PR toca `common/security.py` (revisión cruzada).
-  - [ ]* 18.4 Escribir test de propiedad para asignación de zona en eventos
+  - [x]* 18.4 Escribir test de propiedad para asignación de zona en eventos
     - **Property 26: Asignación de zona en eventos de métrica**
     - **Validates: Requirements 8.1, 8.2**
-  - [ ]* 18.5 Escribir test de propiedad para k-anonimato en reportes
+    - Nota: cubierta en `tests/metrics/test_eventos.py` (con zona → clasificado con la zona normalizada; sin zona → "sin_zona" no clasificado), más la idempotencia por `client_event_id`.
+  - [x]* 18.5 Escribir test de propiedad para k-anonimato en reportes
     - **Property 27: k-anonimato en reportes agregados**
     - **Validates: Requirements 8.6, 15.4**
-  - [ ]* 18.6 Escribir test de propiedad para reportes sin PII individual
+    - Nota: cubierta en `tests/metrics/test_reportes.py` (una zona aparece si y solo si tiene ≥ K Usuarios distintos; el límite exacto no se suprime), con stub de sesión que agrega como la BD.
+  - [x]* 18.6 Escribir test de propiedad para reportes sin PII individual
     - **Property 28: Reportes sin PII individual**
     - **Validates: Requirements 8.5, 15.3**
+    - Nota: cubierta en `tests/metrics/test_reportes.py` (el DTO `ZoneAggregate` solo expone campos agregados: zona, tipo, conteo y Usuarios distintos; nunca `profile_id`).
 
 - [ ] 19. Survey Service — Encuesta de satisfacción (Req 20)
   - [x] 19.1 Implementar presentación de la encuesta con idempotencia

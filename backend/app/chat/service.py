@@ -22,6 +22,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.chat import guardrails
 from app.chat.constants import (
     CANAL_VOZ,
     ESTADO_ENCOLADO,
@@ -29,8 +30,14 @@ from app.chat.constants import (
     ESTADO_LISTO,
     ESTADO_PROCESANDO,
     ESTADO_REPETIR_VOZ,
+    GUARDRAIL_BLOQUEO_ENTRADA,
+    GUARDRAIL_DERIVADO,
+    GUARDRAIL_KILL_SWITCH,
+    GUARDRAIL_PERMITIDO,
+    GUARDRAIL_SALIDA_NO_VALIDADA,
     INFERENCE_TIMEOUT_SECONDS,
     PROCESSING_INDICATOR_SECONDS,
+    SAFE_FALLBACK_RESPONSE,
     STT_CONFIDENCE_THRESHOLD,
 )
 from app.chat.dto import (
@@ -51,6 +58,7 @@ from app.chat.inference import (
 from app.chat.models import AiInteraction
 from app.chat.redaction import redactar_pii
 from app.chat.validation import validar_mensaje_texto, validar_nota_de_voz
+from app.common.config import get_settings
 from app.common.correlation import get_correlation_id
 from app.common.errors import NotFoundError
 from app.common.logging import log_event
@@ -259,6 +267,18 @@ async def procesar_inferencia(
 
     texto_redactado = interaccion.input_redacted
 
+    # Kill switch (Req 16.6): si el agente está degradado, se responde con el
+    # mensaje de respaldo seguro sin invocar el modelo.
+    if not get_settings().chat_agent_enabled:
+        await _finalizar_con_respaldo(db, interaccion, tts, GUARDRAIL_KILL_SWITCH)
+        return
+
+    # Guardrail de entrada (Req 16.1): bloquea contenido inseguro/fuera de dominio
+    # antes de invocar el modelo.
+    if guardrails.evaluar_entrada(texto_redactado) != GUARDRAIL_PERMITIDO:
+        await _finalizar_con_respaldo(db, interaccion, tts, GUARDRAIL_BLOQUEO_ENTRADA)
+        return
+
     async def _invocar() -> object:
         return await modelo.generate(texto_redactado)
 
@@ -276,9 +296,20 @@ async def procesar_inferencia(
         log_event(logger, "chat_inference_failed", interaction_id=str(interaction_id))
         return
 
-    interaccion.response_text = resultado.text
+    # Validación de salida y derivación (Req 16.2, 16.3). `oferta_respaldada` es
+    # False por ahora: el agente no ofrece microseguros hasta coordinar con el
+    # Conversion Service (Req 5.4); cualquier oferta inventada se deriva.
+    decision = _evaluar_salida(resultado.text)
+    if decision != GUARDRAIL_PERMITIDO:
+        await _finalizar_con_respaldo(db, interaccion, tts, decision, resultado.model_version)
+        return
+
+    interaccion.response_text = guardrails.marcar_como_ia(resultado.text)
     interaccion.model_version = resultado.model_version
-    interaccion.response_audio_ref = await _sintetizar_respuesta(tts, resultado.text)
+    interaccion.guardrail_decision = GUARDRAIL_PERMITIDO
+    interaccion.response_audio_ref = await _sintetizar_respuesta(
+        tts, interaccion.response_text
+    )
     interaccion.status = ESTADO_LISTO
     await db.commit()
     log_event(
@@ -286,7 +317,62 @@ async def procesar_inferencia(
         "chat_inference_completed",
         interaction_id=str(interaction_id),
         model_version=resultado.model_version,
+        guardrail=GUARDRAIL_PERMITIDO,
         con_audio=bool(interaccion.response_audio_ref),
+    )
+
+
+def _evaluar_salida(respuesta: str) -> str:
+    """Aplica validación de salida y detección de tema sensible (Req 16.2, 16.3).
+
+    Args:
+        respuesta: texto generado por el modelo.
+
+    Returns:
+        `GUARDRAIL_PERMITIDO` si la salida puede presentarse, o la decisión del
+        guardrail que obliga a usar la respuesta de respaldo.
+    """
+    salida = guardrails.validar_salida(respuesta, oferta_respaldada=False)
+    if salida != GUARDRAIL_PERMITIDO:
+        return salida
+    return guardrails.requiere_derivacion(
+        respuesta, confianza=1.0, umbral=STT_CONFIDENCE_THRESHOLD
+    )
+
+
+async def _finalizar_con_respaldo(
+    db: AsyncSession,
+    interaccion: AiInteraction,
+    tts: TextToSpeech,
+    decision: str,
+    model_version: str | None = None,
+) -> None:
+    """Deja la interacción en "listo" con la respuesta segura de respaldo.
+
+    Se usa cuando el kill switch está activo, el guardrail bloquea la entrada o
+    la salida, o se deriva a canal humano (Req 16.1, 16.2, 16.3, 16.6). La
+    respuesta de respaldo se marca como IA y la decisión del guardrail se guarda
+    para el registro auditable (Req 16.4). No expone PII.
+
+    Args:
+        db: sesión de base de datos.
+        interaccion: interacción a finalizar.
+        tts: sintetizador de voz para la respuesta de respaldo.
+        decision: decisión del guardrail que motivó el respaldo.
+        model_version: versión del modelo, si alcanzó a invocarse.
+    """
+    respuesta = guardrails.marcar_como_ia(SAFE_FALLBACK_RESPONSE)
+    interaccion.response_text = respuesta
+    interaccion.model_version = model_version
+    interaccion.guardrail_decision = decision
+    interaccion.response_audio_ref = await _sintetizar_respuesta(tts, respuesta)
+    interaccion.status = ESTADO_LISTO
+    await db.commit()
+    log_event(
+        logger,
+        "chat_guardrail_fallback",
+        interaction_id=str(interaccion.id),
+        guardrail=decision,
     )
 
 
