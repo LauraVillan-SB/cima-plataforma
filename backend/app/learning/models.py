@@ -163,3 +163,30 @@ class ProfileActivityPrompt(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class LearningEventOutbox(Base):
+    """Evento de dominio pendiente de registro en Metrics (Req 4.7, 8.4).
+
+    Si el registro de `microcapsula_completada` o `ruta_completada` sigue fallando
+    tras los reintentos acotados, el evento se conserva aquí para registrarlo después
+    sin pérdida de datos. `client_event_id` es único: guardar el mismo evento dos veces
+    no lo duplica. Solo lleva identificadores y el tipo de evento, sin PII. La fila se
+    borra cuando el evento se registra.
+    """
+
+    __tablename__ = "learning_event_outbox"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+
+    # Clave de idempotencia del evento; la misma que se enviará a Metrics.
+    client_event_id: Mapped[uuid.UUID] = mapped_column(unique=True)
+
+    # Titular del evento, tomado de la sesión autenticada.
+    profile_id: Mapped[uuid.UUID] = mapped_column(index=True)
+
+    event_type: Mapped[str] = mapped_column(String(32))
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

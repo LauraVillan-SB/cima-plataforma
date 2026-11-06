@@ -47,3 +47,10 @@ PACE_SLOW: Final = "slow"
 # Tope del tiempo reportado por el cliente al finalizar una cápsula (24 h). Acota la
 # entrada: un valor mayor no es una medición creíble y se rechaza (validación).
 MAX_ELAPSED_SEC: Final = 86400
+
+# Reintentos del registro de un evento antes de conservarlo para registro posterior
+# (Req 4.7, Property 15): nunca más de 3 reintentos tras el primer intento.
+MAX_EVENT_RETRIES: Final = 3
+
+# Eventos pendientes que se reintentan por invocación de `drain_outbox`.
+MAX_DRAIN_BATCH: Final = 50

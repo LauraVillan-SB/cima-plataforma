@@ -109,6 +109,20 @@ claves son `uuid5(client_event_id, trigger)`. Si Gamification responde
 Se usan claves distintas porque Metrics deduplica por `client_event_id`; con una clave común se
 perdería uno de los dos eventos al cerrar la ruta.
 
+Resiliencia del registro de eventos (Req 4.7, Property 15): si registrar un evento en Metrics
+falla por un error de base de datos, se reintenta hasta 3 veces tras el primer intento (nunca
+más), revirtiendo la transacción entre intentos. Si persiste, el evento se guarda en
+`learning_event_outbox` (idempotente por `client_event_id`, solo identificadores, sin PII) y la
+finalización responde con éxito. Cada finalización del mismo usuario llama a `drain_outbox`,
+que registra los pendientes de ese usuario y se detiene en el primer fallo. Cualquier error que
+no sea de base de datos se propaga como defecto.
+
+Límites: no hay un worker global que drene la cola; `drain_outbox(db)` sin `profile_id` está
+listo para uno, pero un usuario que no vuelve no recupera sus eventos hasta entonces. Si ni
+siquiera se puede guardar en la cola (base de datos caída), la petición falla y el reintento del
+cliente lo vuelve a intentar. El evento `ruta_completada` solo se emite al pasar a completada,
+por lo que ese último caso no lo recupera.
+
 Si no hay coincidencias para la actividad se entrega el tema general (`fallback`) con un aviso en
 español coloquial.
 
@@ -133,7 +147,7 @@ indicación (`simplify`, `pace`) y la presentación simplificada queda del lado 
 
 ## Tecnologías
 
-FastAPI, SQLAlchemy (async), Pydantic, Alembic (migraciones `0004` y `0012`), PostgreSQL 15+.
+FastAPI, SQLAlchemy (async), Pydantic, Alembic (migraciones `0004`, `0012` y `0013`), PostgreSQL 15+.
 
 ## Pruebas
 
