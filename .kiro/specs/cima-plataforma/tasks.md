@@ -381,12 +381,14 @@ Convenciones:
     - `POST /api/v1/sync/acciones` aplica lote con `client_event_id` (idempotente); resolver conflictos fusionando pasos completados sin pérdida
     - _Requirements: 18.2, 18.4_
     - _Properties: 36, 37_
-  - [ ]* 20.2 Escribir test de propiedad para idempotencia de sincronización
+  - [x]* 20.2 Escribir test de propiedad para idempotencia de sincronización
     - **Property 36: Idempotencia de la sincronización offline**
     - **Validates: Requirements 18.2**
-  - [ ]* 20.3 Escribir test de propiedad para fusión monótona de progreso
+    - Nota: cubierta en `tests/sync/test_idempotencia.py` (reaplicar el mismo lote no vuelve a aplicar acciones ni crea duplicados), con stub de sesión que inspecciona la sentencia ORM.
+  - [x]* 20.3 Escribir test de propiedad para fusión monótona de progreso
     - **Property 37: Fusión monótona de progreso sin pérdida**
     - **Validates: Requirements 18.4**
+    - Nota: cubierta en `tests/sync/test_idempotencia.py` (el progreso tras dos lotes es la unión de los pasos, sin pérdida y en orden estable); incluye además el rechazo anti-BOLA de un lote ajeno.
 
 - [ ] 21. Checkpoint — Verificar servicios de dominio y métricas
   - Ensure all tests pass, ask the user if questions arise.
