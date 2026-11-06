@@ -215,15 +215,14 @@ export class ProfilePageComponent {
     this.mensajeOk.set('');
     this.mensajeError.set('');
     const actual = this.perfil();
-    const datos = {
-      phone: actual?.phone ?? '',
-      activity_type: this.actividad(),
-      geo_zone: this.zona().trim(),
-    };
+    const activity_type = this.actividad();
+    const geo_zone = this.zona().trim();
     try {
+      // Al actualizar solo se envían cultivo/comercio y zona: el celular es la
+      // identidad de ingreso, no se edita aquí y el cliente solo lo ve enmascarado.
       const guardado = actual
-        ? await this.profiles.actualizar(actual.id, datos)
-        : await this.profiles.crear(datos);
+        ? await this.profiles.actualizar(actual.id, { activity_type, geo_zone })
+        : await this.profiles.crear({ phone: '', activity_type, geo_zone });
       this.perfil.set(guardado);
       this.contexto.establecer(guardado);
       this.actividad.set(guardado.activity_type);
