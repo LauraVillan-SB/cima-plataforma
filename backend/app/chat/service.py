@@ -63,6 +63,8 @@ from app.common.correlation import get_correlation_id
 from app.common.errors import NotFoundError
 from app.common.logging import log_event
 from app.common.resilience import CircuitBreaker
+from app.conversion.catalog import nombres_de_ofertas, nombres_de_todas_las_ofertas
+from app.profile.models import Profile
 
 logger = logging.getLogger("cima.chat")
 
@@ -296,10 +298,9 @@ async def procesar_inferencia(
         audit.registrar_auditoria(interaccion)
         return
 
-    # Validación de salida y derivación (Req 16.2, 16.3). `oferta_respaldada` es
-    # False por ahora: el agente no ofrece microseguros hasta coordinar con el
-    # Conversion Service (Req 5.4); cualquier oferta inventada se deriva.
-    decision = _evaluar_salida(resultado.text)
+    # Validación de salida y derivación (Req 16.2, 16.3). Las ofertas solo se
+    # permiten si están respaldadas por el catálogo del Usuario (Req 5.4).
+    decision = await _evaluar_salida(db, interaccion, resultado.text)
     if decision != GUARDRAIL_PERMITIDO:
         await _finalizar_con_respaldo(db, interaccion, tts, decision, resultado.model_version)
         return
@@ -315,17 +316,47 @@ async def procesar_inferencia(
     audit.registrar_auditoria(interaccion)
 
 
-def _evaluar_salida(respuesta: str) -> str:
+async def _oferta_respaldada(
+    db: AsyncSession, interaccion: AiInteraction, respuesta: str
+) -> bool:
+    """Indica si las ofertas de la respuesta están respaldadas por el catálogo (Req 16.2).
+
+    Solo consulta el Perfil cuando la respuesta menciona una oferta. El perfil
+    se obtiene de la interacción guardada en el servidor, nunca del cliente.
+
+    Args:
+        db: sesión de base de datos.
+        interaccion: interacción en proceso (dueña del `profile_id`).
+        respuesta: texto generado por el modelo.
+
+    Returns:
+        True si no hay oferta o si todas las ofertas están en el catálogo del Usuario.
+    """
+    if not guardrails.menciona_oferta(respuesta):
+        return True
+    perfil = await db.get(Profile, interaccion.profile_id)
+    permitidos = nombres_de_ofertas(perfil.activity_type) if perfil else frozenset()
+    return guardrails.oferta_respaldada_por_catalogo(
+        respuesta, permitidos, nombres_de_todas_las_ofertas()
+    )
+
+
+async def _evaluar_salida(
+    db: AsyncSession, interaccion: AiInteraction, respuesta: str
+) -> str:
     """Aplica validación de salida y detección de tema sensible (Req 16.2, 16.3).
 
     Args:
+        db: sesión de base de datos.
+        interaccion: interacción en proceso.
         respuesta: texto generado por el modelo.
 
     Returns:
         `GUARDRAIL_PERMITIDO` si la salida puede presentarse, o la decisión del
         guardrail que obliga a usar la respuesta de respaldo.
     """
-    salida = guardrails.validar_salida(respuesta, oferta_respaldada=False)
+    respaldada = await _oferta_respaldada(db, interaccion, respuesta)
+    salida = guardrails.validar_salida(respuesta, oferta_respaldada=respaldada)
     if salida != GUARDRAIL_PERMITIDO:
         return salida
     return guardrails.requiere_derivacion(

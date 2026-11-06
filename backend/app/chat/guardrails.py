@@ -24,12 +24,21 @@ from app.chat.constants import (
     GUARDRAIL_DERIVADO,
     GUARDRAIL_PERMITIDO,
     GUARDRAIL_SALIDA_NO_VALIDADA,
+    CATALOG_BACKED_OFFER_MARKERS,
+    OFFER_FIGURES_PATTERN,
     OFFER_OUTPUT_MARKERS,
     SENSITIVE_TOPIC_PATTERNS,
 )
+from app.conversion.catalog import normalizar_texto
 
 _BLOCKED_INPUT = tuple(re.compile(p, re.IGNORECASE) for p in BLOCKED_INPUT_PATTERNS)
 _SENSITIVE = tuple(re.compile(p, re.IGNORECASE) for p in SENSITIVE_TOPIC_PATTERNS)
+_OFFER_FIGURES = re.compile(OFFER_FIGURES_PATTERN, re.IGNORECASE)
+_MARCADORES_NO_RESPALDABLES = tuple(
+    normalizar_texto(m)
+    for m in OFFER_OUTPUT_MARKERS
+    if m not in CATALOG_BACKED_OFFER_MARKERS
+)
 
 
 def evaluar_entrada(texto_redactado: str) -> str:
@@ -63,8 +72,7 @@ def validar_salida(respuesta: str, oferta_respaldada: bool) -> str:
         `GUARDRAIL_PERMITIDO` si la salida puede presentarse, o
         `GUARDRAIL_SALIDA_NO_VALIDADA` si menciona una oferta sin respaldo.
     """
-    menciona_oferta = _menciona_oferta(respuesta)
-    if menciona_oferta and not oferta_respaldada:
+    if menciona_oferta(respuesta) and not oferta_respaldada:
         return GUARDRAIL_SALIDA_NO_VALIDADA
     return GUARDRAIL_PERMITIDO
 
@@ -106,7 +114,38 @@ def marcar_como_ia(respuesta: str) -> str:
     return AI_DISCLOSURE_PREFIX + respuesta
 
 
-def _menciona_oferta(respuesta: str) -> bool:
+def oferta_respaldada_por_catalogo(
+    respuesta: str,
+    nombres_permitidos: frozenset[str],
+    nombres_conocidos: frozenset[str],
+) -> bool:
+    """Indica si las ofertas de la respuesta están respaldadas por el catálogo (Req 16.2).
+
+    Una respuesta sin oferta es válida. Con oferta, solo se respalda si solo
+    habla de Microseguros del catálogo del Usuario: sin incentivos, descuentos
+    ni cifras (el catálogo no tiene precios) y sin nombrar productos que no le
+    corresponden por su tipo de actividad.
+
+    Args:
+        respuesta: texto generado por el modelo.
+        nombres_permitidos: nombres normalizados de las ofertas del Usuario.
+        nombres_conocidos: nombres normalizados de todas las ofertas del catálogo.
+
+    Returns:
+        True si la respuesta no ofrece nada o si todo lo que ofrece está respaldado.
+    """
+    if not menciona_oferta(respuesta):
+        return True
+    texto = normalizar_texto(respuesta)
+    if any(m in texto for m in _MARCADORES_NO_RESPALDABLES):
+        return False
+    if not nombres_permitidos or _OFFER_FIGURES.search(texto):
+        return False
+    ajenos = nombres_conocidos - nombres_permitidos
+    return not any(nombre in texto for nombre in ajenos)
+
+
+def menciona_oferta(respuesta: str) -> bool:
     """Indica si la respuesta menciona una oferta o incentivo.
 
     Args:
