@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     # máximo de intentos bloqueados permitidos por ventana, antes de limitar.
     bola_max_attempts: int = 5
     bola_window_seconds: int = 60
+    # Kill switch del Agente Conversacional (Req 16.6): si es True, el agente se
+    # degrada y responde solo con el mensaje de respaldo seguro, sin invocar el
+    # modelo. Se activa vía variable de entorno ante un incidente operativo.
+    chat_agent_enabled: bool = True
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

@@ -191,10 +191,11 @@ Convenciones:
     - _Requirements: 3.3, 14.2, 14.3, 14.5, 14.6_
     - _Properties: 9, 38_
     - Nota: implementado en `app/chat/` (`service.encolar_nota_de_voz`, endpoint `POST /api/v1/chat/mensajes/voz`). STT y TTS inyectables por `Protocol` (`inference.py`) con respaldos seguros (`UnavailableStt` fuerza repetición, `NoopTts` no degrada el texto); circuit breaker para STT; confianza < umbral (0.6) o transcripción vacía → estado `repetir_voz` sin invocar el modelo; redacción de PII de la transcripción antes de persistir/modelo; el audio NO se persiste (Req 14.6); TTS de la respuesta guardado como `response_audio_ref` (migración `0009`). **Pendiente:** la separación de mensajes system/developer/user del LLM y el proveedor real de STT/TTS (hoy respaldos); la duración la mide el cliente y el servidor la valida (no se remide el audio en el servidor).
-  - [ ] 11.5 Implementar guardrails, validación de salida, kill switch y transparencia
+  - [~] 11.5 Implementar guardrails, validación de salida, kill switch y transparencia
     - Guardrails de entrada; validación de salida vs reglas de negocio para ofertas/incentivos; derivación a canal humano/respuesta segura; kill switch; indicación reconocible de IA
     - _Requirements: 16.1, 16.2, 16.3, 16.5, 16.6_
     - _Properties: 39_
+    - Nota: implementado en `app/chat/guardrails.py` e integrado en el worker (`service.procesar_inferencia`). Guardrail de entrada por patrones (bloquea contenido inseguro/fuera de dominio, Req 16.1); validación de salida que exige respaldo del backend para ofertas (Req 16.2, hoy `oferta_respaldada=False` hasta coordinar con Conversion); derivación por tema sensible o baja confianza (Req 16.3); kill switch vía `chat_agent_enabled` en config (Req 16.6); marca de IA en la respuesta (Req 16.5); decisión del guardrail persistida en `guardrail_decision` (migración `0010`) para el registro auditable de la 11.6. **Pendiente:** los guardrails son por patrones/heurística, no un clasificador; la confianza de la respuesta del LLM está fija en 1.0 hasta que el proveedor real la provea (11.4); conectar `oferta_respaldada` al Conversion Service (Req 5.4, 16.2).
   - [ ] 11.6 Implementar registro auditable de IA sin PII
     - Registrar entrada redactada, salida, versión del modelo y decisión del guardrail con Correlation-ID, sin PII
     - _Requirements: 3.9, 16.4_

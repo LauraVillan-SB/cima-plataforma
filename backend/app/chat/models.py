@@ -50,6 +50,10 @@ class AiInteraction(Base):
     # Versión del modelo que generó la respuesta (Req 16.4); nula hasta responder.
     model_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
+    # Decisión del guardrail aplicada, para el registro auditable (Req 16.4):
+    # permitido | bloqueo_entrada | salida_no_validada | derivado_humano | kill_switch.
+    guardrail_decision: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
     # Correlation-ID del evento, para trazabilidad sin PII (Req 3.9).
     correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
