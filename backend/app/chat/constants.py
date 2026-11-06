@@ -48,3 +48,17 @@ PROCESSING_INDICATOR_SECONDS = 15
 # Tiempo maximo de espera de una inferencia (Req 3.8): superado, se marca error
 # de servicio no disponible conservando el historial.
 INFERENCE_TIMEOUT_SECONDS = 60
+
+
+# --- Voz: STT/TTS (Tarea 11.4, Req 14.2, 14.3, 14.5) -----------------------
+
+# Canal de entrada por voz (el de texto es "texto", en service.py).
+CANAL_VOZ = "voz"
+
+# Umbral de confianza del STT en [0, 1]: por debajo, se pide al Usuario repetir
+# en lenguaje simple sin atribuirle el error (Req 14.5).
+STT_CONFIDENCE_THRESHOLD = 0.6
+
+# Estado cuando la transcripción no es suficientemente confiable: el cliente
+# debe pedir al Usuario que repita el mensaje de voz (Req 14.5).
+ESTADO_REPETIR_VOZ = "repetir_voz"
