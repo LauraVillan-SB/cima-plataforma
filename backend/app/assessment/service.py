@@ -36,11 +36,33 @@ from app.assessment.dto import (
     AttemptResult,
     QuestionOut,
 )
+from app.assessment.errors import EvaluacionYaAprobadaError, RutaNoCompletadaError
 from app.assessment.models import Assessment, AssessmentAttempt
 from app.common.errors import NotFoundError, RateLimitedError, ValidationError
 from app.common.logging import log_event
+from app.learning.models import PathProgress
 
 logger = logging.getLogger("cima.assessment")
+
+
+async def _require_path_completed(
+    db: AsyncSession, current_user_id: uuid.UUID, path_id: uuid.UUID
+) -> None:
+    """Exige que el Usuario haya terminado todas las lecciones de la ruta (Req 7.1).
+
+    Lee el progreso del Learning Service anclado al `current_user_id` autenticado
+    (anti-BOLA); nunca confía en un id del cliente. Sin progreso o con la ruta sin
+    completar, lanza `RutaNoCompletadaError` (409) sin revelar el contenido.
+    """
+    progress = await db.scalar(
+        select(PathProgress).where(
+            PathProgress.profile_id == current_user_id,
+            PathProgress.path_id == path_id,
+        )
+    )
+    if progress is None or not progress.completed:
+        log_event(logger, "assessment_blocked_path_incomplete")
+        raise RutaNoCompletadaError(internal_detail="path not completed by user")
 
 
 async def _get_assessment(db: AsyncSession, path_id: uuid.UUID) -> Assessment:
@@ -53,9 +75,16 @@ async def _get_assessment(db: AsyncSession, path_id: uuid.UUID) -> Assessment:
     return assessment
 
 
-async def get_assessment(db: AsyncSession, path_id: uuid.UUID) -> AssessmentOut:
-    """Presenta la evaluación de una ruta sin revelar la clave de respuestas (Req 7.1)."""
+async def get_assessment(
+    db: AsyncSession, current_user_id: uuid.UUID, path_id: uuid.UUID
+) -> AssessmentOut:
+    """Presenta la evaluación de una ruta sin revelar la clave de respuestas.
+
+    Solo se presenta cuando el Usuario terminó todas las lecciones de la ruta
+    (Req 7.1); antes, responde 409 sin entregar preguntas.
+    """
     assessment = await _get_assessment(db, path_id)
+    await _require_path_completed(db, current_user_id, path_id)
     questions = [
         QuestionOut(id=q["id"], prompt=q["prompt"], options=list(q["options"]))
         for q in assessment.questions
@@ -140,17 +169,26 @@ async def submit_assessment(
 ) -> AttemptResult:
     """Valida, califica y registra un intento de evaluación.
 
-    Flujo (Req 7.2–7.7):
+    Flujo (Req 7.1–7.7):
     1. Recupera la evaluación (404 si no existe).
-    2. Rechaza si el Usuario está en enfriamiento vigente (429, Req 7.5).
-    3. Valida las respuestas en servidor; inválidas → 422 sin puntaje (Req 7.6, 7.7).
-    4. Calcula el puntaje 0–100 y marca aprobado si ≥ umbral (Req 7.2, 7.3).
-    5. Controla el número de intento; al 3.º no aprobado activa enfriamiento 24 h
+    2. Exige la ruta completada por el Usuario (409, Req 7.1) y que no haya
+       aprobado ya la evaluación (409, Req 7.3): una evaluación aprobada no se
+       vuelve a calificar.
+    3. Rechaza si el Usuario está en enfriamiento vigente (429, Req 7.5).
+    4. Valida las respuestas en servidor; inválidas → 422 sin puntaje (Req 7.6, 7.7).
+    5. Calcula el puntaje 0–100 y marca aprobado si ≥ umbral (Req 7.2, 7.3).
+    6. Controla el número de intento; al 3.º no aprobado activa enfriamiento 24 h
        y, pasado este, el contador se reinicia (Req 7.4, 7.5).
     """
     now = now or datetime.now(timezone.utc)
     assessment = await _get_assessment(db, path_id)
+    await _require_path_completed(db, current_user_id, path_id)
     previous = await _attempts_in_cycle(db, current_user_id, path_id)
+
+    # Una evaluación aprobada no se vuelve a calificar (Req 7.3).
+    if any(attempt.passed for attempt in previous):
+        log_event(logger, "assessment_already_passed")
+        raise EvaluacionYaAprobadaError(internal_detail="assessment already passed")
 
     # Enfriamiento vigente: el último intento dejó una ventana aún no expirada.
     if previous and previous[0].cooldown_until is not None:

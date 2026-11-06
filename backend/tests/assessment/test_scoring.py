@@ -20,8 +20,10 @@ from hypothesis import strategies as st
 from app.assessment import service
 from app.assessment.constants import COOLDOWN_HOURS, MAX_ATTEMPTS
 from app.assessment.dto import AnswerItem, AnswerSubmission
+from app.assessment.errors import EvaluacionYaAprobadaError, RutaNoCompletadaError
 from app.assessment.models import Assessment, AssessmentAttempt
 from app.common.errors import RateLimitedError, ValidationError
+from app.learning.models import PathProgress
 
 _NOW = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
 
@@ -50,13 +52,32 @@ class _FakeSession:
     """Sesión async mínima: `scalar` devuelve la evaluación; `execute` los intentos."""
 
     def __init__(
-        self, assessment: Assessment, previous: list[AssessmentAttempt] | None = None
+        self,
+        assessment: Assessment,
+        previous: list[AssessmentAttempt] | None = None,
+        path_completed: bool = True,
+        has_progress: bool = True,
     ) -> None:
         self._assessment = assessment
         self._previous = previous or []
+        self._path_completed = path_completed
+        self._has_progress = has_progress
         self.added: list[AssessmentAttempt] = []
 
-    async def scalar(self, _stmt) -> Assessment:
+    async def scalar(self, stmt):  # noqa: ANN001, ANN201
+        # El servicio consulta el progreso de la ruta (gate del Req 7.1) además de la
+        # evaluación: se distingue por la tabla de la sentencia.
+        if "path_progress" in str(stmt):
+            if not self._has_progress:
+                return None
+            return PathProgress(
+                id=uuid.uuid4(),
+                profile_id=uuid.uuid4(),
+                path_id=self._assessment.path_id,
+                completed_microcapsules=[],
+                completed=self._path_completed,
+                last_completed_step=0,
+            )
         return self._assessment
 
     async def execute(self, _stmt) -> _ScalarsResult:
@@ -237,3 +258,78 @@ async def test_property_24_tras_enfriamiento_expirado_reinicia_contador() -> Non
     )
     assert result.attempt_number == 1
     assert result.passed is True
+
+
+# --------------------------------------------------------------------------- #
+# Req 7.1 — La evaluación exige la ruta completada
+# --------------------------------------------------------------------------- #
+@pytest.mark.asyncio
+async def test_req_7_1_no_califica_si_la_ruta_no_esta_completa() -> None:
+    """Sin ruta completada, calificar se rechaza (409) y no se registra ningún intento."""
+    assessment = _assessment(n_questions=3)
+    session = _FakeSession(assessment, path_completed=False)
+
+    with pytest.raises(RutaNoCompletadaError):
+        await service.submit_assessment(
+            session, uuid.uuid4(), assessment.path_id, _full_answers(3, 3), now=_NOW
+        )
+    assert session.added == []
+
+
+@pytest.mark.asyncio
+async def test_req_7_1_no_califica_si_el_usuario_no_tiene_progreso() -> None:
+    """Un Usuario que nunca empezó la ruta tampoco puede calificar."""
+    assessment = _assessment(n_questions=3)
+    session = _FakeSession(assessment, has_progress=False)
+
+    with pytest.raises(RutaNoCompletadaError):
+        await service.submit_assessment(
+            session, uuid.uuid4(), assessment.path_id, _full_answers(3, 3), now=_NOW
+        )
+    assert session.added == []
+
+
+@pytest.mark.asyncio
+async def test_req_7_1_no_presenta_la_evaluacion_si_la_ruta_no_esta_completa() -> None:
+    """Antes de terminar las lecciones, la evaluación no se entrega."""
+    assessment = _assessment(n_questions=3)
+    session = _FakeSession(assessment, path_completed=False)
+
+    with pytest.raises(RutaNoCompletadaError):
+        await service.get_assessment(session, uuid.uuid4(), assessment.path_id)
+
+
+@pytest.mark.asyncio
+async def test_req_7_1_presenta_la_evaluacion_sin_la_clave_si_la_ruta_esta_completa() -> None:
+    """Con la ruta completa se presenta la evaluación, sin exponer la respuesta correcta."""
+    assessment = _assessment(n_questions=3)
+    session = _FakeSession(assessment, path_completed=True)
+
+    result = await service.get_assessment(session, uuid.uuid4(), assessment.path_id)
+
+    assert len(result.questions) == 3
+    assert "correct" not in result.model_dump_json()
+
+
+# --------------------------------------------------------------------------- #
+# Req 7.3 — Una evaluación aprobada no se vuelve a calificar
+# --------------------------------------------------------------------------- #
+@pytest.mark.asyncio
+async def test_req_7_3_no_recalifica_una_evaluacion_ya_aprobada() -> None:
+    """Tras aprobar, un nuevo envío se rechaza (409) y no registra otro intento."""
+    assessment = _assessment(n_questions=4, threshold=70)
+    user = uuid.uuid4()
+    previous = [
+        AssessmentAttempt(
+            id=uuid.uuid4(), profile_id=user, path_id=assessment.path_id,
+            score=100, passed=True, attempt_number=1, cooldown_until=None,
+            created_at=_NOW - timedelta(minutes=5),
+        ),
+    ]
+    session = _FakeSession(assessment, previous)
+
+    with pytest.raises(EvaluacionYaAprobadaError):
+        await service.submit_assessment(
+            session, user, assessment.path_id, _full_answers(4, 4), now=_NOW
+        )
+    assert session.added == []
