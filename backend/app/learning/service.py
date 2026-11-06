@@ -38,6 +38,22 @@ from app.learning.models import LearningPath, Microcapsule, PathProgress
 
 logger = logging.getLogger("cima.learning")
 
+# Espacio de nombres fijo para derivar claves de idempotencia deterministas de los
+# eventos de métrica que emite este servicio (uuid5). Mantenerlo constante es lo
+# que hace que un reintento produzca la misma clave y Metrics no duplique.
+_METRICS_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "cima.learning.metrics")
+
+
+def _microcapsule_event_id(profile_id: uuid.UUID, microcapsule_id: uuid.UUID) -> uuid.UUID:
+    """Clave de idempotencia del evento `microcapsula_completada` de un Usuario.
+
+    Es determinista por (Usuario, microcápsula): la cápsula cuenta una sola vez por
+    Usuario aunque la repita o reintente, y nunca coincide con la clave del evento
+    `ruta_completada` (que usa el `client_event_id` de la petición), evitando que
+    Metrics descarte uno de los dos por considerarlos el mismo evento.
+    """
+    return uuid.uuid5(_METRICS_NAMESPACE, f"microcapsula_completada:{profile_id}:{microcapsule_id}")
+
 # Notificación en español coloquial cuando no hay contenido para la actividad (Req 4.5).
 _NOTICE_SIN_CONTENIDO = (
     "Todavía no tenemos contenido para tu actividad, así que te mostramos temas "
@@ -208,6 +224,17 @@ async def finalize_microcapsule(
     await db.commit()
     await db.refresh(progress)
 
+    # Evento `microcapsula_completada` (Req 4.6, 8.1). Se intenta en cada llamada y
+    # es idempotente por una clave determinista (Usuario, cápsula): si la emisión
+    # falló tras guardar el progreso, el reintento del cliente la recupera (Req 4.7)
+    # sin duplicar, y repetir una cápsula no infla la métrica.
+    await _emit_metric_event(
+        db,
+        current_user_id,
+        "microcapsula_completada",
+        _microcapsule_event_id(current_user_id, microcapsule_id),
+    )
+
     # Enganche de completitud de ruta: al pasar de no-completada a completada se
     # registra un evento de dominio `ruta_completada` (Req 4.6, 8.1). Ese evento
     # es el punto de integración que consumen Gamification (Req 19.1) y la
@@ -215,7 +242,9 @@ async def finalize_microcapsule(
     # `client_event_id` y solo ocurre en la transición (no en reintentos).
     just_completed = progress.completed and not was_completed
     if just_completed:
-        await _emit_path_completed_event(db, current_user_id, data.client_event_id)
+        await _emit_metric_event(
+            db, current_user_id, "ruta_completada", data.client_event_id
+        )
 
     log_event(
         logger,
@@ -234,15 +263,19 @@ async def finalize_microcapsule(
     )
 
 
-async def _emit_path_completed_event(
-    db: AsyncSession, current_user_id: uuid.UUID, client_event_id: uuid.UUID
+async def _emit_metric_event(
+    db: AsyncSession,
+    current_user_id: uuid.UUID,
+    event_type: str,
+    client_event_id: uuid.UUID,
 ) -> None:
-    """Registra el evento de dominio `ruta_completada` para el Usuario (Req 4.6, 8.1).
+    """Registra un evento de dominio (`microcapsula_completada` o `ruta_completada`).
 
     Delega en el Metrics Service, que registra el evento de forma idempotente por
     `client_event_id` (reintentos no duplican, Req 8.4) y lo asocia a la zona del
-    Perfil, o a "sin_zona" si no la tiene (Req 8.2). Es el punto de integración
-    que luego consumen Gamification (Req 19.1) y la Encuesta de Satisfacción
+    Perfil, o a "sin_zona" si no la tiene (Req 8.2). El tipo lo valida el Metrics
+    Service contra su allowlist. `ruta_completada` es el punto de integración que
+    luego consumen Gamification (Req 19.1) y la Encuesta de Satisfacción
     (Req 20.1). La zona se resuelve en el servidor desde el Perfil; nunca del
     cliente. No se registra PII: el evento solo lleva identificadores y la zona.
     """
@@ -261,11 +294,11 @@ async def _emit_path_completed_event(
         MetricEventCreate(
             client_event_id=client_event_id,
             profile_id=current_user_id,
-            event_type="ruta_completada",
+            event_type=event_type,
             geo_zone=geo_zone,
         ),
     )
-    log_event(logger, "path_completed_event_emitted")
+    log_event(logger, "learning_metric_event_emitted", event_type=event_type)
 
 
 async def get_path_status(
