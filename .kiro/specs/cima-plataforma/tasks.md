@@ -366,16 +366,18 @@ Convenciones:
     - `POST /api/v1/encuestas/{rutaId}/respuestas`; valida tipo/formato/rango (calificación 1–5) antes de registrar, rechazo indicando campo inválido; registra asociado al Perfil_de_Usuario y zona sin PII en ≤ 5 s; reintentos ≤ 3 conservando la respuesta sin pérdida (coordinación con Metrics Service)
     - _Requirements: 20.3, 20.4, 20.5_
     - _Properties: 43_
-  - [~] 19.3 Implementar reporte agregado de satisfacción por zona y retención
+  - [x] 19.3 Implementar reporte agregado de satisfacción por zona y retención
     - `GET /api/v1/encuestas/reportes`; agregado por zona con supresión k-anonimato ≥ 5; retención/anonimización de respuestas sensibles ≥ 90 días
     - _Requirements: 20.7, 20.8_
-    - Nota: reporte agregado con supresión k-anonimato ≥ 5 implementado. Falta el proceso de retención/anonimización a 90 días (el modelo solo deja la base preparada).
-  - [ ]* 19.4 Escribir test de propiedad para validación en servidor de la respuesta
+    - Nota: reporte agregado con supresión k-anonimato ≥ 5 y retención/anonimización a 90 días implementados. El job `anonimizar_respuestas_vencidas` (`app/survey/retention.py`) rompe el enlace con el Perfil y descarta el texto libre de `answers` a los `data_retention_days`, conservando `rating`/`geo_zone` para el reporte; idempotente y sin PII en logs. Pruebas en `tests/survey/test_retention.py`.
+  - [x]* 19.4 Escribir test de propiedad para validación en servidor de la respuesta
     - **Property 43: Validación en servidor de la respuesta de encuesta**
     - **Validates: Requirements 20.3**
-  - [ ]* 19.5 Escribir test de propiedad para idempotencia de presentación/registro
+    - Nota: cubierta en `tests/survey/test_validation.py` (rango 1–5, allowlist `extra=forbid`, tipos inválidos y zona que excede el máximo).
+  - [x]* 19.5 Escribir test de propiedad para idempotencia de presentación/registro
     - **Property 44: Idempotencia de presentación/registro de la encuesta**
     - **Validates: Requirements 20.6**
+    - Nota: cubierta en `tests/survey/test_idempotencia.py` (mismo `client_event_id` no duplica ni re-persiste; `already_answered` según respuesta previa), con stub de sesión que inspecciona la sentencia ORM.
 
 - [x] 20. Offline Sync Service (Req 18 — backend)
   - [x] 20.1 Implementar sincronización idempotente y fusión de progreso
