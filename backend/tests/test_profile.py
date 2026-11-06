@@ -19,7 +19,7 @@ from pydantic import ValidationError as PydanticValidationError
 
 from app.common.masking import mask_value
 from app.profile.constants import ALLOWED_ACTIVITY_TYPES, GEO_ZONE_MAX_LENGTH
-from app.profile.dto import ProfileCreate
+from app.profile.dto import ProfileCreate, ProfileUpdate
 
 
 # --------------------------------------------------------------------------- #
@@ -106,7 +106,7 @@ async def test_actualizar_perfil_ajeno_es_rechazado() -> None:
     # Given dos identidades distintas
     current_user = uuid.uuid4()
     otro_perfil = uuid.uuid4()
-    data = ProfileCreate(phone="3001234567", activity_type="cafe", geo_zone="Huila")
+    data = ProfileUpdate(activity_type="cafe", geo_zone="Huila")
 
     # When / Then: intentar modificar un perfil ajeno lanza ForbiddenError
     with pytest.raises(ForbiddenError):

@@ -24,7 +24,7 @@ from app.common.errors import (
 from app.common.logging import log_event
 from app.common.masking import mask_value
 from app.common.rate_limit import SlidingWindowRateLimiter
-from app.profile.dto import ProfileCreate, ProfileResponse
+from app.profile.dto import ProfileCreate, ProfileResponse, ProfileUpdate
 from app.profile.models import Profile
 
 logger = logging.getLogger("cima.profile")
@@ -86,13 +86,14 @@ async def update_own_profile(
     db: AsyncSession,
     current_user_id: uuid.UUID,
     target_id: uuid.UUID,
-    data: ProfileCreate,
+    data: ProfileUpdate,
 ) -> ProfileResponse:
-    """Actualiza el Perfil propio.
+    """Actualiza el Perfil propio (tipo de cultivo/comercio y zona).
 
     Verifica explícitamente que el recurso objetivo pertenezca al usuario
     autenticado antes de aplicar cualquier cambio (anti-BOLA, Req 9.6). Si no
     coincide, registra el intento sin PII y rechaza con error de autorización.
+    El teléfono no se modifica por esta vía (ver `ProfileUpdate`).
     """
     if target_id != current_user_id:
         log_event(
