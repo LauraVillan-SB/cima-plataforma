@@ -1,0 +1,221 @@
+{
+  "info": {
+    "name": "CIMA - Aprendizaje (microcapsulas y rutas)",
+    "description": "Learning Service (Tarea 13, Req 4 y 17): seleccion personalizada de microcapsulas, finalizacion idempotente y estado de la ruta. Antes de empezar completa las variables rutaId y microcapsulaId con los ids de una ruta y de una de sus microcapsulas (de una base local de prueba). Ver postmanCollections/README.md para la configuracion local. No usar credenciales reales.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "telefono", "value": "" },
+    { "key": "clave", "value": "" },
+    { "key": "rutaId", "value": "" },
+    { "key": "microcapsulaId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Ingreso (obtiene la cookie de sesion)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"telefono\": \"{{telefono}}\",\n  \"clave\": \"{{clave}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/auth/ingreso", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "ingreso"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ingreso exitoso (200)', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Se establecio la cookie de sesion', function () {",
+              "  pm.expect(pm.cookies.has('cima_access')).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Microcapsulas personalizadas (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/v1/aprendizaje/microcapsulas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "aprendizaje", "microcapsulas"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test('Entrega como maximo 10 microcapsulas (Req 4.3)', function () {",
+              "  pm.expect(body.items.length).to.be.at.most(10);",
+              "});",
+              "pm.test('Cada microcapsula dura entre 180 y 300 s y tiene un tema permitido (Req 4.1, 4.2)', function () {",
+              "  const temas = ['gestion_riesgos', 'finanzas', 'adaptacion_clima'];",
+              "  body.items.forEach(function (m) {",
+              "    pm.expect(m.duration_sec).to.be.within(180, 300);",
+              "    pm.expect(temas).to.include(m.topic);",
+              "  });",
+              "});",
+              "pm.test('Si no hay contenido para la actividad, avisa con una notificacion (Req 4.5)', function () {",
+              "  if (body.fallback) { pm.expect(body.notice).to.be.a('string'); }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Finalizar una microcapsula (POST, idempotente)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"client_event_id\": \"{{$guid}}\",\n  \"path_id\": \"{{rutaId}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/aprendizaje/microcapsulas/{{microcapsulaId}}/finalizar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "aprendizaje", "microcapsulas", "{{microcapsulaId}}", "finalizar"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test('Devuelve el avance de la ruta (Req 4.10)', function () {",
+              "  pm.expect(body.completed_count).to.be.at.most(body.total_count);",
+              "  pm.expect(body.path_completed).to.be.a('boolean');",
+              "});",
+              "pm.test('La ruta esta completa si y solo si todas las microcapsulas estan finalizadas', function () {",
+              "  pm.expect(body.path_completed).to.eql(body.completed_count === body.total_count);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Estado de la ruta y siguiente paso (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/v1/aprendizaje/rutas/{{rutaId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "aprendizaje", "rutas", "{{rutaId}}"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test('Incluye el avance y el siguiente paso', function () {",
+              "  pm.expect(body).to.have.property('completed_count');",
+              "  pm.expect(body).to.have.property('total_count');",
+              "  pm.expect(body).to.have.property('next_microcapsule_id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Rechazo: campo no permitido al finalizar (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"client_event_id\": \"{{$guid}}\",\n  \"path_id\": \"{{rutaId}}\",\n  \"profile_id\": \"{{$guid}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/aprendizaje/microcapsulas/{{microcapsulaId}}/finalizar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "aprendizaje", "microcapsulas", "{{microcapsulaId}}", "finalizar"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Rechaza el campo no permitido (422): el titular sale de la sesion, no del cuerpo', function () {",
+              "  pm.response.to.have.status(422);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Rechazo: microcapsula que no pertenece a la ruta (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"client_event_id\": \"{{$guid}}\",\n  \"path_id\": \"{{rutaId}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/aprendizaje/microcapsulas/{{$guid}}/finalizar", "host": ["{{baseUrl}}"], "path": ["api", "v1", "aprendizaje", "microcapsulas", "{{$guid}}", "finalizar"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 404 con mensaje generico', function () {",
+              "  pm.response.to.have.status(404);",
+              "  pm.expect(pm.response.json()).to.have.property('correlation_id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Rechazo: ruta inexistente (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/v1/aprendizaje/rutas/{{$guid}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "aprendizaje", "rutas", "{{$guid}}"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. (Manual) Rechazo: sin sesion (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/v1/aprendizaje/microcapsulas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "aprendizaje", "microcapsulas"] },
+        "description": "Borra las cookies de localhost en Postman (Cookies > Manage Cookies) y ejecuta esta solicitud."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Sin sesion se rechaza con 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

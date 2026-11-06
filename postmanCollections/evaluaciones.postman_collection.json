@@ -1,0 +1,260 @@
+{
+  "info": {
+    "name": "CIMA - Evaluaciones (presentar y calificar)",
+    "description": "Assessment Service (Tarea 14, Req 7): presentacion de la evaluacion de una ruta y envio de respuestas, calificadas en el servidor. La evaluacion solo se presenta cuando el Usuario completo la ruta (Req 7.1) y no se vuelve a calificar tras aprobar (Req 7.3). Completa rutaId con una ruta que el usuario de prueba ya termino y rutaSinCompletarId (opcional) con una que no. Las variables opcion0, opcion1 y opcion2 son el indice de la opcion elegida en cada pregunta (la evaluacion de ejemplo tiene 3). Orden: los rechazos de validacion (2 a 4) van ANTES del envio que aprueba (5), porque una evaluacion aprobada se rechaza con 409 antes de validar. Una corrida completa solo funciona una vez por usuario y ruta: para repetirla usa otro usuario de prueba. Ver postmanCollections/README.md para la configuracion local. No usar credenciales reales.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "telefono", "value": "" },
+    { "key": "clave", "value": "" },
+    { "key": "rutaId", "value": "" },
+    { "key": "rutaSinCompletarId", "value": "" },
+    { "key": "opcion0", "value": "0" },
+    { "key": "opcion1", "value": "0" },
+    { "key": "opcion2", "value": "0" }
+  ],
+  "item": [
+    {
+      "name": "0. Ingreso (obtiene la cookie de sesion)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"telefono\": \"{{telefono}}\",\n  \"clave\": \"{{clave}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/auth/ingreso", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "ingreso"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ingreso exitoso (200)', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Se establecio la cookie de sesion', function () {",
+              "  pm.expect(pm.cookies.has('cima_access')).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Presentar la evaluacion de la ruta (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{rutaId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{rutaId}}"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 200 (la ruta esta completa)', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test('Presenta preguntas con opciones', function () {",
+              "  pm.expect(body.questions).to.be.an('array').that.is.not.empty;",
+              "  body.questions.forEach(function (q) {",
+              "    pm.expect(q.options).to.be.an('array');",
+              "  });",
+              "});",
+              "pm.test('NO expone la respuesta correcta (Req 7.6)', function () {",
+              "  pm.expect(pm.response.text()).to.not.include('correct');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Rechazo: respuestas incompletas (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"answers\": [\n    { \"question_id\": 0, \"selected_option\": 0 }\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{rutaId}}/respuestas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{rutaId}}", "respuestas"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Rechaza sin calcular puntaje (422, Req 7.7)', function () {",
+              "  pm.response.to.have.status(422);",
+              "  pm.expect(pm.response.json()).to.not.have.property('score');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Rechazo: opcion fuera de rango (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"answers\": [\n    { \"question_id\": 0, \"selected_option\": 99 },\n    { \"question_id\": 1, \"selected_option\": 0 },\n    { \"question_id\": 2, \"selected_option\": 0 }\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{rutaId}}/respuestas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{rutaId}}", "respuestas"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Rechaza la opcion inexistente (422, Req 7.6)', function () {",
+              "  pm.response.to.have.status(422);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Rechazo: campo no permitido (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"answers\": [\n    { \"question_id\": 0, \"selected_option\": 0 }\n  ],\n  \"score\": 100\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{rutaId}}/respuestas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{rutaId}}", "respuestas"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('El cliente no puede imponer el puntaje: se rechaza el campo extra (422)', function () {",
+              "  pm.response.to.have.status(422);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Enviar respuestas y calificar (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"answers\": [\n    { \"question_id\": 0, \"selected_option\": {{opcion0}} },\n    { \"question_id\": 1, \"selected_option\": {{opcion1}} },\n    { \"question_id\": 2, \"selected_option\": {{opcion2}} }\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{rutaId}}/respuestas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{rutaId}}", "respuestas"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test('El puntaje esta entre 0 y 100 (Req 7.2)', function () {",
+              "  pm.expect(body.score).to.be.within(0, 100);",
+              "});",
+              "pm.test('Informa si aprobo y cuantos intentos le quedan (Req 7.3, 7.4)', function () {",
+              "  pm.expect(body.passed).to.be.a('boolean');",
+              "  pm.expect(body.attempts_remaining).to.be.within(0, 3);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Rechazo: evaluacion inexistente (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{$guid}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{$guid}}"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Responde 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. (Manual) Rechazo: ruta sin completar (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{rutaSinCompletarId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{rutaSinCompletarId}}"] },
+        "description": "Requiere la variable rutaSinCompletarId: una ruta con evaluacion que el usuario de prueba NO ha terminado."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Antes de terminar las lecciones no se presenta la evaluacion (409, Req 7.1)', function () {",
+              "  pm.response.to.have.status(409);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. (Manual) Rechazo: ya aprobada, no se vuelve a calificar (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"answers\": [\n    { \"question_id\": 0, \"selected_option\": {{opcion0}} },\n    { \"question_id\": 1, \"selected_option\": {{opcion1}} },\n    { \"question_id\": 2, \"selected_option\": {{opcion2}} }\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{rutaId}}/respuestas", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{rutaId}}", "respuestas"] },
+        "description": "Ejecutala despues de aprobar con la solicitud 5."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Una evaluacion aprobada no se vuelve a calificar (409, Req 7.3)', function () {",
+              "  pm.response.to.have.status(409);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. (Manual) Rechazo: sin sesion (GET)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/v1/evaluaciones/{{rutaId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "evaluaciones", "{{rutaId}}"] },
+        "description": "Borra las cookies de localhost en Postman (Cookies > Manage Cookies) y ejecuta esta solicitud."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Sin sesion se rechaza con 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
