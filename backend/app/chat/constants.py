@@ -92,6 +92,14 @@ BLOCKED_INPUT_PATTERNS: tuple[str, ...] = (
     r"\bc[oó]mo\s+(fabricar|hacer)\s+(un\s+)?(arma|explosivo|bomba)",
 )
 
+# Marcadores de oferta que SÍ pueden respaldarse con el catálogo de Microseguros
+# (Req 16.2). Los demás marcadores (incentivo, descuento, ...) nunca se respaldan.
+CATALOG_BACKED_OFFER_MARKERS: tuple[str, ...] = ("microseguro",)
+
+# Cifras de precio o porcentaje: el catálogo no tiene precios, por lo que una
+# oferta con cifras se considera inventada (Req 16.2).
+OFFER_FIGURES_PATTERN = r"\$\s*\d|\d\s*%|\b\d[\d.,]*\s+(pesos|cop)\b"
+
 # Palabras que marcan una oferta/incentivo en la salida del modelo: si aparecen,
 # la respuesta debe validarse contra el backend antes de presentarla (Req 16.2).
 OFFER_OUTPUT_MARKERS: tuple[str, ...] = (
