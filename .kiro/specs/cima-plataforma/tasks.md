@@ -258,9 +258,10 @@ Convenciones:
   - [x]* 13.9 Escribir test de propiedad para completitud de ruta
     - **Property 14: Completitud de ruta como bicondicional**
     - **Validates: Requirements 4.10**
-  - [ ]* 13.10 Escribir test de propiedad para resiliencia de registro con reintentos
+  - [x]* 13.10 Escribir test de propiedad para resiliencia de registro con reintentos
     - **Property 15: Resiliencia de registro con reintentos acotados**
     - **Validates: Requirements 4.7, 8.4**
+    - Nota: el registro de `microcapsula_completada` y `ruta_completada` reintenta hasta 3 veces y luego conserva el evento en `learning_event_outbox` (migración `0013`); `drain_outbox` lo recupera. Prueba en `tests/learning/test_resilience.py` (Hypothesis sobre secuencias de fallos; el límite está fijado en la prueba, no derivado del código). **Pendiente:** no hay un worker que drene la cola de todos los usuarios (hoy drena cada usuario al finalizar); el evento `ruta_completada` solo se emite en la transición, por lo que no se recupera si ni la cola pudo guardarse; los reintentos son inmediatos, sin espera.
 
 - [x] 14. Assessment Service — Evaluaciones (Req 7)
   - [x] 14.1 Implementar presentación de evaluación y validación de respuestas en servidor

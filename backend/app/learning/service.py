@@ -20,9 +20,11 @@ from __future__ import annotations
 
 import logging
 import uuid
+from typing import NamedTuple
 
-from sqlalchemy import any_, literal, select
+from sqlalchemy import any_, delete, literal, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.errors import NotFoundError
@@ -30,6 +32,8 @@ from app.common.logging import log_event
 from app.learning.constants import (
     EXPECTED_TIME_FACTOR,
     FALLBACK_TOPIC,
+    MAX_DRAIN_BATCH,
+    MAX_EVENT_RETRIES,
     MAX_PROFILE_PROMPTS,
     MAX_SELECTION,
     PACE_SLOW,
@@ -43,6 +47,7 @@ from app.learning.dto import (
     PathStatusResponse,
 )
 from app.learning.models import (
+    LearningEventOutbox,
     LearningPath,
     Microcapsule,
     PathProgress,
@@ -302,11 +307,15 @@ async def finalize_microcapsule(
     # rollback y expira `progress`; leerlo después exigiría una carga diferida.
     path_completed = bool(progress.completed)
 
+    # Eventos que quedaron pendientes por fallos anteriores del Usuario (Req 4.7).
+    await drain_outbox(db, current_user_id)
+
     # Evento `microcapsula_completada` (Req 4.6, 8.1). Se intenta en cada llamada y
     # es idempotente por una clave determinista (Usuario, cápsula): si la emisión
     # falló tras guardar el progreso, el reintento del cliente la recupera (Req 4.7)
-    # sin duplicar, y repetir una cápsula no infla la métrica.
-    await _emit_metric_event(
+    # sin duplicar, y repetir una cápsula no infla la métrica. Si el registro falla,
+    # se reintenta hasta 3 veces y luego se conserva en la cola (Property 15).
+    await _record_event_resilient(
         db,
         current_user_id,
         "microcapsula_completada",
@@ -320,7 +329,7 @@ async def finalize_microcapsule(
     # `client_event_id` y solo ocurre en la transición (no en reintentos).
     just_completed = path_completed and not was_completed
     if just_completed:
-        await _emit_metric_event(
+        await _record_event_resilient(
             db, current_user_id, "ruta_completada", data.client_event_id
         )
 
@@ -464,6 +473,145 @@ async def _grant_recognitions(
             )
         except ReconocimientoPendienteError:
             log_event(logger, "learning_recognition_pending", trigger=trigger)
+
+
+class _PendingEvent(NamedTuple):
+    """Copia simple de un evento de la cola, a salvo de rollbacks de la sesión."""
+
+    id: uuid.UUID
+    profile_id: uuid.UUID
+    event_type: str
+    client_event_id: uuid.UUID
+
+
+async def _record_event_resilient(
+    db: AsyncSession,
+    current_user_id: uuid.UUID,
+    event_type: str,
+    client_event_id: uuid.UUID,
+) -> None:
+    """Registra un evento con reintentos acotados y, si persiste el fallo, lo conserva.
+
+    Hace el primer intento y hasta `MAX_EVENT_RETRIES` reintentos (nunca más de 3,
+    Property 15). Entre intentos revierte la transacción fallida. Solo captura errores
+    de base de datos; cualquier otro error es un defecto y se propaga. Si todos los
+    intentos fallan, el evento queda en la cola para registrarlo después sin pérdida
+    de datos (Req 4.7, 8.4).
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: titular del evento, tomado de la sesión.
+        event_type: tipo de evento de dominio.
+        client_event_id: clave de idempotencia del evento.
+    """
+    for attempt in range(1 + MAX_EVENT_RETRIES):
+        try:
+            await _emit_metric_event(db, current_user_id, event_type, client_event_id)
+            return
+        except SQLAlchemyError:
+            await db.rollback()
+            log_event(logger, "learning_event_failed", event_type=event_type, attempt=attempt + 1)
+    await _enqueue_event(db, current_user_id, event_type, client_event_id)
+
+
+async def _enqueue_event(
+    db: AsyncSession,
+    profile_id: uuid.UUID,
+    event_type: str,
+    client_event_id: uuid.UUID,
+) -> None:
+    """Guarda el evento en la cola de forma idempotente por `client_event_id`.
+
+    Si ni siquiera se puede guardar (la base de datos no responde) el error se
+    propaga: la petición falla y el reintento del cliente, que es idempotente,
+    vuelve a intentarlo; no se afirma haber conservado algo que no se guardó.
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: titular del evento.
+        event_type: tipo de evento de dominio.
+        client_event_id: clave de idempotencia del evento.
+    """
+    existing = await db.scalar(
+        select(LearningEventOutbox).where(
+            LearningEventOutbox.client_event_id == client_event_id
+        )
+    )
+    if existing is None:
+        db.add(
+            LearningEventOutbox(
+                profile_id=profile_id,
+                client_event_id=client_event_id,
+                event_type=event_type,
+            )
+        )
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+    log_event(logger, "learning_event_queued", event_type=event_type)
+
+
+async def _drain_one(db: AsyncSession, pending: _PendingEvent) -> bool:
+    """Intenta registrar un evento de la cola y lo borra si se registró.
+
+    Args:
+        db: sesión de base de datos.
+        pending: copia del evento pendiente.
+
+    Returns:
+        True si se registró y se quitó de la cola; False si volvió a fallar.
+    """
+    try:
+        await _emit_metric_event(
+            db, pending.profile_id, pending.event_type, pending.client_event_id
+        )
+    except SQLAlchemyError:
+        await db.rollback()
+        log_event(logger, "learning_event_drain_failed", event_type=pending.event_type)
+        return False
+    await db.execute(delete(LearningEventOutbox).where(LearningEventOutbox.id == pending.id))
+    await db.commit()
+    return True
+
+
+async def drain_outbox(
+    db: AsyncSession,
+    profile_id: uuid.UUID | None = None,
+    limit: int = MAX_DRAIN_BATCH,
+) -> int:
+    """Reintenta registrar los eventos que quedaron pendientes en la cola (Req 4.7).
+
+    Procesa del más antiguo al más nuevo y se detiene en el primer fallo para no
+    insistir contra una base de datos caída. El registro en Metrics es idempotente,
+    así que repetir un evento ya registrado no lo duplica. `FOR UPDATE SKIP LOCKED`
+    evita que dos procesos tomen el mismo evento a la vez.
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: si se indica, solo los eventos de ese Usuario (el de la sesión);
+            si es None, de todos (para un worker).
+        limit: máximo de eventos por invocación.
+
+    Returns:
+        Cuántos eventos se registraron y se quitaron de la cola.
+    """
+    stmt = (
+        select(LearningEventOutbox)
+        .order_by(LearningEventOutbox.created_at)
+        .limit(limit)
+        .with_for_update(skip_locked=True)
+    )
+    if profile_id is not None:
+        stmt = stmt.where(LearningEventOutbox.profile_id == profile_id)
+    rows = (await db.scalars(stmt)).all()
+    batch = [_PendingEvent(r.id, r.profile_id, r.event_type, r.client_event_id) for r in rows]
+    drained = 0
+    for pending in batch:
+        if not await _drain_one(db, pending):
+            break
+        drained += 1
+    return drained
 
 
 async def _emit_metric_event(
