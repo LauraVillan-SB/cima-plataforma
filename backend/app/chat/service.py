@@ -22,7 +22,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.chat import guardrails
+from app.chat import audit, guardrails
 from app.chat.constants import (
     CANAL_VOZ,
     ESTADO_ENCOLADO,
@@ -293,7 +293,7 @@ async def procesar_inferencia(
         # PII; no se silencia, se traduce a un estado observable por el cliente.
         interaccion.status = ESTADO_ERROR
         await db.commit()
-        log_event(logger, "chat_inference_failed", interaction_id=str(interaction_id))
+        audit.registrar_auditoria(interaccion)
         return
 
     # Validación de salida y derivación (Req 16.2, 16.3). `oferta_respaldada` es
@@ -312,14 +312,7 @@ async def procesar_inferencia(
     )
     interaccion.status = ESTADO_LISTO
     await db.commit()
-    log_event(
-        logger,
-        "chat_inference_completed",
-        interaction_id=str(interaction_id),
-        model_version=resultado.model_version,
-        guardrail=GUARDRAIL_PERMITIDO,
-        con_audio=bool(interaccion.response_audio_ref),
-    )
+    audit.registrar_auditoria(interaccion)
 
 
 def _evaluar_salida(respuesta: str) -> str:
@@ -368,12 +361,7 @@ async def _finalizar_con_respaldo(
     interaccion.response_audio_ref = await _sintetizar_respuesta(tts, respuesta)
     interaccion.status = ESTADO_LISTO
     await db.commit()
-    log_event(
-        logger,
-        "chat_guardrail_fallback",
-        interaction_id=str(interaccion.id),
-        guardrail=decision,
-    )
+    audit.registrar_auditoria(interaccion)
 
 
 async def _sintetizar_respuesta(tts: TextToSpeech, texto: str) -> str | None:
