@@ -14,10 +14,16 @@ export const ZONA_MAX_LONGITUD = 100;
 export const TELEFONO_MIN_DIGITOS = 7;
 export const TELEFONO_MAX_DIGITOS = 15;
 
-/** Opción de tipo de cultivo o comercio: valor del backend + etiqueta legible. */
+/**
+ * Opción de tipo de cultivo o comercio: valor del backend, etiqueta legible y
+ * la frase con la que se nombra a la persona en los saludos ("tu cultivo de
+ * café", "tu tienda de barrio"). La frase es propia de cada opción porque no
+ * todo es un cultivo (p. ej. la ganadería o los comercios).
+ */
 export interface OpcionActividad {
   readonly valor: string;
   readonly etiqueta: string;
+  readonly frase: string;
 }
 
 /**
@@ -25,18 +31,18 @@ export interface OpcionActividad {
  * acepta la allowlist del backend; la `etiqueta` es el texto que ve el Usuario.
  */
 export const TIPOS_ACTIVIDAD: readonly OpcionActividad[] = [
-  { valor: 'cafe', etiqueta: 'Café' },
-  { valor: 'platano', etiqueta: 'Plátano' },
-  { valor: 'aguacate', etiqueta: 'Aguacate' },
-  { valor: 'cacao', etiqueta: 'Cacao' },
-  { valor: 'arroz', etiqueta: 'Arroz' },
-  { valor: 'maiz', etiqueta: 'Maíz' },
-  { valor: 'ganaderia', etiqueta: 'Ganadería' },
-  { valor: 'hortalizas', etiqueta: 'Hortalizas' },
-  { valor: 'tienda_barrio', etiqueta: 'Tienda de barrio' },
-  { valor: 'panaderia', etiqueta: 'Panadería' },
-  { valor: 'miscelanea', etiqueta: 'Miscelánea' },
-  { valor: 'fruteria', etiqueta: 'Frutería' },
+  { valor: 'cafe', etiqueta: 'Café', frase: 'tu cultivo de café' },
+  { valor: 'platano', etiqueta: 'Plátano', frase: 'tu cultivo de plátano' },
+  { valor: 'aguacate', etiqueta: 'Aguacate', frase: 'tu cultivo de aguacate' },
+  { valor: 'cacao', etiqueta: 'Cacao', frase: 'tu cultivo de cacao' },
+  { valor: 'arroz', etiqueta: 'Arroz', frase: 'tu cultivo de arroz' },
+  { valor: 'maiz', etiqueta: 'Maíz', frase: 'tu cultivo de maíz' },
+  { valor: 'ganaderia', etiqueta: 'Ganadería', frase: 'tu ganadería' },
+  { valor: 'hortalizas', etiqueta: 'Hortalizas', frase: 'tu cultivo de hortalizas' },
+  { valor: 'tienda_barrio', etiqueta: 'Tienda de barrio', frase: 'tu tienda de barrio' },
+  { valor: 'panaderia', etiqueta: 'Panadería', frase: 'tu panadería' },
+  { valor: 'miscelanea', etiqueta: 'Miscelánea', frase: 'tu miscelánea' },
+  { valor: 'fruteria', etiqueta: 'Frutería', frase: 'tu frutería' },
 ];
 
 const VALORES_ACTIVIDAD = new Set(TIPOS_ACTIVIDAD.map((o) => o.valor));
@@ -44,6 +50,14 @@ const VALORES_ACTIVIDAD = new Set(TIPOS_ACTIVIDAD.map((o) => o.valor));
 /** Devuelve la etiqueta legible de un tipo de actividad, o el propio valor. */
 export function etiquetaActividad(valor: string): string {
   return TIPOS_ACTIVIDAD.find((o) => o.valor === valor)?.etiqueta ?? valor;
+}
+
+/**
+ * Frase para nombrar la actividad en un saludo ("tu cultivo de café"). Si el
+ * valor no está en el catálogo devuelve un texto neutro, nunca el valor crudo.
+ */
+export function fraseActividad(valor: string): string {
+  return TIPOS_ACTIVIDAD.find((o) => o.valor === valor)?.frase ?? 'tu actividad';
 }
 
 /** `true` si el tipo de actividad pertenece al catálogo permitido. */

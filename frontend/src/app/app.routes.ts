@@ -27,6 +27,20 @@ export const routes: Routes = [
     title: 'Aprendizaje - CIMA',
   },
   {
+    path: 'perfil',
+    loadComponent: () =>
+      import('./profile/profile-page.component').then((m) => m.ProfilePageComponent),
+    title: 'Mi perfil - CIMA',
+  },
+  {
+    path: 'clave',
+    loadComponent: () =>
+      import('./auth/change-password-page.component').then(
+        (m) => m.ChangePasswordPageComponent,
+      ),
+    title: 'Cambiar mi clave - CIMA',
+  },
+  {
     path: 'evaluacion/:rutaId',
     loadComponent: () =>
       import('./evaluacion/assessment-page.component').then(

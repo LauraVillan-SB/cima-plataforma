@@ -16,12 +16,43 @@ export class AuthService {
   /** Indica si hay una sesión vigente (para mostrar/ocultar vistas). */
   readonly autenticado = signal<boolean>(false);
 
-  /** Registra un nuevo Usuario con teléfono y Clave de 4 dígitos (Req 1.1). */
-  async registrar(telefono: string, clave: string): Promise<void> {
+  /**
+   * Registra un nuevo Usuario con teléfono y Clave de 4 dígitos (Req 1.1). El
+   * backend exige la doble confirmación de la Clave (Req 1.3), por eso se envía
+   * `confirmacion_clave`; sin ella responde 422 y nadie podría crear su cuenta.
+   */
+  async registrar(telefono: string, clave: string, confirmacionClave: string): Promise<void> {
     await firstValueFrom(
-      this.http.post('/api/v1/auth/registro', { telefono, clave }, { withCredentials: true }),
+      this.http.post(
+        '/api/v1/auth/registro',
+        { telefono, clave, confirmacion_clave: confirmacionClave },
+        { withCredentials: true },
+      ),
     );
     this.autenticado.set(true);
+  }
+
+  /**
+   * Cambia la Clave del Usuario autenticado (`PUT /api/v1/auth/clave`). Exige la
+   * Clave actual y la nueva con su confirmación; la verificación la hace el
+   * backend (Req 1.14). Responde 204 sin cuerpo.
+   */
+  async cambiarClave(
+    claveActual: string,
+    claveNueva: string,
+    confirmacionClaveNueva: string,
+  ): Promise<void> {
+    await firstValueFrom(
+      this.http.put(
+        '/api/v1/auth/clave',
+        {
+          clave_actual: claveActual,
+          clave_nueva: claveNueva,
+          confirmacion_clave_nueva: confirmacionClaveNueva,
+        },
+        { withCredentials: true },
+      ),
+    );
   }
 
   /** Inicia sesión con teléfono y Clave; la cookie de sesión la fija el backend. */

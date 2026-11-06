@@ -18,11 +18,10 @@ const ETIQUETA_TEMA: Record<string, string> = {
  * (Tarea 23.3, Req 4). Solo presentación: la selección, el orden y la
  * personalización las resuelve el backend (Req 17.3); aquí se listan y se
  * muestra, si aplica, el aviso de contenido general cuando no hay específico
- * (Req 4.5). No muestra PII.
+ * (Req 4.5). No muestra PII. Textos y botones grandes (Req 13.2, 13.3).
  */
 @Component({
   selector: 'cima-learning-page',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="aprendizaje">
@@ -36,7 +35,7 @@ const ETIQUETA_TEMA: Record<string, string> = {
         </div>
         <button
           type="button"
-          class="sb-ui-button sb-ui-button--primary"
+          class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large reintentar"
           (click)="cargar()"
         >
           Reintentar
@@ -70,29 +69,36 @@ const ETIQUETA_TEMA: Record<string, string> = {
         margin: 0 auto;
       }
       .titulo {
-        font-size: 1.25rem;
         margin: 0 0 1rem;
       }
       .estado {
-        line-height: 1.5;
+        font-size: 1.125rem;
+        line-height: 1.6;
+      }
+      .reintentar {
+        display: block;
+        width: 100%;
+        margin-top: 1rem;
       }
       .lista {
         list-style: none;
         margin: 1rem 0 0;
         padding: 0;
         display: grid;
-        gap: 0.75rem;
+        gap: 1rem;
       }
       .tarjeta {
         background: #fff;
-        padding: 1rem;
+        padding: 1.25rem;
       }
       .tema {
-        font-weight: 600;
+        font-size: 1.25rem;
+        font-weight: 700;
       }
       .duracion {
         margin: 0.25rem 0 0;
-        color: #555;
+        color: #4a4a4a;
+        font-size: 1.05rem;
       }
     `,
   ],
