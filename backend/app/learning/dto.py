@@ -9,14 +9,16 @@ se usan DTOs de salida con allowlist (nunca el objeto ORM completo, Req 9.5).
 from __future__ import annotations
 
 import uuid
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.learning.constants import (
     ALLOWED_TOPICS,
     MAX_DURATION_SEC,
+    MAX_ELAPSED_SEC,
     MIN_DURATION_SEC,
+    PACE_STANDARD,
 )
 
 
@@ -85,6 +87,10 @@ class FinalizeRequest(BaseModel):
 
     client_event_id: uuid.UUID
     path_id: uuid.UUID
+    # Tiempo que tomó completar la cápsula, medido por el cliente sin pedirle datos
+    # al Usuario (Req 17.2). Opcional: sin él no hay señal de tiempo. Es solo una
+    # medición; la decisión de adaptar se toma en el backend (Req 17.3).
+    elapsed_seconds: Optional[int] = Field(default=None, ge=0, le=MAX_ELAPSED_SEC)
 
 
 class FinalizeResponse(BaseModel):
@@ -109,4 +115,10 @@ class PathStatusResponse(BaseModel):
     completed_count: int
     total_count: int
     next_microcapsule_id: Optional[uuid.UUID] = None
+    # `adapted` es verdadero solo cuando el backend aplicó una adaptación por las
+    # señales de progreso (Req 17.1); sin señales suficientes es falso y la ruta es
+    # la estándar (Req 17.5). `simplify` y `pace` son lo que el cliente debe aplicar
+    # a la microcápsula siguiente; el cliente no decide ni calcula nada (Req 17.3).
     adapted: bool = False
+    simplify: bool = False
+    pace: Literal["standard", "slow"] = PACE_STANDARD

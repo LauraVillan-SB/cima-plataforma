@@ -19,7 +19,7 @@ import pytest
 
 from app.learning import service
 from app.learning.dto import FinalizeRequest
-from app.learning.models import LearningPath, PathProgress
+from app.learning.models import LearningPath, Microcapsule, PathProgress
 from app.metrics.models import MetricEvent
 
 
@@ -28,6 +28,16 @@ class _ProfileStub:
 
     def __init__(self, geo_zone: str) -> None:
         self.geo_zone = geo_zone
+
+
+class _ScalarsOf:
+    """Resultado de `scalars()` que expone `all()` como el de SQLAlchemy."""
+
+    def __init__(self, items: list[bool]) -> None:
+        self._items = items
+
+    def all(self) -> list[bool]:
+        return list(self._items)
 
 
 class _Session:
@@ -45,16 +55,26 @@ class _Session:
         path: LearningPath | None,
         progress: PathProgress | None = None,
         geo_zone: str = "Huila",
+        capsules: dict[uuid.UUID, Microcapsule] | None = None,
+        attempts: list[bool] | None = None,
     ) -> None:
         self._path = path
         self._progress = progress
         self._profile = _ProfileStub(geo_zone)
+        self._capsules = capsules or {}
+        self._attempts = attempts or []
         self.events: dict[uuid.UUID, MetricEvent] = {}
 
-    async def get(self, model, _pk):  # noqa: ANN001, ANN201
+    async def get(self, model, pk):  # noqa: ANN001, ANN201
         if model is LearningPath:
             return self._path
+        if model is Microcapsule:
+            return self._capsules.get(pk)
         return self._profile
+
+    async def scalars(self, _stmt):  # noqa: ANN001, ANN201
+        """Resultado de `select(AssessmentAttempt.passed)`: los intentos del Usuario."""
+        return _ScalarsOf(self._attempts)
 
     async def scalar(self, stmt):  # noqa: ANN001, ANN201
         if "metric_events" in str(stmt):

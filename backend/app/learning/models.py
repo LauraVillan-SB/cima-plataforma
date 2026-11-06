@@ -29,6 +29,7 @@ from sqlalchemy import (
     Uuid,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.common.database import Base
@@ -117,6 +118,47 @@ class PathProgress(Base):
 
     # Último paso completado (índice en la secuencia); resiliencia offline (Req 18.4).
     last_completed_step: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Señales de progreso para la adaptación (Req 17.1, 17.2). Se capturan de la
+    # propia actividad del Usuario; no se le pide ningún dato adicional.
+    # Veces que repitió una microcápsula ya finalizada.
+    repeat_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+
+    # Veces que excedió el tiempo esperado al finalizar una microcápsula.
+    slow_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+
+    # Verdadero si la última finalización dio señal (repetición o exceso de tiempo):
+    # la microcápsula siguiente se entrega simplificada y a ritmo lento. Una
+    # finalización posterior sin señal lo devuelve a falso.
+    needs_simplification: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
+
+    # Último `client_event_id` recibido por microcápsula ({id_cápsula: id_evento}).
+    # Distingue un reintento de red de la misma petición (no es repetición) de una
+    # repetición real, que llega con otro `client_event_id` (Req 4.7).
+    finalization_events: Mapped[dict[str, str]] = mapped_column(
+        JSONB, default=dict, server_default="{}"
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class ProfileActivityPrompt(Base):
+    """Cuántas veces se le pidió al Usuario su tipo de cultivo o comercio (Req 4.8, 4.9).
+
+    Una fila por Perfil. El contador se incrementa de forma atómica y se detiene en
+    `MAX_PROFILE_PROMPTS`; agotadas las solicitudes se entrega el tema general sin
+    personalización. No contiene PII: solo el identificador y un entero.
+    """
+
+    __tablename__ = "profile_activity_prompts"
+
+    profile_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+
+    prompt_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

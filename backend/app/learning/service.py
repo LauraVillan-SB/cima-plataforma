@@ -21,12 +21,20 @@ from __future__ import annotations
 import logging
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import any_, literal, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.errors import NotFoundError
 from app.common.logging import log_event
-from app.learning.constants import FALLBACK_TOPIC, MAX_SELECTION
+from app.learning.constants import (
+    EXPECTED_TIME_FACTOR,
+    FALLBACK_TOPIC,
+    MAX_PROFILE_PROMPTS,
+    MAX_SELECTION,
+    PACE_SLOW,
+    PACE_STANDARD,
+)
 from app.learning.dto import (
     FinalizeRequest,
     FinalizeResponse,
@@ -34,7 +42,12 @@ from app.learning.dto import (
     MicrocapsuleSelection,
     PathStatusResponse,
 )
-from app.learning.models import LearningPath, Microcapsule, PathProgress
+from app.learning.models import (
+    LearningPath,
+    Microcapsule,
+    PathProgress,
+    ProfileActivityPrompt,
+)
 
 logger = logging.getLogger("cima.learning")
 
@@ -86,13 +99,72 @@ def _ordered_top(capsules: list[Microcapsule]) -> list[Microcapsule]:
     return ordered[:MAX_SELECTION]
 
 
+async def _register_activity_prompt(db: AsyncSession, profile_id: uuid.UUID) -> bool:
+    """Registra una solicitud de actividad y dice si el agente aún puede hacerla.
+
+    El contador se incrementa de forma atómica (`INSERT ... ON CONFLICT DO UPDATE`) y
+    solo mientras no llegue a `MAX_PROFILE_PROMPTS`: cuando el tope se alcanzó la
+    cláusula `WHERE` no actualiza ninguna fila y no se devuelve nada, por lo que dos
+    peticiones concurrentes no pueden superar las 3 solicitudes (Req 4.8).
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: Perfil autenticado; nunca un id del cliente (anti-BOLA).
+
+    Returns:
+        True si esta solicitud cuenta (aún no se agotaron las 3); False si ya se agotaron.
+    """
+    stmt = (
+        pg_insert(ProfileActivityPrompt)
+        .values(profile_id=profile_id, prompt_count=1)
+        .on_conflict_do_update(
+            index_elements=[ProfileActivityPrompt.profile_id],
+            set_={"prompt_count": ProfileActivityPrompt.prompt_count + 1},
+            where=ProfileActivityPrompt.prompt_count < MAX_PROFILE_PROMPTS,
+        )
+        .returning(ProfileActivityPrompt.prompt_count)
+    )
+    count = await db.scalar(stmt)
+    await db.commit()
+    return count is not None
+
+
+async def select_for_user(
+    db: AsyncSession, current_user_id: uuid.UUID
+) -> MicrocapsuleSelection:
+    """Selecciona microcápsulas para el Usuario autenticado según su Perfil.
+
+    La actividad se resuelve en servidor desde el Perfil; nunca del cliente. Si el
+    Perfil no la tiene, cuenta una solicitud al Usuario y, agotadas las 3, la
+    selección deja de pedirla y entrega el tema general (Req 4.8, 4.9).
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: Usuario autenticado, tomado de la sesión.
+
+    Returns:
+        La selección de microcápsulas.
+    """
+    # Import diferido: evita acoplar la carga de este módulo a la de `profile`.
+    from app.profile.models import Profile
+
+    profile = await db.get(Profile, current_user_id)
+    activity_type = profile.activity_type if profile else None
+    may_prompt = True
+    if not (activity_type or "").strip():
+        may_prompt = await _register_activity_prompt(db, current_user_id)
+    return await select_microcapsules(db, activity_type, may_prompt=may_prompt)
+
+
 async def select_microcapsules(
-    db: AsyncSession, activity_type: str | None
+    db: AsyncSession, activity_type: str | None, may_prompt: bool = True
 ) -> MicrocapsuleSelection:
     """Selecciona microcápsulas personalizadas por la actividad del Perfil.
 
-    - Perfil sin actividad → pide al agente solicitarla (Req 4.8); entrega el
-      tema general como contenido por defecto mientras tanto (Req 4.9).
+    - Perfil sin actividad → pide al agente solicitarla mientras `may_prompt` sea
+      verdadero (Req 4.8); entrega el tema general como contenido por defecto. Con
+      las 3 solicitudes agotadas (`may_prompt` falso) entrega el tema general sin
+      personalización y sin volver a pedirla (Req 4.9).
     - Con actividad y coincidencias → hasta 10 cápsulas de esa actividad,
       ordenadas por relevancia y fecha (Req 4.3).
     - Con actividad pero sin coincidencias → tema general "adaptación al clima"
@@ -104,12 +176,12 @@ async def select_microcapsules(
         # Perfil incompleto: se solicita la actividad y se entrega el tema general
         # como comportamiento por defecto, sin personalización (Req 4.8, 4.9).
         general = await _fetch_by_topic(db, FALLBACK_TOPIC)
-        log_event(logger, "learning_selection_profile_incomplete")
+        log_event(logger, "learning_selection_profile_incomplete", may_prompt=may_prompt)
         return MicrocapsuleSelection(
             items=[_to_microcapsule_response(c) for c in _ordered_top(general)],
             fallback=True,
-            prompt_activity=True,
-            notice=_NOTICE_SIN_CONTENIDO,
+            prompt_activity=may_prompt,
+            notice=_NOTICE_SIN_CONTENIDO if may_prompt else None,
         )
 
     matches = await _fetch_by_activity(db, normalized)
@@ -140,7 +212,7 @@ async def select_microcapsules(
 async def _fetch_by_activity(db: AsyncSession, activity_type: str) -> list[Microcapsule]:
     """Recupera microcápsulas cuya `activity_tags` contiene la actividad dada."""
     stmt = select(Microcapsule).where(
-        Microcapsule.activity_tags.any(activity_type)
+        literal(activity_type) == any_(Microcapsule.activity_tags)
     )
     rows = await db.execute(stmt)
     return list(rows.scalars().all())
@@ -210,6 +282,9 @@ async def finalize_microcapsule(
     was_completed = bool(progress.completed)
 
     done: set[uuid.UUID] = set(progress.completed_microcapsules or [])
+    await _record_adaptation_signals(
+        db, progress, microcapsule_id, data, already_done=microcapsule_id in done
+    )
     if microcapsule_id not in done:
         done.add(microcapsule_id)
         progress.completed_microcapsules = list(done)
@@ -266,6 +341,92 @@ async def finalize_microcapsule(
         completed_count=len(done),
         total_count=len(path_capsules),
     )
+
+
+async def _exceeded_expected_time(
+    db: AsyncSession, microcapsule_id: uuid.UUID, elapsed_seconds: int | None
+) -> bool:
+    """Indica si el Usuario excedió el tiempo esperado de la microcápsula (Req 17.1).
+
+    Sin tiempo reportado no hay señal. El tiempo esperado es la duración de la
+    cápsula por `EXPECTED_TIME_FACTOR`; la comparación se hace en el backend.
+
+    Args:
+        db: sesión de base de datos.
+        microcapsule_id: cápsula finalizada.
+        elapsed_seconds: tiempo reportado por el cliente, o None.
+
+    Returns:
+        True si el tiempo reportado supera el esperado.
+    """
+    if elapsed_seconds is None:
+        return False
+    capsule = await db.get(Microcapsule, microcapsule_id)
+    if capsule is None:
+        return False
+    return elapsed_seconds > capsule.duration_sec * EXPECTED_TIME_FACTOR
+
+
+async def _record_adaptation_signals(
+    db: AsyncSession,
+    progress: PathProgress,
+    microcapsule_id: uuid.UUID,
+    data: FinalizeRequest,
+    already_done: bool,
+) -> None:
+    """Captura las señales de progreso de esta finalización (Req 17.1, 17.2).
+
+    Las señales salen de la propia actividad: repetir una cápsula ya finalizada o
+    exceder el tiempo esperado; no se le pide nada al Usuario. Un reintento de red de
+    la misma petición (mismo `client_event_id` para esa cápsula) no cuenta como
+    repetición (Req 4.7). Una finalización normal posterior devuelve el ritmo estándar.
+
+    Args:
+        db: sesión de base de datos.
+        progress: progreso del Usuario autenticado sobre la ruta.
+        microcapsule_id: cápsula finalizada.
+        data: petición de finalización.
+        already_done: si la cápsula ya estaba finalizada antes de esta llamada.
+    """
+    key = str(microcapsule_id)
+    events = dict(progress.finalization_events or {})
+    if events.get(key) == str(data.client_event_id):
+        return
+    events[key] = str(data.client_event_id)
+    slow = await _exceeded_expected_time(db, microcapsule_id, data.elapsed_seconds)
+    progress.finalization_events = events
+    progress.repeat_count = (progress.repeat_count or 0) + int(already_done)
+    progress.slow_count = (progress.slow_count or 0) + int(slow)
+    progress.needs_simplification = already_done or slow
+
+
+async def _failed_comprehension_check(
+    db: AsyncSession, profile_id: uuid.UUID, path_id: uuid.UUID
+) -> bool:
+    """Indica si el Usuario falló la evaluación de la ruta y aún no la aprueba (Req 17.1).
+
+    Es la comprobación de comprensión del sistema. Se lee del Assessment Service
+    solo para el Usuario autenticado; una evaluación aprobada deja de ser señal.
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: Usuario autenticado.
+        path_id: ruta evaluada.
+
+    Returns:
+        True si hay intentos y ninguno fue aprobado.
+    """
+    # Import diferido: Assessment ya depende de Learning; así no hay ciclo de carga.
+    from app.assessment.models import AssessmentAttempt
+
+    result = await db.scalars(
+        select(AssessmentAttempt.passed).where(
+            AssessmentAttempt.profile_id == profile_id,
+            AssessmentAttempt.path_id == path_id,
+        )
+    )
+    outcomes = list(result.all())
+    return bool(outcomes) and not any(outcomes)
 
 
 async def _grant_recognitions(
@@ -369,9 +530,13 @@ async def get_path_status(
     next_id = next((cid for cid in path_capsules if cid not in done), None)
     completed = done.issuperset(path_capsules) and len(path_capsules) > 0
 
-    # Adaptación: hay señales si existe progreso con al menos una finalización
-    # o un último paso registrado (Req 17.1, 17.2); sin señales → estándar (17.5).
-    adapted = bool(progress and (done or progress.last_completed_step > 0))
+    # Adaptación (Req 17.1, 17.2): se simplifica y se baja el ritmo de la siguiente
+    # microcápsula si la última finalización fue una repetición o excedió el tiempo,
+    # o si el Usuario falló la comprobación de comprensión. Sin esas señales la ruta
+    # es la estándar (Req 17.5).
+    simplify = bool(progress and progress.needs_simplification)
+    if not simplify:
+        simplify = await _failed_comprehension_check(db, current_user_id, path_id)
 
     log_event(
         logger,
@@ -379,7 +544,7 @@ async def get_path_status(
         completed=completed,
         completed_count=len(done),
         total_count=len(path_capsules),
-        adapted=adapted,
+        adapted=simplify,
     )
     return PathStatusResponse(
         path_id=path_id,
@@ -387,5 +552,7 @@ async def get_path_status(
         completed_count=len(done),
         total_count=len(path_capsules),
         next_microcapsule_id=next_id,
-        adapted=adapted,
+        adapted=simplify,
+        simplify=simplify,
+        pace=PACE_SLOW if simplify else PACE_STANDARD,
     )
