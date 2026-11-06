@@ -223,6 +223,9 @@ async def finalize_microcapsule(
 
     await db.commit()
     await db.refresh(progress)
+    # Se captura antes de otorgar reconocimientos: un conflicto en Gamification hace
+    # rollback y expira `progress`; leerlo después exigiría una carga diferida.
+    path_completed = bool(progress.completed)
 
     # Evento `microcapsula_completada` (Req 4.6, 8.1). Se intenta en cada llamada y
     # es idempotente por una clave determinista (Usuario, cápsula): si la emisión
@@ -240,16 +243,18 @@ async def finalize_microcapsule(
     # es el punto de integración que consumen Gamification (Req 19.1) y la
     # Encuesta de Satisfacción (Req 20.1). La emisión es idempotente por
     # `client_event_id` y solo ocurre en la transición (no en reintentos).
-    just_completed = progress.completed and not was_completed
+    just_completed = path_completed and not was_completed
     if just_completed:
         await _emit_metric_event(
             db, current_user_id, "ruta_completada", data.client_event_id
         )
 
+    await _grant_recognitions(db, current_user_id, data.client_event_id, path_completed)
+
     log_event(
         logger,
         "microcapsule_finalized",
-        path_completed=progress.completed,
+        path_completed=path_completed,
         completed_count=len(done),
         total_count=len(path_capsules),
         path_just_completed=just_completed,
@@ -257,10 +262,47 @@ async def finalize_microcapsule(
     return FinalizeResponse(
         path_id=data.path_id,
         microcapsule_id=microcapsule_id,
-        path_completed=progress.completed,
+        path_completed=path_completed,
         completed_count=len(done),
         total_count=len(path_capsules),
     )
+
+
+async def _grant_recognitions(
+    db: AsyncSession,
+    current_user_id: uuid.UUID,
+    client_event_id: uuid.UUID,
+    path_completed: bool,
+) -> None:
+    """Otorga las Insignias y puntos por la finalización (Req 19.1, 19.2).
+
+    Se invoca en cada finalización y es idempotente (Req 19.5): la insignia de
+    ruta se intenta mientras la ruta esté completa, no solo en la transición, para
+    que un fallo previo se recupere con el reintento del cliente. Si Gamification
+    no puede confirmar el otorgamiento (`ReconocimientoPendienteError`, Req 19.6)
+    la finalización no falla: el progreso ya está guardado y se reintenta después.
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: titular autenticado; nunca un id del cliente.
+        client_event_id: id del evento de la petición, base de las claves derivadas.
+        path_completed: si la ruta quedó completa para este Usuario.
+    """
+    # Import diferido: evita acoplar la carga de este módulo a la de gamification.
+    from app.gamification import constants as gamification
+    from app.gamification.errors import ReconocimientoPendienteError
+    from app.gamification.service import grant_recognition
+
+    triggers = [gamification.TRIGGER_MICROCAPSULA_COMPLETADA]
+    if path_completed:
+        triggers.append(gamification.TRIGGER_RUTA_COMPLETADA)
+    for trigger in triggers:
+        try:
+            await grant_recognition(
+                db, current_user_id, trigger, uuid.uuid5(client_event_id, trigger)
+            )
+        except ReconocimientoPendienteError:
+            log_event(logger, "learning_recognition_pending", trigger=trigger)
 
 
 async def _emit_metric_event(

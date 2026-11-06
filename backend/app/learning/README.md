@@ -89,6 +89,12 @@ Eventos hacia Metrics (importación diferida, sin acoplar los dominios):
   `uuid5` determinista por (usuario, cápsula), así que reintentar no duplica el evento.
 - `ruta_completada`: al terminar la última cápsula, con el `client_event_id` de la petición.
 
+Reconocimientos (Gamification, Req 19): tras guardar el progreso se llama a `grant_recognition`
+con el titular de la sesión. La insignia de cápsula se intenta siempre y la de ruta mientras la
+ruta esté completa (no solo al terminar), así un fallo previo se recupera con el reintento. Las
+claves son `uuid5(client_event_id, trigger)`. Si Gamification responde
+`ReconocimientoPendienteError` la finalización no falla; cualquier otro error se propaga.
+
 Se usan claves distintas porque Metrics deduplica por `client_event_id`; con una clave común se
 perdería uno de los dos eventos al cerrar la ruta.
 
