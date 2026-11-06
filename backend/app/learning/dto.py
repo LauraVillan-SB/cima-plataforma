@@ -19,14 +19,33 @@ from app.learning.constants import (
     MAX_ELAPSED_SEC,
     MIN_DURATION_SEC,
     PACE_STANDARD,
+    YOUTUBE_VIDEO_ID_PATTERN,
 )
+
+
+class VideoOut(BaseModel):
+    """Video de apoyo de YouTube de una microcápsula.
+
+    Solo expone el identificador validado, el crédito (título y canal) y la dirección de
+    incrustación construida por el backend; el cliente no arma URLs. El video es un
+    complemento: el contenido de texto es lo principal y funciona sin conexión.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    video_id: str = Field(pattern=YOUTUBE_VIDEO_ID_PATTERN)
+    title: str
+    channel: str
+    embed_url: str
 
 
 class MicrocapsuleResponse(BaseModel):
     """DTO de salida de una microcápsula entregada al Usuario.
 
     Garantiza, a nivel de contrato, que el tema pertenece a la allowlist
-    (Property 11) y que la duración está en el rango permitido (Property 10).
+    (Property 11) y que la duración está en el rango permitido (Property 10). El
+    contenido (`title`, `summary`, `paragraphs`, `key_points`) es texto plano y es
+    opcional para no romper cápsulas anteriores; `video` es un complemento opcional.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -36,6 +55,11 @@ class MicrocapsuleResponse(BaseModel):
     activity_tags: list[str]
     duration_sec: int
     difficulty: int
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    paragraphs: list[str] = Field(default_factory=list)
+    key_points: list[str] = Field(default_factory=list)
+    video: Optional[VideoOut] = None
 
     @field_validator("topic")
     @classmethod
