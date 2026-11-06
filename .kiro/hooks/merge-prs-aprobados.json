@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Merge de PRs aprobados al iniciar sesión",
+      "trigger": "SessionStart",
+      "description": "Al iniciar sesión, mergea (squash) los PRs hacia develop que ya estén APPROVED y MERGEABLE, y borra su rama. No toca los que estén en espera o con conflictos.",
+      "action": {
+        "type": "command",
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .kiro/scripts/merge-prs-aprobados.ps1",
+        "timeout": 120
+      }
+    }
+  ]
+}
