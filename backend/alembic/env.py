@@ -28,6 +28,8 @@ from app.chat import models as _chat_models  # noqa: F401
 from app.learning import models as _learning_models  # noqa: F401
 from app.assessment import models as _assessment_models  # noqa: F401
 from app.certification import models as _certification_models  # noqa: F401
+from app.survey import models as _survey_models  # noqa: F401
+from app.sync import models as _sync_models  # noqa: F401
 
 config = context.config
 
