@@ -9,6 +9,7 @@ Se irán agregando a medida que se implementen los servicios de dominio.
 |---|---|---|
 | `conversion.postman_collection.json` | Conversion (Tarea 16.2) | `GET /api/v1/conversion/microseguros/{ruta_id}`, `POST /api/v1/conversion/intenciones/{ruta_id}` + casos de rechazo |
 | `gamificacion.postman_collection.json` | Gamification (Tarea 17.2) | `GET /api/v1/gamificacion/reconocimientos` + casos de rechazo (perfil ajeno, formato inválido, sin sesión) |
+| `chat.postman_collection.json` | Conversational Agent (Tareas 11.1-11.6) | `POST /api/v1/chat/mensajes`, `POST /api/v1/chat/mensajes/voz`, `GET /api/v1/chat/mensajes/{id}`, `GET /api/v1/chat/historial` + casos de rechazo (mensaje vacío, clave inesperada, mensaje ajeno, id inválido) |
 
 Pendientes: auth, profile, metrics, survey, sync (y los servicios que aún no se implementan).
 El otorgamiento de reconocimientos no se expone por HTTP; lo invoca el Learning Service
