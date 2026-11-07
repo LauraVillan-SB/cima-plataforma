@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import (
     ARRAY,
@@ -25,6 +26,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Text,
     UniqueConstraint,
     Uuid,
     func,
@@ -62,6 +64,25 @@ class Microcapsule(Base):
     # Nivel de dificultad (0 = base). Permite simplificar la siguiente cápsula
     # en la adaptación por señales de progreso (Req 17.1).
     difficulty: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Contenido que se muestra al Usuario. Es texto plano (el cliente nunca lo
+    # interpreta como HTML) y debe poder leerse en voz alta (Req 13.4). Las columnas
+    # son opcionales para no invalidar cápsulas creadas antes de existir el contenido.
+    title: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    summary: Mapped[Optional[str]] = mapped_column(String(280), nullable=True)
+    paragraphs: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
+    key_points: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
+
+    # Video de apoyo opcional de YouTube: solo el identificador de 11 caracteres
+    # (validado) más el título y el canal para dar crédito. Nunca se guarda una URL
+    # libre; el enlace de incrustación lo construye el backend (SSRF/XSS).
+    video_id: Mapped[Optional[str]] = mapped_column(String(11), nullable=True)
+    video_title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    video_channel: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     # Fecha de publicación; desempata el orden ante igual relevancia (Req 4.3).
     published_at: Mapped[datetime] = mapped_column(

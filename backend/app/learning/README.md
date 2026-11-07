@@ -32,8 +32,13 @@ cliente nunca envía su identidad (anti-BOLA).
       "id": "00000000-0000-4000-8000-000000000001",
       "topic": "finanzas",
       "activity_tags": ["cafe"],
-      "duration_sec": 240,
-      "difficulty": 1
+      "duration_sec": 196,
+      "difficulty": 0,
+      "title": "Las cuentas del café: qué entra y qué sale en cada cosecha",
+      "summary": "Un registro sencillo para saber cuánto cuesta producir y cuánto te queda realmente.",
+      "paragraphs": ["Primer párrafo de texto plano...", "Segundo párrafo..."],
+      "key_points": ["Primer punto clave...", "Segundo punto clave..."],
+      "video": null
     }
   ],
   "fallback": false,
@@ -145,9 +150,47 @@ lento; la siguiente finalización normal la devuelve al ritmo estándar. Hoy cad
 secuencia fija de cápsulas y no hay variantes simplificadas del contenido: el backend entrega la
 indicación (`simplify`, `pace`) y la presentación simplificada queda del lado del front.
 
+## Contenido y video de apoyo
+
+El catálogo de arranque vive en `catalog.py` y se carga con un comando idempotente:
+
+```bash
+cd backend && poetry run python -m app.learning.seed
+```
+
+Incluye 9 microcápsulas (3 generales de respaldo, 3 de café y 3 de tienda de barrio, cada
+actividad con clima, finanzas y gestión de riesgos), 3 rutas y 3 evaluaciones de 3 preguntas.
+Los identificadores salen de `uuid5(slug)`, así que repetir la carga actualiza las mismas filas y
+no toca el progreso de nadie; nunca borra. Se niega a correr fuera de `dev`, `local`, `test` y
+`stage`. Las otras 10 actividades permitidas reciben el tema general hasta que se agregue su
+contenido.
+
+Es contenido de referencia, original y en texto plano (sin enlaces ni HTML), **pendiente de
+revisión por la Escuela de Sostenibilidad e Inclusión**. La duración de cada cápsula sale de
+contar sus palabras a unos 132 por minuto de lectura en voz alta, y una prueba exige que quede
+entre 180 y 300 s. El respaldo sin actividad entrega solo las cápsulas etiquetadas `general`.
+
+Video de apoyo (opcional): una cápsula puede llevar un video de YouTube, pero solo se guarda el
+identificador de 11 caracteres más el título y el canal para dar el crédito. Nunca una URL. El
+backend arma la dirección con `youtube-nocookie.com` y el DTO rechaza cualquier identificador
+con otro formato. El texto es lo principal y funciona sin conexión; el video es un complemento.
+Para cargar uno:
+
+1. Verifica que existe, que se puede incrustar y que su contenido es adecuado y de una fuente
+   confiable. El endpoint público
+   `https://www.youtube.com/oembed?url=<URL del video>&format=json` responde 200 con el título y
+   el canal; un 401 o 404 indica que no se puede incrustar o no existe.
+2. Agrega `video=VideoSpec(video_id="...", title="...", channel="...")` a la cápsula en
+   `catalog.py`, copiando título y canal tal como los informa YouTube.
+3. Vuelve a ejecutar la carga.
+
+Pendiente de otros equipos: el front debe mostrar el contenido y el video, y la política de
+seguridad de contenido (`frame-src`) tiene que permitir `https://www.youtube-nocookie.com`.
+Hoy ninguna cápsula trae video: no se cargó ninguno porque no se pudo verificar uno.
+
 ## Tecnologías
 
-FastAPI, SQLAlchemy (async), Pydantic, Alembic (migraciones `0004`, `0012` y `0013`), PostgreSQL 15+.
+FastAPI, SQLAlchemy (async), Pydantic, Alembic (migraciones `0004`, `0012`, `0013` y `0014`), PostgreSQL 15+.
 
 ## Pruebas
 
