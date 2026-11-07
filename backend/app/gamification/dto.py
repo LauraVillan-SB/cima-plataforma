@@ -10,6 +10,8 @@ Requisitos: 19.1, 19.2, 19.3.
 
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -48,3 +50,75 @@ class RecognitionSummary(BaseModel):
 
     badges: list[BadgeOut]
     total_points: int
+
+
+class LevelOut(BaseModel):
+    """Nivel del titular, derivado de sus puntos (no se guarda)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    number: int
+    name: str
+    min_points: int
+
+
+class NextLevelOut(BaseModel):
+    """Siguiente nivel y cuántos puntos faltan para alcanzarlo."""
+
+    model_config = ConfigDict(frozen=True)
+
+    number: int
+    name: str
+    points_needed: int
+
+
+class BadgeStatusOut(BaseModel):
+    """Una Insignia del catálogo con indicación de si el titular ya la tiene."""
+
+    model_config = ConfigDict(frozen=True)
+
+    badge_code: str
+    badge_name: str
+    points: int
+    earned: bool
+
+
+class GamificationSummary(BaseModel):
+    """Resumen de gamificación del titular autenticado.
+
+    Puntos, nivel, racha e Insignias (con las que aún no tiene marcadas). Allowlist
+    de campos: sin identificador del Perfil ni PII. Nivel y racha son una extensión
+    de experiencia no especificada en requirements.md; las reglas viven en el backend.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    total_points: int
+    streak_days: int
+    level: LevelOut
+    next_level: Optional[NextLevelOut]
+    level_progress_pct: int
+    badges: list[BadgeStatusOut]
+
+
+class LeaderboardEntry(BaseModel):
+    """Fila del ranking. El alias es seudónimo: no hay nombre, teléfono ni id real."""
+
+    model_config = ConfigDict(frozen=True)
+
+    rank: int
+    alias: str
+    total_points: int
+    level_name: str
+    streak_days: int
+    is_me: bool
+
+
+class Leaderboard(BaseModel):
+    """Ranking acotado (top N) y la posición del titular aunque quede fuera del top."""
+
+    model_config = ConfigDict(frozen=True)
+
+    entries: list[LeaderboardEntry]
+    me: Optional[LeaderboardEntry]
+    participants: int

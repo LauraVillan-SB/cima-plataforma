@@ -474,6 +474,26 @@ async def _failed_comprehension_check(
     return bool(outcomes) and not any(outcomes)
 
 
+async def _record_streak(db: AsyncSession, current_user_id: uuid.UUID) -> None:
+    """Cuenta el día de actividad del Usuario para su racha (extensión de Gamification).
+
+    No es crítico: el progreso ya está guardado, así que un error de base de datos se
+    registra y no hace fallar la finalización. Es idempotente por día.
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: titular de la sesión; nunca un id del cliente.
+    """
+    # Import diferido: evita acoplar la carga de este módulo a la de gamification.
+    from app.gamification.service import record_activity
+
+    try:
+        await record_activity(db, current_user_id)
+    except SQLAlchemyError:
+        await db.rollback()
+        log_event(logger, "learning_streak_failed")
+
+
 async def _grant_recognitions(
     db: AsyncSession,
     current_user_id: uuid.UUID,
@@ -499,6 +519,7 @@ async def _grant_recognitions(
     from app.gamification.errors import ReconocimientoPendienteError
     from app.gamification.service import grant_recognition
 
+    await _record_streak(db, current_user_id)
     triggers = [gamification.TRIGGER_MICROCAPSULA_COMPLETADA]
     if path_completed:
         triggers.append(gamification.TRIGGER_RUTA_COMPLETADA)

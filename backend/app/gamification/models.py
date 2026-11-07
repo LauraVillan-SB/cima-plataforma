@@ -11,9 +11,10 @@ Requisitos: 19.2, 19.5, 19.6.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+from typing import Optional
 
-from sqlalchemy import DateTime, Integer, String, UniqueConstraint, func
+from sqlalchemy import Date, DateTime, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.common.database import Base
@@ -54,6 +55,14 @@ class UserPoints(Base):
     profile_id: Mapped[uuid.UUID] = mapped_column(unique=True, index=True)
 
     total_points: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Racha de días consecutivos con actividad y la fecha (UTC) del último día que
+    # contó. Permiten mostrar "N días en racha" sin PII. `last_activity_date` es una
+    # fecha sin hora, suficiente para contar días.
+    current_streak: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    last_activity_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
