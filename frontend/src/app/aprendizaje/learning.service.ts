@@ -13,6 +13,43 @@ export interface Microcapsula {
   readonly activity_tags: readonly string[];
   readonly duration_sec: number;
   readonly difficulty: number;
+  readonly title: string | null;
+  readonly summary: string | null;
+  readonly paragraphs: readonly string[];
+  readonly key_points: readonly string[];
+  readonly video: VideoCapsula | null;
+}
+
+/** Video complementario verificado; el texto de la cápsula funciona sin él. */
+export interface VideoCapsula {
+  readonly video_id: string;
+  readonly title: string;
+  readonly channel: string;
+  readonly embed_url: string;
+}
+
+/** Estado de una cápsula dentro de una ruta, calculado por el backend. */
+export type EstadoCapsula = 'completed' | 'next' | 'pending';
+
+/** Cápsula en su posición dentro de una ruta. */
+export interface ItemRuta {
+  readonly position: number;
+  readonly status: EstadoCapsula;
+  readonly capsule: Microcapsula;
+}
+
+/** Ruta de aprendizaje con el avance real del Usuario (`GET /aprendizaje/rutas`). */
+export interface Ruta {
+  readonly path_id: string;
+  readonly title: string | null;
+  readonly summary: string | null;
+  readonly audience_tags: readonly string[];
+  readonly total_count: number;
+  readonly completed_count: number;
+  readonly completed: boolean;
+  readonly next_microcapsule_id: string | null;
+  readonly assessment_passed: boolean;
+  readonly items: readonly ItemRuta[];
 }
 
 /**
@@ -68,13 +105,36 @@ export class LearningService {
     microcapsulaId: string,
     pathId: string,
     clientEventId: string,
+    elapsedSeconds?: number,
   ): Promise<ResultadoFinalizacion> {
+    const cuerpo =
+      elapsedSeconds === undefined
+        ? { client_event_id: clientEventId, path_id: pathId }
+        : {
+            client_event_id: clientEventId,
+            path_id: pathId,
+            elapsed_seconds: elapsedSeconds,
+          };
     return firstValueFrom(
       this.http.post<ResultadoFinalizacion>(
         `/api/v1/aprendizaje/microcapsulas/${microcapsulaId}/finalizar`,
-        { client_event_id: clientEventId, path_id: pathId },
+        cuerpo,
         { withCredentials: true },
       ),
     );
+  }
+
+  /**
+   * Obtiene las rutas publicadas con el avance real del Usuario
+   * (`GET /api/v1/aprendizaje/rutas`). El estado de cada cápsula
+   * (completada, siguiente, pendiente) lo calcula el backend.
+   */
+  async obtenerRutas(): Promise<readonly Ruta[]> {
+    const respuesta = await firstValueFrom(
+      this.http.get<{ routes: Ruta[] }>('/api/v1/aprendizaje/rutas', {
+        withCredentials: true,
+      }),
+    );
+    return respuesta.routes;
   }
 }
