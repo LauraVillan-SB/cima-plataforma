@@ -1,8 +1,18 @@
 /* Estilos globales de CIMA. Mobile-first, accesible (WCAG 2.1 AA). */
 :root {
-  --cima-verde: #0a7d3c;
-  --cima-texto: #1a1a1a;
-  --cima-fondo: #ffffff;
+  /* Paleta oficial del design system de Seguros Bolívar. */
+  --cima-verde: #009056;
+  --cima-verde-oscuro: #005c38;
+  --cima-verde-claro: #e6f5ee;
+  --cima-dorado: #ffe16f;
+  --cima-texto: #1b1b1b;
+  --cima-texto-suave: #4a4a4a;
+  --cima-fondo: #f5f7f6;
+  --cima-superficie: #ffffff;
+  --cima-borde: #d9dedb;
+  --cima-exito: #28a745;
+  --cima-error: #dc3545;
+  --cima-radio: 16px;
 }
 
 * {
@@ -26,4 +36,19 @@ a,
 [role="button"] {
   min-height: 44px;
   min-width: 44px;
+}
+
+/* Foco visible para navegación con teclado (WCAG 2.4.7). */
+:focus-visible {
+  outline: 3px solid var(--cima-dorado);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--cima-verde-oscuro);
+}
+
+/* Respeta la preferencia de menos movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

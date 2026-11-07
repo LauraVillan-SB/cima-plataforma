@@ -12,12 +12,7 @@ export const routes: Routes = [
       import('./auth/auth-page.component').then((m) => m.AuthPageComponent),
     title: 'Entrar a CIMA',
   },
-  {
-    path: 'inicio',
-    loadComponent: () =>
-      import('./home/home-page.component').then((m) => m.HomePageComponent),
-    title: 'CIMA',
-  },
+  { path: 'inicio', redirectTo: 'aprendizaje', pathMatch: 'full' },
   {
     path: 'aprendizaje',
     loadComponent: () =>
@@ -25,6 +20,32 @@ export const routes: Routes = [
         (m) => m.LearningPageComponent,
       ),
     title: 'Aprendizaje - CIMA',
+  },
+  {
+    path: 'aprendizaje/leccion/:pathId/:capsuleId',
+    loadComponent: () =>
+      import('./aprendizaje/lesson-page.component').then((m) => m.LessonPageComponent),
+    title: 'Lección - CIMA',
+  },
+  {
+    path: 'mi-ruta',
+    loadComponent: () =>
+      import('./aprendizaje/my-route-page.component').then((m) => m.MyRoutePageComponent),
+    title: 'Mi ruta - CIMA',
+  },
+  {
+    path: 'reconocimientos',
+    loadComponent: () =>
+      import('./gamificacion/recognitions-page.component').then(
+        (m) => m.RecognitionsPageComponent,
+      ),
+    title: 'Reconocimientos - CIMA',
+  },
+  {
+    path: 'ranking',
+    loadComponent: () =>
+      import('./gamificacion/ranking-page.component').then((m) => m.RankingPageComponent),
+    title: 'Ranking - CIMA',
   },
   {
     path: 'evaluacion/:rutaId',
