@@ -146,3 +146,42 @@ class PathStatusResponse(BaseModel):
     adapted: bool = False
     simplify: bool = False
     pace: Literal["standard", "slow"] = PACE_STANDARD
+
+
+class RouteCapsuleOut(BaseModel):
+    """Una microcápsula dentro de una ruta, con su estado para el Usuario autenticado.
+
+    `status` es `completed` si ya la finalizó, `next` si es la primera que le falta y
+    `pending` si todavía no le toca. El orden no se impone: puede abrir cualquiera.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    position: int
+    status: Literal["completed", "next", "pending"]
+    capsule: MicrocapsuleResponse
+
+
+class RouteOut(BaseModel):
+    """Ruta de aprendizaje con el avance del Usuario autenticado y sus cápsulas."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    path_id: uuid.UUID
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    audience_tags: list[str]
+    total_count: int
+    completed_count: int
+    completed: bool
+    next_microcapsule_id: Optional[uuid.UUID] = None
+    assessment_passed: bool
+    items: list[RouteCapsuleOut]
+
+
+class RoutesResponse(BaseModel):
+    """Rutas relevantes para el Usuario autenticado, la suya primero y la general después."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    routes: list[RouteOut]

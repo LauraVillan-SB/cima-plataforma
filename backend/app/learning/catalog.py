@@ -102,6 +102,8 @@ class PathSpec:
     slug: str
     capsule_slugs: tuple[str, ...]
     questions: tuple[QuestionSpec, ...]
+    title: str
+    summary: str
     pass_threshold: int = 70
 
     @property
@@ -546,6 +548,8 @@ CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
 PATHS: Final[tuple[PathSpec, ...]] = (
     PathSpec(
         slug="ruta-general-clima",
+        title="Ruta general: clima, agua y plan B",
+        summary="Lo básico para cualquier persona: leer el clima, cuidar el agua y tener un plan para las temporadas difíciles.",
         capsule_slugs=(_GENERAL_CLIMA.slug, _GENERAL_AGUA.slug, _GENERAL_PLAN_B.slug),
         questions=(
             QuestionSpec(
@@ -579,6 +583,8 @@ PATHS: Final[tuple[PathSpec, ...]] = (
     ),
     PathSpec(
         slug="ruta-cafe",
+        title="Ruta del cafetal",
+        summary="Protege tu cafetal del clima, ordena las cuentas de la cosecha y aprende a manejar los riesgos.",
         capsule_slugs=(_CAFE_CLIMA.slug, _CAFE_FINANZAS.slug, _CAFE_RIESGOS.slug),
         questions=(
             QuestionSpec(
@@ -612,6 +618,8 @@ PATHS: Final[tuple[PathSpec, ...]] = (
     ),
     PathSpec(
         slug="ruta-tienda-barrio",
+        title="Ruta de la tienda de barrio",
+        summary="Cuida tu negocio del calor y las lluvias, separa la plata del negocio y de la casa, y conoce sus riesgos.",
         capsule_slugs=(_TIENDA_CLIMA.slug, _TIENDA_FINANZAS.slug, _TIENDA_RIESGOS.slug),
         questions=(
             QuestionSpec(

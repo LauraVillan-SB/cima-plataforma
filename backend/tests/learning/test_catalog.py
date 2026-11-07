@@ -98,6 +98,7 @@ def test_cada_ruta_es_coherente_con_su_evaluacion(path) -> None:  # noqa: ANN001
     assert set(path.capsule_slugs) <= slugs
     assert len(set(path.capsule_slugs)) == len(path.capsule_slugs)
     assert 0 <= path.pass_threshold <= 100
+    assert 0 < len(path.title) <= 120 and 0 < len(path.summary) <= 280
     assert len(path.questions) == 3
     for pregunta in path.questions:
         assert 0 <= pregunta.correct < len(pregunta.options)

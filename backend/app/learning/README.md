@@ -150,6 +150,44 @@ lento; la siguiente finalización normal la devuelve al ritmo estándar. Hoy cad
 secuencia fija de cápsulas y no hay variantes simplificadas del contenido: el backend entrega la
 indicación (`simplify`, `pace`) y la presentación simplificada queda del lado del front.
 
+## Listado de rutas con avance
+
+`GET /api/v1/aprendizaje/rutas` devuelve las rutas del Usuario autenticado con el estado real
+de cada microcápsula. Es lo que alimenta el tablero y la vista "Mi ruta" del front.
+
+| Método | Ruta | Descripción | Éxito | Errores |
+|---|---|---|---|---|
+| GET | `/rutas` | Rutas relevantes con el estado de cada cápsula | 200 | 403 sin sesión |
+
+No recibe ningún parámetro: la actividad y el progreso salen de la sesión (anti-BOLA). Se listan
+las rutas de su actividad y las generales, la propia primero. Las rutas sin título no se publican
+(`learning_paths.title`, migración `0016`). Cada cápsula llega con su contenido completo y un
+estado: `completed` (ya la finalizó), `next` (la primera que le falta) o `pending`. El orden no
+se impone, así que el cliente puede abrir cualquiera. `assessment_passed` indica si ya aprobó la
+evaluación de la ruta.
+
+```json
+{
+  "routes": [
+    {
+      "path_id": "00000000-0000-4000-8000-0000000000b1",
+      "title": "Ruta del cafetal",
+      "summary": "Protege tu cafetal del clima, ordena las cuentas de la cosecha y aprende a manejar los riesgos.",
+      "audience_tags": ["cafe"],
+      "total_count": 3,
+      "completed_count": 1,
+      "completed": false,
+      "next_microcapsule_id": "00000000-0000-4000-8000-000000000002",
+      "assessment_passed": false,
+      "items": [
+        {"position": 1, "status": "completed", "capsule": {"id": "00000000-0000-4000-8000-000000000001", "title": "...", "paragraphs": ["..."], "key_points": ["..."], "video": null}},
+        {"position": 2, "status": "next", "capsule": {"id": "00000000-0000-4000-8000-000000000002", "title": "..."}}
+      ]
+    }
+  ]
+}
+```
+
 ## Contenido y video de apoyo
 
 El catálogo de arranque vive en `catalog.py` y se carga con un comando idempotente:

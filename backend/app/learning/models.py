@@ -105,6 +105,11 @@ class LearningPath(Base):
     # Umbral de aprobación de la evaluación asociada (0–100, default 70, Req 7.3).
     pass_threshold: Mapped[int] = mapped_column(Integer, default=70)
 
+    # Nombre y descripción de la ruta para mostrarla al Usuario. Texto plano y
+    # opcionales para no invalidar rutas creadas antes de existir.
+    title: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    summary: Mapped[Optional[str]] = mapped_column(String(280), nullable=True)
+
 
 class PathProgress(Base):
     """Progreso de un Usuario sobre una ruta de aprendizaje.
