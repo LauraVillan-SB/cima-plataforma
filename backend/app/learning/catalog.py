@@ -533,6 +533,146 @@ _TIENDA_RIESGOS = CapsuleSpec(
     ),
 )
 
+# --------------------------------------------------------------------------- #
+# Cápsulas de refuerzo: una para quien cultiva café, una para la tienda de barrio y
+# una de finanzas que sirve a ambos. Cada una va en su propia ruta corta (ver PATHS)
+# porque la audiencia de una ruta es la unión de las etiquetas de sus cápsulas.
+# --------------------------------------------------------------------------- #
+_CAFE_BROCA = CapsuleSpec(
+    slug="cafe-la-broca",
+    topic=TOPIC_GESTION_RIESGOS,
+    tags=("cafe",),
+    relevance=8.0,
+    title="La broca: cómo cuidar tu cosecha de la plaga que más daña el café",
+    summary="Aprende cómo vive la broca, dónde se esconde y qué hacer antes y después de la cosecha.",
+    paragraphs=(
+        "La broca del café es un escarabajo diminuto, del tamaño de la cabeza de un "
+        "alfiler, y es la plaga que más daño le hace al café en el mundo. La hembra "
+        "perfora el grano, entra y pone sus huevos adentro. Por eso el daño casi no se "
+        "ve por fuera, pero por dentro el grano se pica, pesa menos y se vende peor.",
+        "Para defenderte conviene conocerla. Desde el huevo hasta que es adulta pasan "
+        "más o menos de veinticuatro a cuarenta y cinco días, según el clima. Le "
+        "gustan los lugares sombríos y húmedos, y suele salir después de la lluvia a "
+        "buscar otro cafeto. Y donde ya hubo broca, es más fácil que vuelva.",
+        "Los granos que se quedan en la planta o caídos en el suelo después de la "
+        "cosecha son la casa donde la broca se refugia hasta la próxima floración. Por "
+        "eso lo más importante es recoger bien: coge los frutos maduros a tiempo, haz "
+        "un repase al final para sacar los que quedaron en las ramas y levanta los que "
+        "están en el suelo. Es un trabajo cansón, pero si se hace con juicio es de lo "
+        "más eficaz que puedes hacer.",
+        "Revisa tu lote cada cierto tiempo: toma un puñado de frutos, mira si tienen "
+        "un huequito pequeño cerca de la punta y ábrelos para ver si hay galerías. Así "
+        "sabes qué tan afectado está y no actúas a ciegas. También cuida lo que entra "
+        "a tu finca: no lleves frutos ni costales de otras fincas sin revisarlos, "
+        "porque con ellos puede llegar la plaga.",
+        "La naturaleza también ayuda. Algunas hormigas se comen la broca y hay un "
+        "hongo que la ataca y que se ve como un polvillo blanco sobre el fruto. Si "
+        "fumigas sin necesidad, los insectos que te ayudan también se mueren. Y "
+        "recuerda que los insecticidas son peligrosos para tu salud y para el agua: "
+        "antes de usar cualquier producto, pregunta al técnico o al extensionista de "
+        "tu comité de cafeteros qué conviene en tu finca y cómo aplicarlo con "
+        "seguridad. Este contenido es una guía general y no reemplaza esa asesoría.",
+        "Esta semana haz una prueba sencilla en un lote: revisa un puñado de frutos "
+        "en tres sitios distintos, cuenta cuántos tienen perforación y anótalo. Repite "
+        "la revisión después de la cosecha y compara. Con ese cuaderno sabrás si tu "
+        "recolección y tu repase están funcionando.",
+    ),
+    key_points=(
+        "La broca perfora el grano y pone sus huevos adentro: el daño se ve al abrirlo.",
+        "Recoge a tiempo y haz el repase: quita los frutos que quedan en la rama y en el suelo.",
+        "No muevas frutos ni costales de otras fincas sin revisarlos.",
+        "Antes de aplicar cualquier producto, consulta al extensionista de tu comité.",
+    ),
+)
+
+_TIENDA_INVENTARIO = CapsuleSpec(
+    slug="tienda-el-inventario",
+    topic=TOPIC_FINANZAS,
+    tags=("tienda_barrio",),
+    relevance=8.0,
+    title="Tu inventario: no dejes la plata parada en el estante",
+    summary="Aprende a saber qué se vende, qué se queda quieto y cuánto pedir sin que te falte ni te sobre.",
+    paragraphs=(
+        "Cada producto que está en tu estante es plata que ya pagaste y todavía no "
+        "recuperas. Si se vende rápido, esa plata vuelve y puedes comprar de nuevo. Si "
+        "se queda quieto, la plata está parada, ocupa espacio y, si se vence o se daña, "
+        "se pierde. Por eso llevar el inventario no es un lujo: es cuidar tu capital.",
+        "Una buena administración del inventario busca dos cosas a la vez. Primero, que "
+        "cuando el cliente pida un producto lo tengas. Segundo, que no tengas más de lo "
+        "necesario, porque tener mucho también cuesta. Hay que encontrar el equilibrio: "
+        "si pides poco se te acaba y pierdes la venta; si pides mucho se te empoza la "
+        "plata.",
+        "Para empezar basta un cuaderno. Una vez por semana anota qué productos se "
+        "acabaron, cuáles se vendieron más y cuáles llevan semanas sin moverse. Así "
+        "descubres tus productos estrella, que debes tener siempre, y tus productos "
+        "dormidos, que quizás no vale la pena volver a comprar. Compra con base en lo "
+        "que de verdad vendes, no en lo que te ofrece el vendedor.",
+        "Ten cuidado con los descuentos por volumen. Comprar más barato solo sirve si "
+        "alcanzas a vender todo antes de que se venza y si no dejas sin plata el resto "
+        "del negocio. Haz la cuenta: ¿cuánto vas a vender en un mes? Si la respuesta es "
+        "menos de lo que te toca comprar, el descuento no es tal.",
+        "En los productos que se vencen, como lácteos, pan o fruta, aplica la regla de "
+        "primero en entrar, primero en salir. Pon adelante lo que llegó antes y atrás "
+        "lo nuevo, y revisa las fechas cada semana. Y para los días de más venta, como "
+        "quincena, fiestas o puentes, guarda un poquito de más de lo que más se vende, "
+        "como una reserva de seguridad, pero sin exagerar.",
+        "Esta semana haz un conteo rápido de tu estante, anota los cinco productos que "
+        "más rotan y los cinco que menos. Con eso ya tienes la base para decidir mejor "
+        "tu próximo pedido.",
+    ),
+    key_points=(
+        "Lo que está en el estante es plata que todavía no recuperas.",
+        "Busca el equilibrio: que no te falte lo que más se vende ni te sobre lo que no rota.",
+        "Cada semana anota qué se acabó, qué se vendió más y qué lleva semanas quieto.",
+        "En lo que se vence, pon adelante lo que llegó primero y revisa las fechas.",
+    ),
+)
+
+_FINANZAS_GOTA_A_GOTA = CapsuleSpec(
+    slug="finanzas-gota-a-gota",
+    topic=TOPIC_FINANZAS,
+    tags=("cafe", "tienda_barrio"),
+    relevance=9.0,
+    title="El gota a gota: cómo reconocerlo y qué hacer en vez de caer",
+    summary="Para quien cultiva y para quien atiende un negocio: señales del préstamo gota a gota y alternativas más seguras.",
+    paragraphs=(
+        "Cuando la plata no alcanza, el préstamo rápido parece una salvación. Por eso el "
+        "gota a gota se ofrece justo ahí: sin papeles, sin preguntas y con la plata en "
+        "la mano el mismo día. El problema aparece después. Este tipo de préstamo "
+        "informal nació en Medellín en los años noventa y se volvió muy conocido porque "
+        "se paga a diario o a la semana y cobra intereses muy altos, mucho más caros "
+        "que un microcrédito formal.",
+        "Hay señales para reconocerlo. Te prestan sin pedir casi nada. Te cobran cuotas "
+        "diarias o semanales que no te dicen cuánto suman al final. No te entregan un "
+        "contrato claro ni te explican la tasa. Te piden fotos de tu cédula, de tu "
+        "negocio o de tu finca. Y lo más grave: si te atrasas, empiezan las "
+        "presiones, las amenazas y las visitas. Por eso muchas veces no se pierde solo "
+        "plata, también la tranquilidad.",
+        "Ojo con las fachadas. A veces quien presta se hace pasar por una entidad "
+        "seria, con carteles, mensajes o llamadas muy amables. Antes de aceptar, "
+        "pregunta el nombre completo de la entidad y si está vigilada por la "
+        "Superintendencia Financiera. Cobrar intereses por encima del límite legal es "
+        "un delito, y quien te lo cobra no puede obligarte con amenazas.",
+        "Existen caminos más seguros. Pregunta en cooperativas, fondos de empleados y "
+        "entidades que ofrecen microcrédito: compara por lo menos dos opciones y pide "
+        "siempre el costo total, es decir, cuánto vas a pagar en cuotas hasta el "
+        "final. Si eres cafetero, pregunta en tu comité de cafeteros por las líneas "
+        "para el sector. Si tienes tienda, llevar bien tus cuentas te sirve de "
+        "respaldo cuando pidas un crédito.",
+        "Y la mejor defensa es tener un colchón. Aunque sea poquito, aparta una parte "
+        "de cada venta o de cada cosecha en un fondo para imprevistos, así cuando algo "
+        "falle no tienes que correr donde un prestamista. Si ya estás en un gota a "
+        "gota y te están amenazando, no te quedes callado: cuéntaselo a una persona "
+        "de confianza y denuncia ante la Policía o la Fiscalía.",
+    ),
+    key_points=(
+        "Si te prestan sin pedir casi nada y no te dicen el costo total, desconfía.",
+        "Pregunta siempre cuánto pagarás en total y si la entidad está vigilada.",
+        "Compara por lo menos dos opciones: cooperativas, microcrédito, comité de cafeteros.",
+        "Ahorra un poquito de cada venta o cosecha: es tu defensa contra el gota a gota.",
+    ),
+)
+
 CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _GENERAL_CLIMA,
     _GENERAL_AGUA,
@@ -543,9 +683,117 @@ CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _TIENDA_CLIMA,
     _TIENDA_FINANZAS,
     _TIENDA_RIESGOS,
+    _CAFE_BROCA,
+    _TIENDA_INVENTARIO,
+    _FINANZAS_GOTA_A_GOTA,
 )
 
 PATHS: Final[tuple[PathSpec, ...]] = (
+    PathSpec(
+        slug="ruta-cafe-broca",
+        title="Ruta corta: la broca del café",
+        summary="Conoce la plaga que más daña el café y aprende a revisar tu lote y a recoger bien para que no se refugie.",
+        capsule_slugs=(_CAFE_BROCA.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Qué ayuda más a que la broca no se refugie después de la cosecha?",
+                (
+                    "Dejar los frutos en el suelo para que se pudran",
+                    "Hacer el repase y levantar los frutos de las ramas y del suelo",
+                    "Esperar a que llegue la próxima lluvia",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Cómo sabes qué tan afectado está tu lote?",
+                (
+                    "Mirando los frutos solo por fuera",
+                    "Preguntándole al vecino",
+                    "Revisando una muestra de frutos para ver si tienen perforación",
+                ),
+                2,
+            ),
+            QuestionSpec(
+                "Antes de aplicar cualquier producto contra la plaga, ¿qué debes hacer?",
+                (
+                    "Consultar al técnico o al extensionista de tu comité",
+                    "Echarle el doble para estar seguro",
+                    "Mezclar varios productos",
+                ),
+                0,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-tienda-inventario",
+        title="Ruta corta: el inventario de tu tienda",
+        summary="Aprende a ver qué se vende, qué se queda quieto y cuánto pedir para que la plata de tu tienda no quede parada.",
+        capsule_slugs=(_TIENDA_INVENTARIO.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Por qué un producto que no se vende es un problema?",
+                (
+                    "Porque es plata que ya pagaste y está parada",
+                    "Porque ocupa menos espacio",
+                    "Porque con el tiempo sube de precio solo",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Qué significa primero en entrar, primero en salir?",
+                (
+                    "Vender primero lo que llegó más nuevo",
+                    "Vender primero lo que llegó antes, sobre todo si se vence",
+                    "Vender solo lo más caro",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "Antes de aprovechar un descuento por comprar más, ¿qué debes calcular?",
+                (
+                    "El color del empaque",
+                    "Si el vendedor es amable",
+                    "Cuánto alcanzas a vender antes de que se venza",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-finanzas-gota-a-gota",
+        title="Ruta corta: cuidado con el gota a gota",
+        summary="Para quien cultiva y para quien atiende un negocio: cómo reconocer el gota a gota y qué alternativas más seguras tienes.",
+        capsule_slugs=(_FINANZAS_GOTA_A_GOTA.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Cuál es una señal de alerta de un préstamo gota a gota?",
+                (
+                    "Te prestan sin pedir casi nada y no te dicen el costo total",
+                    "Te entregan un contrato claro",
+                    "Te explican la tasa y cuánto pagarás en total",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "Antes de aceptar un crédito, ¿qué debes preguntar?",
+                (
+                    "Solo el valor de la primera cuota",
+                    "Cuánto pagarás en total y si la entidad está vigilada",
+                    "Nada: todos cobran igual",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "Si ya te están amenazando por un gota a gota, ¿qué conviene hacer?",
+                (
+                    "Pagar y quedarte callado",
+                    "Esconderte unos días",
+                    "Contarlo a alguien de confianza y denunciar",
+                ),
+                2,
+            ),
+        ),
+    ),
     PathSpec(
         slug="ruta-general-clima",
         title="Ruta general: clima, agua y plan B",

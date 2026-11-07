@@ -108,11 +108,32 @@ def test_cada_ruta_es_coherente_con_su_evaluacion(path) -> None:  # noqa: ANN001
 def test_las_rutas_por_actividad_no_mezclan_contenido_ajeno() -> None:
     """La ruta de café solo tiene cápsulas de café; la de tienda, de tienda."""
     por_slug = {c.slug: c for c in CAPSULES}
-    esperado = {"ruta-cafe": "cafe", "ruta-tienda-barrio": "tienda_barrio"}
+    esperado = {
+        "ruta-cafe": "cafe",
+        "ruta-tienda-barrio": "tienda_barrio",
+        "ruta-cafe-broca": "cafe",
+        "ruta-tienda-inventario": "tienda_barrio",
+    }
     for path in PATHS:
         etiqueta = esperado.get(path.slug)
         if etiqueta:
             assert all(etiqueta in por_slug[s].tags for s in path.capsule_slugs)
+
+
+def test_la_audiencia_de_cada_ruta_de_refuerzo_es_la_esperada() -> None:
+    """La audiencia de una ruta es la unión de las etiquetas de sus cápsulas.
+
+    Las rutas exclusivas no deben ser visibles para la otra actividad; la de finanzas
+    sirve a ambas (por eso cada cápsula nueva va en su propia ruta).
+    """
+    por_slug = {c.slug: c for c in CAPSULES}
+    audiencia = {
+        path.slug: {tag for s in path.capsule_slugs for tag in por_slug[s].tags}
+        for path in PATHS
+    }
+    assert audiencia["ruta-cafe-broca"] == {"cafe"}
+    assert audiencia["ruta-tienda-inventario"] == {"tienda_barrio"}
+    assert audiencia["ruta-finanzas-gota-a-gota"] == {"cafe", "tienda_barrio"}
 
 
 # --------------------------------------------------------------------------- #
