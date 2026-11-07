@@ -78,6 +78,8 @@ async def _upsert_path(db: AsyncSession, spec: PathSpec) -> None:
     values = {
         "microcapsule_ids": [ids_by_slug[slug] for slug in spec.capsule_slugs],
         "pass_threshold": spec.pass_threshold,
+        "title": spec.title,
+        "summary": spec.summary,
     }
     stmt = pg_insert(LearningPath).values(id=spec.id, **values)
     await db.execute(

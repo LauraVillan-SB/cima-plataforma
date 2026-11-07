@@ -47,6 +47,9 @@ from app.learning.dto import (
     MicrocapsuleResponse,
     MicrocapsuleSelection,
     PathStatusResponse,
+    RouteCapsuleOut,
+    RouteOut,
+    RoutesResponse,
     VideoOut,
 )
 from app.learning.models import (
@@ -761,3 +764,118 @@ async def get_path_status(
         simplify=simplify,
         pace=PACE_SLOW if simplify else PACE_STANDARD,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Listado de rutas con el avance del Usuario (alimenta el tablero y "Mi ruta").
+# --------------------------------------------------------------------------- #
+
+
+async def _fetch_paths(db: AsyncSession) -> list[LearningPath]:
+    """Todas las rutas publicadas (con título), ordenadas por título."""
+    stmt = select(LearningPath).where(LearningPath.title.is_not(None)).order_by(LearningPath.title)
+    return list((await db.execute(stmt)).scalars().all())
+
+
+async def _fetch_capsules_by_id(
+    db: AsyncSession, capsule_ids: set[uuid.UUID]
+) -> dict[uuid.UUID, Microcapsule]:
+    """Microcápsulas por identificador (consulta parametrizada con IN)."""
+    if not capsule_ids:
+        return {}
+    stmt = select(Microcapsule).where(Microcapsule.id.in_(capsule_ids))
+    return {c.id: c for c in (await db.execute(stmt)).scalars().all()}
+
+
+async def _fetch_progress_by_path(
+    db: AsyncSession, current_user_id: uuid.UUID
+) -> dict[uuid.UUID, PathProgress]:
+    """Progreso del Usuario autenticado por ruta; nunca el de otro Usuario (anti-BOLA)."""
+    stmt = select(PathProgress).where(PathProgress.profile_id == current_user_id)
+    return {p.path_id: p for p in (await db.execute(stmt)).scalars().all()}
+
+
+async def _fetch_passed_paths(db: AsyncSession, current_user_id: uuid.UUID) -> set[uuid.UUID]:
+    """Rutas cuya evaluación aprobó el Usuario autenticado."""
+    # Import diferido: Assessment ya depende de Learning; así no hay ciclo de carga.
+    from app.assessment.models import AssessmentAttempt
+
+    stmt = select(AssessmentAttempt.path_id).where(
+        AssessmentAttempt.profile_id == current_user_id,
+        AssessmentAttempt.passed.is_(True),
+    )
+    return set((await db.scalars(stmt)).all())
+
+
+def _is_relevant(audience_tags: list[str], activity: str) -> bool:
+    """La ruta es para el Usuario si trae contenido de su actividad o es general."""
+    return GENERAL_TAG in audience_tags or (bool(activity) and activity in audience_tags)
+
+
+def _build_route(
+    path: LearningPath,
+    capsules: dict[uuid.UUID, Microcapsule],
+    progress: PathProgress | None,
+    assessment_passed: bool,
+) -> RouteOut:
+    """Arma una ruta con el estado de cada cápsula para el Usuario.
+
+    Omite las cápsulas que ya no existen. La primera sin finalizar queda como `next`.
+    """
+    done = set(progress.completed_microcapsules or []) if progress else set()
+    found = [capsules[cid] for cid in path.microcapsule_ids or [] if cid in capsules]
+    next_id = next((c.id for c in found if c.id not in done), None)
+    items = [
+        RouteCapsuleOut(
+            position=index + 1,
+            status="completed" if c.id in done else ("next" if c.id == next_id else "pending"),
+            capsule=_to_microcapsule_response(c),
+        )
+        for index, c in enumerate(found)
+    ]
+    completed_count = sum(1 for item in items if item.status == "completed")
+    return RouteOut(
+        path_id=path.id,
+        title=path.title,
+        summary=path.summary,
+        audience_tags=sorted({tag for c in found for tag in (c.activity_tags or [])}),
+        total_count=len(items),
+        completed_count=completed_count,
+        completed=bool(items) and completed_count == len(items),
+        next_microcapsule_id=next_id,
+        assessment_passed=assessment_passed,
+        items=items,
+    )
+
+
+async def list_routes(db: AsyncSession, current_user_id: uuid.UUID) -> RoutesResponse:
+    """Lista las rutas relevantes para el Usuario autenticado con su avance real.
+
+    Relevantes son las de su actividad (según el Perfil, resuelta en servidor) y las
+    generales; las rutas sin título no se publican. La ruta propia va primero. Cada
+    cápsula trae su estado (completada, siguiente o pendiente) y su contenido, de modo
+    que el cliente no calcula nada (Req 17.3). Solo se lee el progreso del titular.
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: Usuario autenticado, tomado de la sesión.
+
+    Returns:
+        Las rutas con su avance.
+    """
+    # Import diferido: evita acoplar la carga de este módulo a la de `profile`.
+    from app.profile.models import Profile
+
+    profile = await db.get(Profile, current_user_id)
+    activity = ((profile.activity_type if profile else None) or "").strip().lower()
+    paths = await _fetch_paths(db)
+    capsules = await _fetch_capsules_by_id(db, {cid for p in paths for cid in p.microcapsule_ids or []})
+    progress = await _fetch_progress_by_path(db, current_user_id)
+    passed = await _fetch_passed_paths(db, current_user_id)
+    routes = [
+        _build_route(path, capsules, progress.get(path.id), path.id in passed) for path in paths
+    ]
+    relevant = [r for r in routes if _is_relevant(r.audience_tags, activity)]
+    relevant.sort(key=lambda r: (activity not in r.audience_tags, r.title or ""))
+    log_event(logger, "routes_listed", route_count=len(relevant))
+    return RoutesResponse(routes=relevant)
