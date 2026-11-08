@@ -11,8 +11,12 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://cima_app:CHANGE_ME@localhost:5432/cima"
     jwt_issuer: str = "https://idp.segurosbolivar.com"
     access_token_ttl_seconds: int = 900
-    # TTL del refresh token (14 días). Con rotación: cada refresco emite uno nuevo.
+    # Tope absoluto de una sesión desde el ingreso (14 días): aunque haya
+    # actividad, pasado este plazo hay que volver a autenticarse.
     refresh_token_ttl_seconds: int = 1209600
+    # Inactividad máxima (30 min, Req 1.14): el refresh vence a los 30 min de la
+    # última petición autenticada y cada petición lo renueva. Debe ser mayor que
+    # `access_token_ttl_seconds` para que el refresco cubra el hueco entre ambos.
     session_inactivity_seconds: int = 1800
     # Bloqueo por intentos fallidos: umbral y duración del bloqueo (Req 1.12, 1.13).
     max_failed_attempts: int = 5
