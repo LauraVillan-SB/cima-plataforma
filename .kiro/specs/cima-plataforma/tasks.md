@@ -90,7 +90,7 @@ Convenciones:
   - [x]* 6.6 Escribir test de propiedad para normalización y validación del perfil
     - **Property 31: Normalización y validación de campos del Perfil**
     - **Validates: Requirements 9.2, 9.3**
-  - [ ]* 6.7 Escribir test de propiedad para DTO con allowlist en respuestas
+  - [x]* 6.7 Escribir test de propiedad para DTO con allowlist en respuestas
     - **Property 32: DTO con allowlist en respuestas de Perfil**
     - **Validates: Requirements 9.5**
   - [x]* 6.8 Escribir test de propiedad para autorización por propiedad (anti-BOLA)
@@ -131,10 +131,10 @@ Convenciones:
   - [x]* 7.8 Escribir test de propiedad para error de ingreso indistinguible
     - **Property 3: Error de ingreso indistinguible**
     - **Validates: Requirements 1.7**
-  - [ ]* 7.9 Escribir test de propiedad para bloqueo por intentos fallidos
+  - [x]* 7.9 Escribir test de propiedad para bloqueo por intentos fallidos
     - **Property 4: Bloqueo por intentos fallidos consecutivos**
     - **Validates: Requirements 1.11**
-  - [ ]* 7.10 Escribir test de propiedad para reactivación tras expirar el bloqueo
+  - [x]* 7.10 Escribir test de propiedad para reactivación tras expirar el bloqueo
     - **Property 5: Reactivación tras expirar el bloqueo**
     - **Validates: Requirements 1.12**
   - [x]* 7.11 Escribir test de propiedad para propiedades del token de sesión

@@ -109,23 +109,67 @@ async def test_bloqueo_vigente_rechaza_con_cuenta_bloqueada() -> None:
         await service.ingresar(sesion, IngresoRequest(telefono=_TELEFONO, clave=_CLAVE_OK))
 
 
+# Hash de la Clave correcta calculado una sola vez: bcrypt es lento a propósito y
+# las propiedades de abajo generan muchos Perfiles.
+_HASH_OK = hash_clave(_CLAVE_OK)
+
+
+def _perfil_bloqueado(fallos: int, locked_until: datetime) -> Profile:
+    return Profile(
+        id=uuid.uuid4(),
+        phone_e164=_TELEFONO,
+        clave_hash=_HASH_OK,
+        activity_type="",
+        geo_zone="",
+        failed_attempts=fallos,
+        locked_until=locked_until,
+    )
+
+
 # Feature: cima-plataforma, Property 5: Reactivación tras expirar el bloqueo.
 # Validates: Requirements 1.12
+@settings(max_examples=100, deadline=None)
+@given(
+    segundos_vencido=st.integers(min_value=1, max_value=30 * 86_400),
+    fallos=st.integers(min_value=_MAX, max_value=_MAX + 20),
+)
 @pytest.mark.asyncio
-async def test_property_5_reactivacion_tras_expirar_el_bloqueo() -> None:
-    """Pasado el tiempo de bloqueo, un ingreso correcto reactiva la cuenta con contador en cero."""
-    # Given un bloqueo ya expirado (locked_until en el pasado)
-    pasado = datetime.now(timezone.utc) - timedelta(seconds=1)
-    perfil = _perfil(clave=_CLAVE_OK, failed=_MAX, locked_until=pasado)
+async def test_property_5_reactivacion_tras_expirar_el_bloqueo(
+    segundos_vencido: int, fallos: int
+) -> None:
+    """Para todo bloqueo ya vencido, un ingreso correcto reactiva con contador en cero."""
+    # Given un bloqueo que venció hace `segundos_vencido`, con cualquier conteo previo
+    vencido = datetime.now(timezone.utc) - timedelta(seconds=segundos_vencido)
+    perfil = _perfil_bloqueado(fallos, vencido)
     sesion = _FakeSession(stored=perfil)
 
-    # When ingresa con la Clave correcta tras expirar el bloqueo
+    # When ingresa con la Clave correcta
     resp = await service.ingresar(sesion, IngresoRequest(telefono=_TELEFONO, clave=_CLAVE_OK))
 
     # Then el ingreso procede, el contador queda en cero y el bloqueo se limpia
     assert resp.id == perfil.id
     assert perfil.failed_attempts == 0
     assert perfil.locked_until is None
+
+
+# Feature: cima-plataforma, Property 5: Reactivación tras expirar el bloqueo.
+# Validates: Requirements 1.12
+@settings(max_examples=100, deadline=None)
+@given(segundos_restantes=st.integers(min_value=5, max_value=_LOCKOUT))
+@pytest.mark.asyncio
+async def test_property_5_no_reactiva_antes_de_expirar(segundos_restantes: int) -> None:
+    """Contraparte: mientras el bloqueo esté vigente, ni la Clave correcta lo levanta."""
+    vigente = datetime.now(timezone.utc) + timedelta(seconds=segundos_restantes)
+    perfil = _perfil_bloqueado(_MAX, vigente)
+    sesion = _FakeSession(stored=perfil)
+
+    with pytest.raises(CuentaBloqueadaError):
+        await service.ingresar(sesion, IngresoRequest(telefono=_TELEFONO, clave=_CLAVE_OK))
+
+    # El bloqueo y el contador se conservan: no hubo reactivación anticipada.
+    assert perfil.locked_until == vigente
+    assert perfil.failed_attempts == _MAX
+    assert sesion.commits == 0
 
 
 @pytest.mark.asyncio
