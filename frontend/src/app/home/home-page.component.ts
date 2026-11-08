@@ -8,9 +8,10 @@ import { UserContextService } from '../core/user-context.service';
  * Pantalla de inicio tras entrar (destino del login/registro). Saluda a la
  * persona nombrando su cultivo o comercio ("Hola, estas son tus opciones para
  * tu cultivo de café") y ofrece lo principal con botones grandes: sus
- * microcápsulas, su perfil, cambiar su clave y cerrar sesión (Req 13.1, 13.3).
- * Solo presentación; la sesión vive en la cookie HttpOnly del backend (Req 2.6)
- * y el Perfil llega con el celular ya enmascarado (Req 9.4).
+ * microcápsulas, su asistente, sus logros, su perfil, cambiar su clave y
+ * cerrar sesión (Req 13.1, 13.3). Solo presentación; la sesión vive en la
+ * cookie HttpOnly del backend (Req 2.6) y el Perfil llega con el celular ya
+ * enmascarado (Req 9.4).
  */
 @Component({
   selector: 'cima-home-page',
@@ -41,6 +42,20 @@ import { UserContextService } from '../core/user-context.service';
             (click)="ir('/aprendizaje')"
           >
             Ver mis microcápsulas
+          </button>
+          <button
+            type="button"
+            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large accion"
+            (click)="ir('/asistente')"
+          >
+            Hablar con mi asistente
+          </button>
+          <button
+            type="button"
+            class="sb-ui-button sb-ui-button--primary sb-ui-button--stroke sb-ui-button--large accion"
+            (click)="ir('/logros')"
+          >
+            Ver mis logros
           </button>
           <button
             type="button"
