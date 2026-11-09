@@ -113,7 +113,7 @@ Convenciones:
     - Access ≤ 15 min + refresh con rotación; cookies Secure/HttpOnly/SameSite; sin tokens en localStorage; `POST /api/v1/auth/refresco`, `POST /api/v1/auth/salir`
     - _Requirements: 1.10, 1.13_
     - _Properties: 6_
-  - [~] 7.4 Implementar bloqueo por intentos, reactivación e inactividad
+  - [x] 7.4 Implementar bloqueo por intentos, reactivación e inactividad
     - 5 fallos consecutivos → bloqueo 15 min por teléfono; reactivación con contador en cero; invalidación por 30 min de inactividad; `PUT /api/v1/auth/clave` exige Clave actual
     - _Requirements: 1.11, 1.12, 1.13, 1.14_
     - _Properties: 4, 5_

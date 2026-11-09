@@ -22,9 +22,22 @@ REFRESH_COOKIE = "cima_refresh"
 _REFRESH_PATH = "/api/v1/auth"
 
 
-def set_session_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    """Adjunta las cookies de access y refresh con atributos de seguridad."""
+def set_session_cookies(
+    response: Response,
+    access_token: str,
+    refresh_token: str,
+    refresh_max_age: int | None = None,
+) -> None:
+    """Adjunta las cookies de access y refresh con atributos de seguridad.
+
+    `refresh_max_age` debe coincidir con la vida del refresh emitido (la ventana
+    de inactividad recortada al tope de la sesión, ver `tokens.emitir_sesion`).
+    Si no se indica, se usa la ventana de inactividad completa (Req 1.14).
+    """
     settings = get_settings()
+    vida_refresh = (
+        refresh_max_age if refresh_max_age is not None else settings.session_inactivity_seconds
+    )
     response.set_cookie(
         key=ACCESS_COOKIE,
         value=access_token,
@@ -37,7 +50,7 @@ def set_session_cookies(response: Response, access_token: str, refresh_token: st
     response.set_cookie(
         key=REFRESH_COOKIE,
         value=refresh_token,
-        max_age=settings.refresh_token_ttl_seconds,
+        max_age=vida_refresh,
         httponly=True,
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
