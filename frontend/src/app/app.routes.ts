@@ -48,6 +48,28 @@ export const routes: Routes = [
       ),
     title: 'Evaluación - CIMA',
   },
+  {
+    path: 'asistente',
+    loadComponent: () =>
+      import('./chat/chat-page.component').then((m) => m.ChatPageComponent),
+    title: 'Asistente - CIMA',
+  },
+  {
+    path: 'conversion/:rutaId',
+    loadComponent: () =>
+      import('./conversion/conversion-page.component').then(
+        (m) => m.ConversionPageComponent,
+      ),
+    title: 'Microseguros - CIMA',
+  },
+  {
+    path: 'logros',
+    loadComponent: () =>
+      import('./gamificacion/gamification-page.component').then(
+        (m) => m.GamificationPageComponent,
+      ),
+    title: 'Tus logros - CIMA',
+  },
   { path: '', redirectTo: 'entrar', pathMatch: 'full' },
   { path: '**', redirectTo: 'entrar' },
 ];

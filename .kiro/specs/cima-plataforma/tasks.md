@@ -145,7 +145,7 @@ Convenciones:
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. Control de SSRF para consumo externo (Req 10)
-  - [ ] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
+  - [x] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
     - Allowlist de dominios, HTTPS obligatorio, bloqueo de IPs privadas/link-local, timeout ≤ 5 s, máx. 2 redirecciones; llamadas autenticadas con token firmado; registro de intentos bloqueados con Correlation-ID
     - _Requirements: 10.4, 10.5_
     - _Properties: 34_
@@ -154,7 +154,7 @@ Convenciones:
     - **Validates: Requirements 10.4, 10.5**
 
 - [ ] 10. Observabilidad, resiliencia y escalabilidad (Req 11, Req 12)
-  - [ ] 10.1 Implementar circuit breaker, timeout y fallback para dependencias externas
+  - [x] 10.1 Implementar circuit breaker, timeout y fallback para dependencias externas
     - Envolver invocaciones a LLM, STT/TTS, pagos y core de pólizas con circuit breaker + timeout bajo + fallback documentado; registrar activación con Correlation-ID sin PII
     - _Requirements: 11.5, 11.6_
   - [ ] 10.2 Exponer señales doradas con SLO y alertas

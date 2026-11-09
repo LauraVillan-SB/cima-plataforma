@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import {
   AssessmentService,
@@ -18,6 +18,7 @@ import {
   selector: 'cima-assessment-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink],
   template: `
     <section class="evaluacion">
       <h1 class="titulo">Evaluación</h1>
@@ -37,6 +38,12 @@ import {
         >
           @if (r.passed) {
             <p>¡Aprobaste! Tu puntaje fue {{ r.score }} de 100.</p>
+            <a
+              class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large"
+              [routerLink]="['/conversion', rutaId]"
+            >
+              Ver opciones de microseguro
+            </a>
           } @else {
             <p>Tu puntaje fue {{ r.score }} de 100. Aún no alcanzas el mínimo.</p>
             @if (r.cooldown_until) {
@@ -134,7 +141,7 @@ export class AssessmentPageComponent {
   private readonly assessment = inject(AssessmentService);
   private readonly route = inject(ActivatedRoute);
 
-  private readonly rutaId = this.route.snapshot.paramMap.get('rutaId') ?? '';
+  protected readonly rutaId = this.route.snapshot.paramMap.get('rutaId') ?? '';
   private readonly seleccion = new Map<number, number>();
 
   readonly cargando = signal<boolean>(true);
