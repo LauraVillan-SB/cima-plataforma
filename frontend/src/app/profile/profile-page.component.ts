@@ -217,12 +217,17 @@ export class ProfilePageComponent {
     const actual = this.perfil();
     const activity_type = this.actividad();
     const geo_zone = this.zona().trim();
+    if (!actual) {
+      // El Perfil se crea al registrarse; si no llegó, la sesión no corresponde a
+      // una cuenta completa. No hay creación aparte (se quitó por seguridad).
+      this.mensajeError.set('No encontramos tu perfil. Sal de tu cuenta y vuelve a entrar.');
+      this.guardando.set(false);
+      return;
+    }
     try {
-      // Al actualizar solo se envían cultivo/comercio y zona: el celular es la
-      // identidad de ingreso, no se edita aquí y el cliente solo lo ve enmascarado.
-      const guardado = actual
-        ? await this.profiles.actualizar(actual.id, { activity_type, geo_zone })
-        : await this.profiles.crear({ phone: '', activity_type, geo_zone });
+      // Solo se envían cultivo/comercio y zona: el celular es la identidad de
+      // ingreso, no se edita aquí y el cliente solo lo ve enmascarado.
+      const guardado = await this.profiles.actualizar(actual.id, { activity_type, geo_zone });
       this.perfil.set(guardado);
       this.contexto.establecer(guardado);
       this.actividad.set(guardado.activity_type);

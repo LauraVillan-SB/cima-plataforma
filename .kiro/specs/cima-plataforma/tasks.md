@@ -72,7 +72,7 @@ Convenciones:
     - _Requirements: 9.1, 9.2, 9.3_
     - _Properties: 30, 31_
   - [x] 6.2 Implementar endpoints de perfil con DTO allowlist y enmascaramiento
-    - `POST /api/v1/perfiles`, `GET/PUT /api/v1/perfiles/me`; respuestas con DTO autorizado y PII enmascarada
+    - `GET/PUT /api/v1/perfiles/me`; respuestas con DTO autorizado y PII enmascarada. El Perfil se crea con el registro; la creación pública `POST /api/v1/perfiles` se quitó porque revelaba qué teléfonos tienen cuenta (Req 1.7)
     - _Requirements: 9.1, 9.4, 9.5_
     - _Properties: 18, 32_
   - [x] 6.3 Implementar autorización por propiedad (anti-BOLA) y rate limiting de abuso
@@ -141,7 +141,7 @@ Convenciones:
     - **Property 6: Propiedades del token de sesión**
     - **Validates: Requirements 1.10**
 
-- [ ] 8. Checkpoint — Verificar autenticación y perfil end-to-end
+- [x] 8. Checkpoint — Verificar autenticación y perfil end-to-end
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. Control de SSRF para consumo externo (Req 10)

@@ -14,13 +14,6 @@ export interface Perfil {
   readonly geo_zone: string;
 }
 
-/** Datos para crear el Perfil (contrato de entrada del backend). */
-export interface PerfilEntrada {
-  readonly phone: string;
-  readonly activity_type: string;
-  readonly geo_zone: string;
-}
-
 /**
  * Datos para actualizar el Perfil propio. No lleva el celular: es la identidad
  * de ingreso, no se edita por aquí y el cliente solo lo conoce enmascarado
@@ -45,13 +38,6 @@ export class ProfileService {
   async obtenerMiPerfil(): Promise<Perfil> {
     return firstValueFrom(
       this.http.get<Perfil>('/api/v1/perfiles/me', { withCredentials: true }),
-    );
-  }
-
-  /** Crea el Perfil del Usuario autenticado (`POST /api/v1/perfiles`). */
-  async crear(datos: PerfilEntrada): Promise<Perfil> {
-    return firstValueFrom(
-      this.http.post<Perfil>('/api/v1/perfiles', datos, { withCredentials: true }),
     );
   }
 

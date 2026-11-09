@@ -260,8 +260,9 @@ Detalles:
 
 | Endpoint | Método | Descripción | Req |
 |----------|--------|-------------|-----|
-| `/api/v1/perfiles` | POST | Crea perfil con campos mínimos (allowlist) | 9.1, 9.2, 9.3 |
 | `/api/v1/perfiles/me` | GET/PUT | Lee/actualiza el perfil del Usuario autenticado | 9.4, 9.5, 9.6 |
+
+El Perfil se crea con el registro (`POST /api/v1/auth/registro`), junto con el hash de la Clave; no hay una ruta de creación aparte. Una creación pública respondería distinto según el teléfono ya estuviera registrado o no, y permitiría averiguar qué celulares tienen cuenta, contra el error indistinguible del ingreso (Req 1.7).
 
 Detalles:
 - Campos mínimos: teléfono, tipo de cultivo/comercio, zona geográfica; cualquier campo extra → rechazo señalando el campo no permitido (allowlist, Zero Trust) (Req 9.1).
