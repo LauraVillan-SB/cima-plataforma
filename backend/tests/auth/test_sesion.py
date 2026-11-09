@@ -48,6 +48,12 @@ async def test_sesion_con_token_corrupto_es_rechazada() -> None:
     """Un token con firma alterada se rechaza (integridad, Req 2.7)."""
     pid = uuid.uuid4()
     access = tokens.crear_access_token(pid)
-    corrupto = access[:-1] + ("a" if access[-1] != "a" else "b")
+    # Se altera el PRIMER carácter de la firma. El último no sirve: en base64url
+    # solo aporta 4 bits útiles y 2 de relleno, así que cambiarlo (p. ej. "Y"/"Z"
+    # por "a") puede dejar los mismos bytes y la firma seguir válida, lo que
+    # hacía que esta prueba fallara de forma intermitente.
+    cabecera, carga, firma = access.split(".")
+    otro = "A" if firma[0] != "A" else "B"
+    corrupto = f"{cabecera}.{carga}.{otro}{firma[1:]}"
     with pytest.raises(ForbiddenError):
         await get_current_user_id(cima_access=corrupto)
