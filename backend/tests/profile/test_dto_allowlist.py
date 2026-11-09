@@ -198,7 +198,6 @@ def _propiedades_respuesta(openapi: dict, ruta: str, metodo: str, codigo: str) -
 @pytest.mark.parametrize(
     ("ruta", "metodo", "codigo", "campos"),
     [
-        ("/api/v1/perfiles", "post", "201", CAMPOS_PERFIL),
         ("/api/v1/perfiles/me", "get", "200", CAMPOS_PERFIL),
         ("/api/v1/perfiles/{perfil_id}", "put", "200", CAMPOS_PERFIL),
         ("/api/v1/auth/registro", "post", "201", CAMPOS_SESION),

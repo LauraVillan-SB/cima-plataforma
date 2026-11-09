@@ -11,7 +11,6 @@ from __future__ import annotations
 import logging
 import uuid
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.config import get_settings
@@ -19,12 +18,11 @@ from app.common.errors import (
     ForbiddenError,
     NotFoundError,
     RateLimitedError,
-    ValidationError,
 )
 from app.common.logging import log_event
 from app.common.masking import mask_value
 from app.common.rate_limit import SlidingWindowRateLimiter
-from app.profile.dto import ProfileCreate, ProfileResponse, ProfileUpdate
+from app.profile.dto import ProfileResponse, ProfileUpdate
 from app.profile.models import Profile
 
 logger = logging.getLogger("cima.profile")
@@ -47,27 +45,6 @@ def _to_response(profile: Profile) -> ProfileResponse:
         activity_type=profile.activity_type,
         geo_zone=profile.geo_zone,
     )
-
-
-async def create_profile(db: AsyncSession, data: ProfileCreate) -> ProfileResponse:
-    """Crea un Perfil validado. Rechaza si el teléfono ya está registrado.
-
-    La validación de formato ya ocurrió en el DTO; aquí se verifica la unicidad.
-    """
-    existing = await db.scalar(select(Profile).where(Profile.phone_e164 == data.phone))
-    if existing is not None:
-        raise ValidationError(internal_detail="phone already registered")
-
-    profile = Profile(
-        phone_e164=data.phone,
-        activity_type=data.activity_type,
-        geo_zone=data.geo_zone,
-    )
-    db.add(profile)
-    await db.commit()
-    await db.refresh(profile)
-    log_event(logger, "profile_created", profile_id=str(profile.id))
-    return _to_response(profile)
 
 
 async def get_own_profile(db: AsyncSession, current_user_id: uuid.UUID) -> ProfileResponse:
