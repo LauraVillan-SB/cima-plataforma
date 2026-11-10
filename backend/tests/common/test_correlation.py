@@ -38,6 +38,8 @@ from app.common.errors import NotFoundError, register_error_handlers
 _UUID_V4 = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
 _DESTINO = "https://sostenibilidadbolivar.com/servicio"
 _IP_PUBLICA = [("", "", "", "", ("93.184.216.34", 0))]
+# Valor ficticio, no es un secreto.
+_TOKEN = "token-de-prueba"
 
 # Cabeceras que recibió el "tercero" simulado en cada llamada saliente.
 _recibidas: list[httpx.Headers] = []
@@ -67,7 +69,7 @@ async def _falla() -> None:
 async def _saliente() -> dict[str, str]:
     cliente = http_client.crear_cliente(transport=httpx.MockTransport(_tercero))
     async with cliente:
-        await http_client.solicitar(cliente, "GET", _DESTINO)
+        await http_client.solicitar(cliente, "GET", _DESTINO, token=_TOKEN)
     return {"contexto": get_correlation_id()}
 
 
@@ -159,7 +161,7 @@ async def test_llamada_saliente_fuera_de_una_peticion_lleva_un_id_generado() -> 
     cliente = http_client.crear_cliente(transport=httpx.MockTransport(_tercero))
     with patch.object(http_client.socket, "getaddrinfo", return_value=_IP_PUBLICA):
         async with cliente:
-            await http_client.solicitar(cliente, "GET", _DESTINO)
+            await http_client.solicitar(cliente, "GET", _DESTINO, token=_TOKEN)
     assert _UUID_V4.fullmatch(_recibidas[0][CORRELATION_HEADER])
 
 
@@ -170,6 +172,6 @@ async def test_id_fijado_por_el_llamador_se_respeta() -> None:
     with patch.object(http_client.socket, "getaddrinfo", return_value=_IP_PUBLICA):
         async with cliente:
             await http_client.solicitar(
-                cliente, "GET", _DESTINO, headers={CORRELATION_HEADER: "fijado-1"}
+                cliente, "GET", _DESTINO, token=_TOKEN, headers={CORRELATION_HEADER: "fijado-1"}
             )
     assert _recibidas[0][CORRELATION_HEADER] == "fijado-1"

@@ -11,6 +11,9 @@ dominio permitido hacia una dirección interna (p. ej. 169.254.169.254) se
 bloquea antes de transmitir, no después. El mismo hook adjunta el
 `X-Correlation-ID` de la petición entrante a toda llamada saliente (Property 35).
 
+Toda llamada va autenticada: `solicitar` exige un token firmado y lo envía como
+`Authorization: Bearer`, sin registrarlo nunca (Req 10.4).
+
 Requisitos: 10.4, 10.5 (OWASP A10 SSRF), 11.1. Dependencias externas se
 envuelven además con el circuit breaker de `app/common/resilience.py`
 (Req 11.5, 11.6).
@@ -20,6 +23,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import re
 import socket
 import uuid
 from urllib.parse import urlsplit
@@ -31,6 +35,10 @@ from app.common.correlation import CORRELATION_HEADER, get_correlation_id
 from app.common.logging import log_event
 
 logger = logging.getLogger("cima.http")
+
+# Forma b64token de RFC 6750 (cubre JWT): sin espacios ni saltos de línea, que
+# permitirían inyectar cabeceras. Tope de longitud para no aceptar basura enorme.
+_TOKEN_VALIDO = re.compile(r"[A-Za-z0-9\-._~+/]{1,4096}=*")
 
 
 class SsrfBlockedError(Exception):
@@ -141,19 +149,43 @@ def crear_cliente(transport: httpx.AsyncBaseTransport | None = None) -> httpx.As
     )
 
 
+def _validar_token(token: object) -> str:
+    """Valida el token firmado con una allowlist de caracteres (RFC 6750 b64token).
+
+    El mensaje de error nunca incluye el token: podría ser un secreto válido con un
+    error de formato, y el mensaje puede acabar en logs o trazas.
+    """
+    if not isinstance(token, str) or not _TOKEN_VALIDO.fullmatch(token):
+        raise ValueError("token firmado ausente o con formato invalido")
+    return token
+
+
 async def solicitar(
     cliente: httpx.AsyncClient,
     metodo: str,
     url: str,
+    *,
+    token: str,
     **kwargs: object,
 ) -> httpx.Response:
-    """Realiza una petición aplicando la política de SSRF a cada salto.
+    """Realiza una llamada autenticada aplicando la política de SSRF a cada salto.
 
-    Exige un cliente creado con `crear_cliente`: uno sin el hook seguiría las
-    redirecciones sin verificarlas. La primera URL se verifica también aquí, para
-    fallar rápido con un mensaje claro.
+    - Exige un cliente creado con `crear_cliente`: uno sin el hook seguiría las
+      redirecciones sin verificarlas. La primera URL se verifica también aquí,
+      para fallar rápido con un mensaje claro.
+    - Exige `token`: el token firmado (JWT del IdP institucional) que el llamador
+      obtiene para el servicio destino. Se envía como `Authorization: Bearer` y
+      prevalece sobre cualquier `Authorization` que traigan los `headers` del
+      llamador (Req 10.4). De dónde sale el token depende del contrato del IdP,
+      que no está definido todavía; por eso lo provee el llamador.
+    - El token nunca se registra. En una redirección a OTRO origen httpx quita la
+      cabecera `Authorization`, así que el token no se filtra al nuevo destino;
+      dentro del mismo origen se conserva.
     """
     if _antes_de_enviar not in cliente.event_hooks.get("request", []):
         raise ValueError("Usa http_client.crear_cliente(): el cliente no aplica la política de SSRF")
+    token_valido = _validar_token(token)
     _verificar_o_bloquear(url)
-    return await cliente.request(metodo, url, **kwargs)
+    cabeceras = httpx.Headers(kwargs.pop("headers", None))  # type: ignore[arg-type]
+    cabeceras["Authorization"] = f"Bearer {token_valido}"
+    return await cliente.request(metodo, url, headers=cabeceras, **kwargs)
