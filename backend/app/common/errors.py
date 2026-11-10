@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 
 from app.common.correlation import get_correlation_id
 from app.common.logging import log_event
+from app.common.security_headers import aplicar_cabeceras
 
 logger = logging.getLogger("cima.errors")
 
@@ -127,7 +128,11 @@ def register_error_handlers(app: FastAPI) -> None:
             detail=str(exc),
             path=request.url.path,
         )
-        return JSONResponse(
+        respuesta = JSONResponse(
             status_code=500,
             content=_error_body("Tuvimos un problema de nuestro lado. Intenta más tarde."),
         )
+        # Este manejador corre fuera de los middlewares de la app (en Starlette
+        # el error 500 lo resuelve el middleware de errores más externo), así que
+        # aquí se agregan también las cabeceras de seguridad (OWASP A02).
+        return aplicar_cabeceras(respuesta, request.url.path)

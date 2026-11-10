@@ -436,8 +436,9 @@ Convenciones:
     - _Requirements: 2.2, 2.3, 2.4, 13.2, 13.3_
 
 - [ ] 24. Integración y cableado final
-  - [ ] 24.1 Cablear API Gateway, headers de seguridad y OpenAPI
+  - [~] 24.1 Cablear API Gateway, headers de seguridad y OpenAPI
     - Enrutar `/api/v1/*` por el gateway con TLS, rate limiting y Correlation-ID; headers HSTS, CSP, nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy; exponer OpenAPI como contrato
+    - Nota: headers de seguridad implementados en la API (`app/common/security_headers.py`): toda respuesta, incluidas las de error y el 500, lleva HSTS (sin `preload`), CSP `default-src 'none'`, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` y `Permissions-Policy`; solo `/docs` y `/redoc` usan una CSP acotada a lo que cargan. OpenAPI se expone en `/openapi.json`. **Falta:** el API Gateway con TLS y rate limiting (infraestructura, repositorio `-infra`) y los headers del frontend, que se fijan donde se sirve la PWA (CloudFront), con CSP por nonce y `microphone=(self)` para la voz
     - _Requirements: 11.1, 12.2_
   - [ ] 24.2 Integrar frontend y backend end-to-end
     - Conectar PWA con todos los servicios de dominio vía gateway; verificar sesión por cookie httpOnly; graceful shutdown
