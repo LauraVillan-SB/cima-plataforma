@@ -145,11 +145,11 @@ Convenciones:
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. Control de SSRF para consumo externo (Req 10)
-  - [~] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
+  - [x] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
     - Allowlist de dominios, HTTPS obligatorio, bloqueo de IPs privadas/link-local, timeout ≤ 5 s, máx. 2 redirecciones; llamadas autenticadas con token firmado; registro de intentos bloqueados con Correlation-ID
     - _Requirements: 10.4, 10.5_
     - _Properties: 34_
-    - Nota: allowlist, HTTPS, bloqueo de IPs internas, timeout, límite de redirecciones (verificadas antes de enviar cada salto) y propagación del Correlation-ID implementados en `app/common/http_client.py`. **Falta:** las llamadas autenticadas con token firmado. Hay una implementación previa en la rama `backup/ssrf-client-con-token-firmado` (commit `597e9ce`) que no llegó a `develop`.
+    - Nota: allowlist, HTTPS, bloqueo de IPs internas, timeout, límite de redirecciones (verificadas antes de enviar cada salto) y propagación del Correlation-ID implementados en `app/common/http_client.py`. `solicitar` exige un token firmado (`token=`, validado con allowlist de caracteres) y lo envía como `Authorization: Bearer`; httpx no lo reenvía en redirecciones a otro origen y nunca se registra (`tests/common/test_token_saliente.py`). El origen del token lo provee el llamador: depende del contrato del IdP institucional, pendiente igual que la 7.5.
   - [x]* 9.2 Escribir test de propiedad para control de SSRF
     - **Property 34: Control de SSRF en consumo externo**
     - **Validates: Requirements 10.4, 10.5**

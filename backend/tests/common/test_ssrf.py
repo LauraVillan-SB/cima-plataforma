@@ -77,6 +77,8 @@ import httpx  # noqa: E402
 import pytest  # noqa: E402
 
 _PERMITIDA = "https://sostenibilidadbolivar.com/inicio"
+# Valor ficticio, no es un secreto.
+_TOKEN = "token-de-prueba"
 
 
 def _transporte_que_redirige(destino: str, recibidas: list[str]) -> httpx.MockTransport:
@@ -116,7 +118,7 @@ async def test_redireccion_a_destino_prohibido_se_bloquea_sin_transmitir(destino
     with patch.object(http_client.socket, "getaddrinfo", side_effect=_dns_por_host({})):
         async with cliente:
             with pytest.raises(http_client.SsrfBlockedError):
-                await http_client.solicitar(cliente, "GET", _PERMITIDA)
+                await http_client.solicitar(cliente, "GET", _PERMITIDA, token=_TOKEN)
 
     # Solo llegó la petición al dominio permitido; el destino prohibido nunca la recibió.
     assert recibidas == [_PERMITIDA]
@@ -139,7 +141,7 @@ async def test_redireccion_a_dominio_permitido_que_resuelve_a_ip_interna_se_bloq
             ):
                 async with cliente:
                     with pytest.raises(http_client.SsrfBlockedError):
-                        await http_client.solicitar(cliente, "GET", _PERMITIDA)
+                        await http_client.solicitar(cliente, "GET", _PERMITIDA, token=_TOKEN)
         finally:
             http_client.get_settings.cache_clear()
 
@@ -154,7 +156,7 @@ async def test_redireccion_dentro_del_dominio_permitido_se_sigue() -> None:
 
     with patch.object(http_client.socket, "getaddrinfo", side_effect=_dns_por_host({})):
         async with cliente:
-            respuesta = await http_client.solicitar(cliente, "GET", _PERMITIDA)
+            respuesta = await http_client.solicitar(cliente, "GET", _PERMITIDA, token=_TOKEN)
 
     assert respuesta.status_code == 200
     assert recibidas == [_PERMITIDA, destino]
@@ -165,4 +167,4 @@ async def test_solicitar_rechaza_un_cliente_sin_la_politica_de_ssrf() -> None:
     """Un `httpx.AsyncClient` cualquiera seguiría redirecciones sin verificarlas."""
     async with httpx.AsyncClient(transport=httpx.MockTransport(lambda r: httpx.Response(200))) as crudo:
         with pytest.raises(ValueError):
-            await http_client.solicitar(crudo, "GET", _PERMITIDA)
+            await http_client.solicitar(crudo, "GET", _PERMITIDA, token=_TOKEN)
