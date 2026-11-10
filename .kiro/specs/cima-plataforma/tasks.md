@@ -44,29 +44,29 @@ Convenciones:
   - [x]* 3.4 Escribir test de propiedad para enmascaramiento de PII
     - **Property 18: Enmascaramiento de PII en respuestas y logs**
     - **Validates: Requirements 5.9, 9.4**
-  - [ ]* 3.5 Escribir test de propiedad para propagación del Correlation-ID
+  - [x]* 3.5 Escribir test de propiedad para propagación del Correlation-ID
     - **Property 35: Propagación del Correlation-ID**
     - **Validates: Requirements 11.1**
 
-- [ ] 4. Modelos de datos y migraciones
+- [x] 4. Modelos de datos y migraciones
   - [x] 4.1 Definir modelos SQLAlchemy y esquemas Pydantic base
     - Crear entidades `profiles`, `microcapsules` (con columna `embedding` VECTOR/PgVector), `learning_paths`, `path_progress`, `assessments`, `assessment_attempts`, `certificates`, `incentives`, `conversion_intents`, `metric_events`, `metric_aggregates`, `ai_interactions`, `badges`, `user_badges`, `user_points`, `surveys`, `survey_responses`
     - Tipado estricto, cifrado at-rest de PII (`phone_e164`), restricción UNIQUE(`profile_id`,`path_id`) en certificados, `client_event_id` UUID v4 para idempotencia
     - Gamificación: `badges` (catálogo con `points_value`), `user_badges` con restricción UNIQUE(`profile_id`,`badge_id`) y `client_event_id` UUID v4 para otorgamiento idempotente, y `user_points` (total de puntos por perfil)
     - Encuesta de satisfacción: `surveys` (definición de preguntas con escala 1–5) y `survey_responses` con restricción UNIQUE(`profile_id`,`path_id`) y `client_event_id` UUID v4 para idempotencia de registro, y `rating` en escala 1–5
     - _Requirements: 1.5, 4.1, 4.2, 6.4, 8.1, 8.2, 9.1, 17.4, 19.2, 19.5, 20.3, 20.6_
-  - [~] 4.2 Crear migraciones Alembic iniciales
+  - [x] 4.2 Crear migraciones Alembic iniciales
     - Migración de creación de tablas, extensión PgVector, índices y roles de BD separados (lectura/escritura/admin)
-    - Nota: infraestructura Alembic y migraciones `0001` (`profiles`, `metric_events` + PgVector) y `0002` (`conversion_intents`, `no_offer_events`) creadas; un solo head (`0002_conversion_microseguros`). Los roles de BD separados quedan como provisión de infraestructura (no en migración versionada). **Pendiente:** faltan las migraciones de `surveys` y `survey_responses` (Survey Service), `sync_actions` y `sync_path_progress` (Sync Service): tienen modelo ORM pero ninguna migración las crea, por lo que fallarían en una base creada con `alembic upgrade head`. Tampoco existen aún los modelos de `ai_interactions`, `incentives`, `badges`, `user_badges` ni `user_points`.
+    - Nota: infraestructura Alembic y migraciones `0001` (`profiles`, `metric_events` + PgVector) y `0002` (`conversion_intents`, `no_offer_events`) creadas; un solo head (`0002_conversion_microseguros`). Los roles de BD separados quedan como provisión de infraestructura (no en migración versionada). Hoy hay 11 migraciones (`0001` a `0011_survey_sync_tablas`) con un solo head; incluyen `surveys`, `survey_responses`, `sync_actions`, `sync_path_progress`, `ai_interactions`, `incentives` y gamificación. Verificado en una base vacía: `upgrade head` crea 18 tablas, `alembic check` no detecta diferencias con los modelos, y `downgrade base` + `upgrade head` vuelven a dejarla en el head.
     - _Requirements: 8.1, 17.4_
   - [ ]* 4.3 Escribir pruebas unitarias de los esquemas de datos
     - Validar restricciones, tipos y defaults (p. ej. `pass_threshold` default 70)
     - _Requirements: 4.1, 4.2, 7.3_
 
-- [ ] 5. Checkpoint — Verificar que la base compila y las migraciones aplican
+- [x] 5. Checkpoint — Verificar que la base compila y las migraciones aplican
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Profile Service — Perfil y protección de datos (Req 9)
+- [x] 6. Profile Service — Perfil y protección de datos (Req 9)
   - [x] 6.1 Implementar validación y normalización del perfil (allowlist, trim)
     - Esquema Pydantic con allowlist de campos (teléfono, tipo de cultivo/comercio, zona); rechazo de claves no permitidas; validación teléfono 7–15 dígitos, tipo en lista permitida, zona ≤ 100 chars
     - _Requirements: 9.1, 9.2, 9.3_
@@ -117,7 +117,7 @@ Convenciones:
     - 5 fallos consecutivos → bloqueo 15 min por teléfono; reactivación con contador en cero; invalidación por 30 min de inactividad; `PUT /api/v1/auth/clave` exige Clave actual
     - _Requirements: 1.11, 1.12, 1.13, 1.14_
     - _Properties: 4, 5_
-    - Nota: bloqueo por intentos, reactivación y `PUT /api/v1/auth/clave` implementados. Falta la invalidación de sesión por 30 min de inactividad.
+    - Nota: bloqueo por intentos, reactivación, `PUT /api/v1/auth/clave` e invalidación por 30 min de inactividad (sesión deslizante, `app/auth/activity.py`, PR #76) implementados.
   - [~] 7.5 Implementar restauración de sesión y SSO con WordPress
     - `GET /api/v1/auth/sesion` restaura sesión vigente; SSO valida sesión WordPress contra IdP; redirige conservando destino si expiró o >30 min inactividad
     - _Requirements: 2.6, 2.7, 10.1, 10.2_
@@ -145,11 +145,12 @@ Convenciones:
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. Control de SSRF para consumo externo (Req 10)
-  - [x] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
+  - [~] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
     - Allowlist de dominios, HTTPS obligatorio, bloqueo de IPs privadas/link-local, timeout ≤ 5 s, máx. 2 redirecciones; llamadas autenticadas con token firmado; registro de intentos bloqueados con Correlation-ID
     - _Requirements: 10.4, 10.5_
     - _Properties: 34_
-  - [ ]* 9.2 Escribir test de propiedad para control de SSRF
+    - Nota: allowlist, HTTPS, bloqueo de IPs internas, timeout, límite de redirecciones (verificadas antes de enviar cada salto) y propagación del Correlation-ID implementados en `app/common/http_client.py`. **Falta:** las llamadas autenticadas con token firmado. Hay una implementación previa en la rama `backup/ssrf-client-con-token-firmado` (commit `597e9ce`) que no llegó a `develop`.
+  - [x]* 9.2 Escribir test de propiedad para control de SSRF
     - **Property 34: Control de SSRF en consumo externo**
     - **Validates: Requirements 10.4, 10.5**
 
@@ -164,7 +165,7 @@ Convenciones:
     - Rate limiting con respuesta de reintento y registro sin PII; sesión en almacén compartido para escalado horizontal sin pérdida; acuse observable (202) para tareas largas
     - _Requirements: 12.2, 12.3, 12.4, 12.5_
     - _Properties: 33_
-  - [ ]* 10.4 Escribir test de propiedad para rate limiting
+  - [x]* 10.4 Escribir test de propiedad para rate limiting
     - **Property 33: Rate limiting en componentes core**
     - **Validates: Requirements 9.7, 12.2, 12.5**
   - [ ]* 10.5 Escribir pruebas de integración de circuit breaker y escalado sin pérdida de sesión

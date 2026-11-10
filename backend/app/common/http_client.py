@@ -5,8 +5,15 @@ dominio está en la allowlist y (3) el destino no resuelve a una IP privada o de
 enlace local. En cualquier otro caso se bloquea SIN transmitir datos y se
 registra el intento con su Correlation-ID (Property 34).
 
-Requisitos: 10.4, 10.5 (OWASP A10 SSRF). Dependencias externas se envuelven
-además con el circuit breaker de `app/common/resilience.py` (Req 11.5, 11.6).
+La verificación corre en un hook `request` de httpx, es decir, ANTES de enviar
+cada petición, incluidas las de cada redirección. Así una redirección desde un
+dominio permitido hacia una dirección interna (p. ej. 169.254.169.254) se
+bloquea antes de transmitir, no después. El mismo hook adjunta el
+`X-Correlation-ID` de la petición entrante a toda llamada saliente (Property 35).
+
+Requisitos: 10.4, 10.5 (OWASP A10 SSRF), 11.1. Dependencias externas se
+envuelven además con el circuit breaker de `app/common/resilience.py`
+(Req 11.5, 11.6).
 """
 
 from __future__ import annotations
@@ -14,11 +21,13 @@ from __future__ import annotations
 import ipaddress
 import logging
 import socket
+import uuid
 from urllib.parse import urlsplit
 
 import httpx
 
 from app.common.config import get_settings
+from app.common.correlation import CORRELATION_HEADER, get_correlation_id
 from app.common.logging import log_event
 
 logger = logging.getLogger("cima.http")
@@ -102,17 +111,33 @@ def _verificar_o_bloquear(url: str) -> None:
         raise SsrfBlockedError("destino no permitido por la politica de SSRF")
 
 
-def crear_cliente() -> httpx.AsyncClient:
-    """Crea un `AsyncClient` con timeout bajo y límite de redirecciones.
+async def _antes_de_enviar(request: httpx.Request) -> None:
+    """Hook de httpx que corre antes de enviar CADA petición, redirecciones incluidas.
 
-    El llamador debe usar `solicitar` para que la verificación de SSRF se aplique
-    también a la URL final tras redirecciones.
+    1. Aplica la política de SSRF a la URL de este salto; si está bloqueada,
+       lanza `SsrfBlockedError` y la petición no se transmite.
+    2. Adjunta el Correlation-ID de la petición entrante (o uno nuevo si la
+       llamada no nace de una petición, p. ej. un worker) para trazabilidad de
+       extremo a extremo (Req 11.1, Property 35). Si el llamador ya fijó uno, se
+       conserva.
+    """
+    _verificar_o_bloquear(str(request.url))
+    if CORRELATION_HEADER not in request.headers:
+        request.headers[CORRELATION_HEADER] = get_correlation_id() or str(uuid.uuid4())
+
+
+def crear_cliente(transport: httpx.AsyncBaseTransport | None = None) -> httpx.AsyncClient:
+    """Crea un `AsyncClient` con timeout bajo, límite de redirecciones y el hook de SSRF.
+
+    `transport` solo existe para pruebas (p. ej. `httpx.MockTransport`).
     """
     settings = get_settings()
     return httpx.AsyncClient(
         timeout=settings.http_timeout_seconds,
         follow_redirects=True,
         max_redirects=settings.http_max_redirects,
+        event_hooks={"request": [_antes_de_enviar]},
+        transport=transport,
     )
 
 
@@ -122,13 +147,13 @@ async def solicitar(
     url: str,
     **kwargs: object,
 ) -> httpx.Response:
-    """Realiza una petición solo si la URL pasa la política de SSRF.
+    """Realiza una petición aplicando la política de SSRF a cada salto.
 
-    Verifica la URL antes de transmitir cualquier dato; si está bloqueada,
-    lanza `SsrfBlockedError` sin realizar la llamada.
+    Exige un cliente creado con `crear_cliente`: uno sin el hook seguiría las
+    redirecciones sin verificarlas. La primera URL se verifica también aquí, para
+    fallar rápido con un mensaje claro.
     """
+    if _antes_de_enviar not in cliente.event_hooks.get("request", []):
+        raise ValueError("Usa http_client.crear_cliente(): el cliente no aplica la política de SSRF")
     _verificar_o_bloquear(url)
-    respuesta = await cliente.request(metodo, url, **kwargs)
-    # Verifica también el destino final tras posibles redirecciones.
-    _verificar_o_bloquear(str(respuesta.url))
-    return respuesta
+    return await cliente.request(metodo, url, **kwargs)
