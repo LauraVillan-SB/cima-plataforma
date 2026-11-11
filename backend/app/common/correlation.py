@@ -18,10 +18,15 @@ from starlette.responses import Response
 
 CORRELATION_HEADER = "X-Correlation-ID"
 
+# Longitud máxima de un Correlation-ID. Debe caber en las columnas que lo
+# persisten (p. ej. `ai_interactions.correlation_id`, VARCHAR(64)): uno más largo
+# hacía fallar la inserción con un 500. Un UUID v4 mide 36.
+CORRELATION_ID_MAX_LENGTH = 64
+
 # Forma admitida para un Correlation-ID recibido del cliente (Zero Trust Input):
-# solo caracteres seguros y longitud acotada. El valor viaja a logs, respuestas y
-# llamadas a terceros, así que no se reutiliza uno arbitrario o desmedido.
-_ID_VALIDO = re.compile(r"[A-Za-z0-9._:-]{1,128}")
+# solo caracteres seguros y longitud acotada. El valor viaja a logs, respuestas,
+# llamadas a terceros y la base, así que no se reutiliza uno arbitrario o desmedido.
+_ID_VALIDO = re.compile(rf"[A-Za-z0-9._:-]{{1,{CORRELATION_ID_MAX_LENGTH}}}")
 
 
 def es_correlation_id_valido(valor: str) -> bool:

@@ -59,9 +59,10 @@ Convenciones:
     - Migración de creación de tablas, extensión PgVector, índices y roles de BD separados (lectura/escritura/admin)
     - Nota: infraestructura Alembic y migraciones `0001` (`profiles`, `metric_events` + PgVector) y `0002` (`conversion_intents`, `no_offer_events`) creadas; un solo head (`0002_conversion_microseguros`). Los roles de BD separados quedan como provisión de infraestructura (no en migración versionada). Hoy hay 11 migraciones (`0001` a `0011_survey_sync_tablas`) con un solo head; incluyen `surveys`, `survey_responses`, `sync_actions`, `sync_path_progress`, `ai_interactions`, `incentives` y gamificación. Verificado en una base vacía: `upgrade head` crea 18 tablas, `alembic check` no detecta diferencias con los modelos, y `downgrade base` + `upgrade head` vuelven a dejarla en el head.
     - _Requirements: 8.1, 17.4_
-  - [ ]* 4.3 Escribir pruebas unitarias de los esquemas de datos
+  - [x]* 4.3 Escribir pruebas unitarias de los esquemas de datos
     - Validar restricciones, tipos y defaults (p. ej. `pass_threshold` default 70)
     - _Requirements: 4.1, 4.2, 7.3_
+    - Nota: `tests/test_esquemas_datos.py` (29 pruebas) sobre los modelos y sobre el DDL offline de las migraciones (`pass_threshold` DEFAULT 70 en la base). Verifica además que los valores del dominio quepan en sus columnas; así se encontró que un Correlation-ID válido de 65–128 caracteres daba 500 en el chat (columna de 64). Pendiente con los dueños: la base no tiene CHECK de rango para `duration_sec` (180–300), `topic`, `pass_threshold` (0–100) ni `rating` (1–5); hoy solo los validan los DTOs, y `pass_threshold` ni eso.
 
 - [x] 5. Checkpoint — Verificar que la base compila y las migraciones aplican
   - Ensure all tests pass, ask the user if questions arise.
@@ -336,7 +337,7 @@ Convenciones:
     - **Property 42: Autorización por propiedad en consulta de reconocimientos**
     - **Validates: Requirements 19.7, 19.8**
 
-- [ ] 18. Metrics Service + Tablero ODS (Req 8, Req 15)
+- [x] 18. Metrics Service + Tablero ODS (Req 8, Req 15)
   - [x] 18.1 Implementar registro de eventos con asignación de zona idempotente
     - `POST /api/v1/metricas/eventos` con `client_event_id`; tipo, zona (o "sin_zona" no clasificado) y timestamp ISO-8601; reintentos ≤ 3 + cola de pendientes ante fallo
     - _Requirements: 8.1, 8.2, 8.4_
@@ -363,7 +364,7 @@ Convenciones:
     - **Validates: Requirements 8.5, 15.3**
     - Nota: cubierta en `tests/metrics/test_reportes.py` (el DTO `ZoneAggregate` solo expone campos agregados: zona, tipo, conteo y Usuarios distintos; nunca `profile_id`).
 
-- [ ] 19. Survey Service — Encuesta de satisfacción (Req 20)
+- [x] 19. Survey Service — Encuesta de satisfacción (Req 20)
   - [x] 19.1 Implementar presentación de la encuesta con idempotencia
     - `GET /api/v1/encuestas/{rutaId}`; presenta la encuesta breve y opcional (escala 1–5) solo si no ha sido respondida ni omitida para esa ruta y Usuario; habilitada al completar la Ruta_de_Aprendizaje o hito (enganche con Learning Service); respuesta por texto o voz coherente con voz-first; omitible sin bloquear
     - _Requirements: 20.1, 20.2, 20.6_
