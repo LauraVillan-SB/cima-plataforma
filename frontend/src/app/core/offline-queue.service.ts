@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
+import { generarClaveIdempotencia } from './idempotencia';
 import { NetworkStatusService } from './network-status.service';
 
 /** Tipos de accion que la cola puede encolar (consistente con el backend). */
@@ -46,16 +47,12 @@ export class OfflineQueueService {
     return this.cola().length === 0 ? 'al_dia' : 'pendiente';
   });
 
-  /** Genera una clave de idempotencia (UUID v4) para una accion encolada. */
+  /**
+   * Genera una clave de idempotencia (UUID v4) para una accion encolada. La
+   * logica vive en `idempotencia.ts` para probarla con jest sin Angular.
+   */
   static generarClaveIdempotencia(): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-      return crypto.randomUUID();
-    }
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
+    return generarClaveIdempotencia();
   }
 
   /** Encola una accion para sincronizar luego; persiste en almacenamiento local. */

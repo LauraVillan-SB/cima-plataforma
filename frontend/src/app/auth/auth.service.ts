@@ -2,6 +2,16 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
+import { almacenDelNavegador, vaciarCachesDeDatos } from '../core/limpieza-local';
+
+/**
+ * Vacía los datos de la API que el Service Worker dejó en el dispositivo cuando
+ * la sesión cambia de manos (celular compartido). Ver `core/limpieza-local.ts`.
+ */
+export function limpiarDatosLocales(): Promise<number> {
+  return vaciarCachesDeDatos(almacenDelNavegador());
+}
+
 /**
  * Cliente de autenticación del frontend. Solo realiza llamadas HTTP al Auth
  * Service del backend (sin lógica de negocio ni autorización en el cliente,
@@ -29,6 +39,8 @@ export class AuthService {
         { withCredentials: true },
       ),
     );
+    // Una cuenta nueva no debe ver lo que dejó en caché otra sesión del dispositivo.
+    await limpiarDatosLocales();
     this.autenticado.set(true);
   }
 
@@ -60,6 +72,8 @@ export class AuthService {
     await firstValueFrom(
       this.http.post('/api/v1/auth/ingreso', { telefono, clave }, { withCredentials: true }),
     );
+    // Quien entra no debe ver lo que dejó en caché otra sesión del dispositivo.
+    await limpiarDatosLocales();
     this.autenticado.set(true);
   }
 
@@ -77,11 +91,20 @@ export class AuthService {
     }
   }
 
-  /** Cierra la sesión en el backend (borra las cookies). */
+  /**
+   * Cierra la sesión en el backend (borra las cookies) y vacía los datos que el
+   * Service Worker dejó en el dispositivo. La limpieza y el cambio de estado van
+   * en `finally`: sin conexión el `POST /salir` falla, pero igual no deben quedar
+   * datos de esta sesión a la vista del siguiente que use el celular.
+   */
   async salir(): Promise<void> {
-    await firstValueFrom(
-      this.http.post('/api/v1/auth/salir', {}, { withCredentials: true }),
-    );
-    this.autenticado.set(false);
+    try {
+      await firstValueFrom(
+        this.http.post('/api/v1/auth/salir', {}, { withCredentials: true }),
+      );
+    } finally {
+      await limpiarDatosLocales();
+      this.autenticado.set(false);
+    }
   }
 }
