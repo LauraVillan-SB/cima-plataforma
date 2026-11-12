@@ -63,6 +63,9 @@ class CircuitBreaker:
         self._fallos = 0
         self._estado = EstadoCircuito.CERRADO
         self._abierto_desde = 0.0
+        # En semiabierto solo pasa UNA llamada de prueba; las concurrentes se
+        # rechazan como si el circuito siguiera abierto.
+        self._prueba_en_curso = False
 
     @property
     def estado(self) -> EstadoCircuito:
@@ -107,12 +110,20 @@ class CircuitBreaker:
         settings = get_settings()
         limite = timeout if timeout is not None else settings.http_timeout_seconds
 
-        if self.estado is EstadoCircuito.ABIERTO:
+        estado = self.estado
+        if estado is EstadoCircuito.ABIERTO or (
+            estado is EstadoCircuito.SEMIABIERTO and self._prueba_en_curso
+        ):
             log_event(logger, "circuito_rechazo", dependencia=self._nombre)
             if fallback is not None:
                 return await fallback()
             raise CircuitoAbiertoError(f"circuito abierto: {self._nombre}")
 
+        # Sin `await` entre la comprobación y esta asignación: en un mismo event
+        # loop ninguna otra llamada puede colarse como segunda prueba.
+        es_prueba = estado is EstadoCircuito.SEMIABIERTO
+        if es_prueba:
+            self._prueba_en_curso = True
         try:
             resultado = await asyncio.wait_for(operacion(), timeout=limite)
         except asyncio.TimeoutError as exc:
@@ -126,6 +137,10 @@ class CircuitBreaker:
         else:
             self._al_exito()
             return resultado
+        finally:
+            # También si la prueba se cancela: así otra llamada puede probar.
+            if es_prueba:
+                self._prueba_en_curso = False
 
     async def _manejar_fallo(
         self,

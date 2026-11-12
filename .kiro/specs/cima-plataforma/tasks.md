@@ -144,7 +144,7 @@ Convenciones:
 - [x] 8. Checkpoint — Verificar autenticación y perfil end-to-end
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Control de SSRF para consumo externo (Req 10)
+- [x] 9. Control de SSRF para consumo externo (Req 10)
   - [x] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
     - Allowlist de dominios, HTTPS obligatorio, bloqueo de IPs privadas/link-local, timeout ≤ 5 s, máx. 2 redirecciones; llamadas autenticadas con token firmado; registro de intentos bloqueados con Correlation-ID
     - _Requirements: 10.4, 10.5_
@@ -168,9 +168,10 @@ Convenciones:
   - [x]* 10.4 Escribir test de propiedad para rate limiting
     - **Property 33: Rate limiting en componentes core**
     - **Validates: Requirements 9.7, 12.2, 12.5**
-  - [ ]* 10.5 Escribir pruebas de integración de circuit breaker y escalado sin pérdida de sesión
+  - [~]* 10.5 Escribir pruebas de integración de circuit breaker y escalado sin pérdida de sesión
     - Mocks de dependencias que fallan o exceden timeout; verificar fallback; almacén compartido entre instancias
     - _Requirements: 11.5, 11.6, 12.3_
+    - Nota: circuit breaker cubierto en `tests/common/test_resilience.py` (12 pruebas: fallos, timeout, fallback, abierto, semiabierto con una sola llamada de prueba, registro con Correlation-ID y sin PII); las pruebas encontraron y fijaron que en semiabierto pasaban todas las llamadas concurrentes. **Falta:** escalado sin pérdida de sesión con almacén compartido, que depende de la 10.3.
 
 - [ ] 11. Conversational Agent Service — Pipeline de IA responsable y voz-first (Req 3, Req 14, Req 16)
   - [x] 11.1 Implementar validación de entrada de texto y de nota de voz
