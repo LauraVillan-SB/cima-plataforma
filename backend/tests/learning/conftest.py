@@ -30,5 +30,9 @@ def grants(monkeypatch: pytest.MonkeyPatch) -> list[GrantCall]:
     async def _fake_grant(db, profile_id, trigger, client_event_id):  # noqa: ANN001, ANN202
         calls.append(GrantCall(profile_id, trigger, client_event_id))
 
+    async def _fake_streak(db, profile_id, today=None):  # noqa: ANN001, ANN202
+        return 1
+
     monkeypatch.setattr("app.gamification.service.grant_recognition", _fake_grant)
+    monkeypatch.setattr("app.gamification.service.record_activity", _fake_streak)
     return calls

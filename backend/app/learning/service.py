@@ -20,21 +20,45 @@ from __future__ import annotations
 
 import logging
 import uuid
+from typing import NamedTuple
 
-from sqlalchemy import select
+from sqlalchemy import any_, delete, literal, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.errors import NotFoundError
 from app.common.logging import log_event
-from app.learning.constants import FALLBACK_TOPIC, MAX_SELECTION
+from app.learning.constants import (
+    EXPECTED_TIME_FACTOR,
+    FALLBACK_TOPIC,
+    GENERAL_TAG,
+    MAX_DRAIN_BATCH,
+    MAX_EVENT_RETRIES,
+    MAX_PROFILE_PROMPTS,
+    MAX_SELECTION,
+    PACE_SLOW,
+    PACE_STANDARD,
+    YOUTUBE_EMBED_BASE_URL,
+)
 from app.learning.dto import (
     FinalizeRequest,
     FinalizeResponse,
     MicrocapsuleResponse,
     MicrocapsuleSelection,
     PathStatusResponse,
+    RouteCapsuleOut,
+    RouteOut,
+    RoutesResponse,
+    VideoOut,
 )
-from app.learning.models import LearningPath, Microcapsule, PathProgress
+from app.learning.models import (
+    LearningEventOutbox,
+    LearningPath,
+    Microcapsule,
+    PathProgress,
+    ProfileActivityPrompt,
+)
 
 logger = logging.getLogger("cima.learning")
 
@@ -61,6 +85,22 @@ _NOTICE_SIN_CONTENIDO = (
 )
 
 
+def _to_video(capsule: Microcapsule) -> VideoOut | None:
+    """Construye el video de apoyo de una cápsula, o None si no tiene.
+
+    El DTO valida el formato del identificador; la dirección de incrustación la fija el
+    backend con un dominio constante, no el cliente ni el dato almacenado.
+    """
+    if not capsule.video_id:
+        return None
+    return VideoOut(
+        video_id=capsule.video_id,
+        title=capsule.video_title or "",
+        channel=capsule.video_channel or "",
+        embed_url=f"{YOUTUBE_EMBED_BASE_URL}{capsule.video_id}",
+    )
+
+
 def _to_microcapsule_response(capsule: Microcapsule) -> MicrocapsuleResponse:
     """Construye el DTO de salida de una microcápsula (allowlist de campos)."""
     return MicrocapsuleResponse(
@@ -69,6 +109,11 @@ def _to_microcapsule_response(capsule: Microcapsule) -> MicrocapsuleResponse:
         activity_tags=list(capsule.activity_tags or []),
         duration_sec=capsule.duration_sec,
         difficulty=capsule.difficulty,
+        title=capsule.title,
+        summary=capsule.summary,
+        paragraphs=list(capsule.paragraphs or []),
+        key_points=list(capsule.key_points or []),
+        video=_to_video(capsule),
     )
 
 
@@ -86,13 +131,72 @@ def _ordered_top(capsules: list[Microcapsule]) -> list[Microcapsule]:
     return ordered[:MAX_SELECTION]
 
 
+async def _register_activity_prompt(db: AsyncSession, profile_id: uuid.UUID) -> bool:
+    """Registra una solicitud de actividad y dice si el agente aún puede hacerla.
+
+    El contador se incrementa de forma atómica (`INSERT ... ON CONFLICT DO UPDATE`) y
+    solo mientras no llegue a `MAX_PROFILE_PROMPTS`: cuando el tope se alcanzó la
+    cláusula `WHERE` no actualiza ninguna fila y no se devuelve nada, por lo que dos
+    peticiones concurrentes no pueden superar las 3 solicitudes (Req 4.8).
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: Perfil autenticado; nunca un id del cliente (anti-BOLA).
+
+    Returns:
+        True si esta solicitud cuenta (aún no se agotaron las 3); False si ya se agotaron.
+    """
+    stmt = (
+        pg_insert(ProfileActivityPrompt)
+        .values(profile_id=profile_id, prompt_count=1)
+        .on_conflict_do_update(
+            index_elements=[ProfileActivityPrompt.profile_id],
+            set_={"prompt_count": ProfileActivityPrompt.prompt_count + 1},
+            where=ProfileActivityPrompt.prompt_count < MAX_PROFILE_PROMPTS,
+        )
+        .returning(ProfileActivityPrompt.prompt_count)
+    )
+    count = await db.scalar(stmt)
+    await db.commit()
+    return count is not None
+
+
+async def select_for_user(
+    db: AsyncSession, current_user_id: uuid.UUID
+) -> MicrocapsuleSelection:
+    """Selecciona microcápsulas para el Usuario autenticado según su Perfil.
+
+    La actividad se resuelve en servidor desde el Perfil; nunca del cliente. Si el
+    Perfil no la tiene, cuenta una solicitud al Usuario y, agotadas las 3, la
+    selección deja de pedirla y entrega el tema general (Req 4.8, 4.9).
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: Usuario autenticado, tomado de la sesión.
+
+    Returns:
+        La selección de microcápsulas.
+    """
+    # Import diferido: evita acoplar la carga de este módulo a la de `profile`.
+    from app.profile.models import Profile
+
+    profile = await db.get(Profile, current_user_id)
+    activity_type = profile.activity_type if profile else None
+    may_prompt = True
+    if not (activity_type or "").strip():
+        may_prompt = await _register_activity_prompt(db, current_user_id)
+    return await select_microcapsules(db, activity_type, may_prompt=may_prompt)
+
+
 async def select_microcapsules(
-    db: AsyncSession, activity_type: str | None
+    db: AsyncSession, activity_type: str | None, may_prompt: bool = True
 ) -> MicrocapsuleSelection:
     """Selecciona microcápsulas personalizadas por la actividad del Perfil.
 
-    - Perfil sin actividad → pide al agente solicitarla (Req 4.8); entrega el
-      tema general como contenido por defecto mientras tanto (Req 4.9).
+    - Perfil sin actividad → pide al agente solicitarla mientras `may_prompt` sea
+      verdadero (Req 4.8); entrega el tema general como contenido por defecto. Con
+      las 3 solicitudes agotadas (`may_prompt` falso) entrega el tema general sin
+      personalización y sin volver a pedirla (Req 4.9).
     - Con actividad y coincidencias → hasta 10 cápsulas de esa actividad,
       ordenadas por relevancia y fecha (Req 4.3).
     - Con actividad pero sin coincidencias → tema general "adaptación al clima"
@@ -103,13 +207,13 @@ async def select_microcapsules(
     if not normalized:
         # Perfil incompleto: se solicita la actividad y se entrega el tema general
         # como comportamiento por defecto, sin personalización (Req 4.8, 4.9).
-        general = await _fetch_by_topic(db, FALLBACK_TOPIC)
-        log_event(logger, "learning_selection_profile_incomplete")
+        general = await _fetch_general(db)
+        log_event(logger, "learning_selection_profile_incomplete", may_prompt=may_prompt)
         return MicrocapsuleSelection(
             items=[_to_microcapsule_response(c) for c in _ordered_top(general)],
             fallback=True,
-            prompt_activity=True,
-            notice=_NOTICE_SIN_CONTENIDO,
+            prompt_activity=may_prompt,
+            notice=_NOTICE_SIN_CONTENIDO if may_prompt else None,
         )
 
     matches = await _fetch_by_activity(db, normalized)
@@ -127,7 +231,7 @@ async def select_microcapsules(
         )
 
     # Sin coincidencias para la actividad declarada → fallback al tema general.
-    general = await _fetch_by_topic(db, FALLBACK_TOPIC)
+    general = await _fetch_general(db)
     log_event(logger, "learning_selection_fallback")
     return MicrocapsuleSelection(
         items=[_to_microcapsule_response(c) for c in _ordered_top(general)],
@@ -140,15 +244,27 @@ async def select_microcapsules(
 async def _fetch_by_activity(db: AsyncSession, activity_type: str) -> list[Microcapsule]:
     """Recupera microcápsulas cuya `activity_tags` contiene la actividad dada."""
     stmt = select(Microcapsule).where(
-        Microcapsule.activity_tags.any(activity_type)
+        literal(activity_type) == any_(Microcapsule.activity_tags)
     )
     rows = await db.execute(stmt)
     return list(rows.scalars().all())
 
 
-async def _fetch_by_topic(db: AsyncSession, topic: str) -> list[Microcapsule]:
-    """Recupera microcápsulas de un tema dado (consulta parametrizada)."""
-    rows = await db.execute(select(Microcapsule).where(Microcapsule.topic == topic))
+async def _fetch_general(db: AsyncSession) -> list[Microcapsule]:
+    """Recupera las microcápsulas del tema general de adaptación al clima (Req 4.4, 4.9).
+
+    Prefiere las etiquetadas como generales, para no entregar contenido de un cultivo o
+    comercio ajeno. Si el catálogo aún no tiene ninguna etiquetada, cae al tema completo
+    para no dejar al Usuario sin contenido. Consultas parametrizadas.
+    """
+    stmt = select(Microcapsule).where(
+        Microcapsule.topic == FALLBACK_TOPIC,
+        literal(GENERAL_TAG) == any_(Microcapsule.activity_tags),
+    )
+    general = list((await db.execute(stmt)).scalars().all())
+    if general:
+        return general
+    rows = await db.execute(select(Microcapsule).where(Microcapsule.topic == FALLBACK_TOPIC))
     return list(rows.scalars().all())
 
 
@@ -210,6 +326,9 @@ async def finalize_microcapsule(
     was_completed = bool(progress.completed)
 
     done: set[uuid.UUID] = set(progress.completed_microcapsules or [])
+    await _record_adaptation_signals(
+        db, progress, microcapsule_id, data, already_done=microcapsule_id in done
+    )
     if microcapsule_id not in done:
         done.add(microcapsule_id)
         progress.completed_microcapsules = list(done)
@@ -227,11 +346,15 @@ async def finalize_microcapsule(
     # rollback y expira `progress`; leerlo después exigiría una carga diferida.
     path_completed = bool(progress.completed)
 
+    # Eventos que quedaron pendientes por fallos anteriores del Usuario (Req 4.7).
+    await drain_outbox(db, current_user_id)
+
     # Evento `microcapsula_completada` (Req 4.6, 8.1). Se intenta en cada llamada y
     # es idempotente por una clave determinista (Usuario, cápsula): si la emisión
     # falló tras guardar el progreso, el reintento del cliente la recupera (Req 4.7)
-    # sin duplicar, y repetir una cápsula no infla la métrica.
-    await _emit_metric_event(
+    # sin duplicar, y repetir una cápsula no infla la métrica. Si el registro falla,
+    # se reintenta hasta 3 veces y luego se conserva en la cola (Property 15).
+    await _record_event_resilient(
         db,
         current_user_id,
         "microcapsula_completada",
@@ -245,7 +368,7 @@ async def finalize_microcapsule(
     # `client_event_id` y solo ocurre en la transición (no en reintentos).
     just_completed = path_completed and not was_completed
     if just_completed:
-        await _emit_metric_event(
+        await _record_event_resilient(
             db, current_user_id, "ruta_completada", data.client_event_id
         )
 
@@ -266,6 +389,112 @@ async def finalize_microcapsule(
         completed_count=len(done),
         total_count=len(path_capsules),
     )
+
+
+async def _exceeded_expected_time(
+    db: AsyncSession, microcapsule_id: uuid.UUID, elapsed_seconds: int | None
+) -> bool:
+    """Indica si el Usuario excedió el tiempo esperado de la microcápsula (Req 17.1).
+
+    Sin tiempo reportado no hay señal. El tiempo esperado es la duración de la
+    cápsula por `EXPECTED_TIME_FACTOR`; la comparación se hace en el backend.
+
+    Args:
+        db: sesión de base de datos.
+        microcapsule_id: cápsula finalizada.
+        elapsed_seconds: tiempo reportado por el cliente, o None.
+
+    Returns:
+        True si el tiempo reportado supera el esperado.
+    """
+    if elapsed_seconds is None:
+        return False
+    capsule = await db.get(Microcapsule, microcapsule_id)
+    if capsule is None:
+        return False
+    return elapsed_seconds > capsule.duration_sec * EXPECTED_TIME_FACTOR
+
+
+async def _record_adaptation_signals(
+    db: AsyncSession,
+    progress: PathProgress,
+    microcapsule_id: uuid.UUID,
+    data: FinalizeRequest,
+    already_done: bool,
+) -> None:
+    """Captura las señales de progreso de esta finalización (Req 17.1, 17.2).
+
+    Las señales salen de la propia actividad: repetir una cápsula ya finalizada o
+    exceder el tiempo esperado; no se le pide nada al Usuario. Un reintento de red de
+    la misma petición (mismo `client_event_id` para esa cápsula) no cuenta como
+    repetición (Req 4.7). Una finalización normal posterior devuelve el ritmo estándar.
+
+    Args:
+        db: sesión de base de datos.
+        progress: progreso del Usuario autenticado sobre la ruta.
+        microcapsule_id: cápsula finalizada.
+        data: petición de finalización.
+        already_done: si la cápsula ya estaba finalizada antes de esta llamada.
+    """
+    key = str(microcapsule_id)
+    events = dict(progress.finalization_events or {})
+    if events.get(key) == str(data.client_event_id):
+        return
+    events[key] = str(data.client_event_id)
+    slow = await _exceeded_expected_time(db, microcapsule_id, data.elapsed_seconds)
+    progress.finalization_events = events
+    progress.repeat_count = (progress.repeat_count or 0) + int(already_done)
+    progress.slow_count = (progress.slow_count or 0) + int(slow)
+    progress.needs_simplification = already_done or slow
+
+
+async def _failed_comprehension_check(
+    db: AsyncSession, profile_id: uuid.UUID, path_id: uuid.UUID
+) -> bool:
+    """Indica si el Usuario falló la evaluación de la ruta y aún no la aprueba (Req 17.1).
+
+    Es la comprobación de comprensión del sistema. Se lee del Assessment Service
+    solo para el Usuario autenticado; una evaluación aprobada deja de ser señal.
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: Usuario autenticado.
+        path_id: ruta evaluada.
+
+    Returns:
+        True si hay intentos y ninguno fue aprobado.
+    """
+    # Import diferido: Assessment ya depende de Learning; así no hay ciclo de carga.
+    from app.assessment.models import AssessmentAttempt
+
+    result = await db.scalars(
+        select(AssessmentAttempt.passed).where(
+            AssessmentAttempt.profile_id == profile_id,
+            AssessmentAttempt.path_id == path_id,
+        )
+    )
+    outcomes = list(result.all())
+    return bool(outcomes) and not any(outcomes)
+
+
+async def _record_streak(db: AsyncSession, current_user_id: uuid.UUID) -> None:
+    """Cuenta el día de actividad del Usuario para su racha (extensión de Gamification).
+
+    No es crítico: el progreso ya está guardado, así que un error de base de datos se
+    registra y no hace fallar la finalización. Es idempotente por día.
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: titular de la sesión; nunca un id del cliente.
+    """
+    # Import diferido: evita acoplar la carga de este módulo a la de gamification.
+    from app.gamification.service import record_activity
+
+    try:
+        await record_activity(db, current_user_id)
+    except SQLAlchemyError:
+        await db.rollback()
+        log_event(logger, "learning_streak_failed")
 
 
 async def _grant_recognitions(
@@ -293,6 +522,7 @@ async def _grant_recognitions(
     from app.gamification.errors import ReconocimientoPendienteError
     from app.gamification.service import grant_recognition
 
+    await _record_streak(db, current_user_id)
     triggers = [gamification.TRIGGER_MICROCAPSULA_COMPLETADA]
     if path_completed:
         triggers.append(gamification.TRIGGER_RUTA_COMPLETADA)
@@ -303,6 +533,145 @@ async def _grant_recognitions(
             )
         except ReconocimientoPendienteError:
             log_event(logger, "learning_recognition_pending", trigger=trigger)
+
+
+class _PendingEvent(NamedTuple):
+    """Copia simple de un evento de la cola, a salvo de rollbacks de la sesión."""
+
+    id: uuid.UUID
+    profile_id: uuid.UUID
+    event_type: str
+    client_event_id: uuid.UUID
+
+
+async def _record_event_resilient(
+    db: AsyncSession,
+    current_user_id: uuid.UUID,
+    event_type: str,
+    client_event_id: uuid.UUID,
+) -> None:
+    """Registra un evento con reintentos acotados y, si persiste el fallo, lo conserva.
+
+    Hace el primer intento y hasta `MAX_EVENT_RETRIES` reintentos (nunca más de 3,
+    Property 15). Entre intentos revierte la transacción fallida. Solo captura errores
+    de base de datos; cualquier otro error es un defecto y se propaga. Si todos los
+    intentos fallan, el evento queda en la cola para registrarlo después sin pérdida
+    de datos (Req 4.7, 8.4).
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: titular del evento, tomado de la sesión.
+        event_type: tipo de evento de dominio.
+        client_event_id: clave de idempotencia del evento.
+    """
+    for attempt in range(1 + MAX_EVENT_RETRIES):
+        try:
+            await _emit_metric_event(db, current_user_id, event_type, client_event_id)
+            return
+        except SQLAlchemyError:
+            await db.rollback()
+            log_event(logger, "learning_event_failed", event_type=event_type, attempt=attempt + 1)
+    await _enqueue_event(db, current_user_id, event_type, client_event_id)
+
+
+async def _enqueue_event(
+    db: AsyncSession,
+    profile_id: uuid.UUID,
+    event_type: str,
+    client_event_id: uuid.UUID,
+) -> None:
+    """Guarda el evento en la cola de forma idempotente por `client_event_id`.
+
+    Si ni siquiera se puede guardar (la base de datos no responde) el error se
+    propaga: la petición falla y el reintento del cliente, que es idempotente,
+    vuelve a intentarlo; no se afirma haber conservado algo que no se guardó.
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: titular del evento.
+        event_type: tipo de evento de dominio.
+        client_event_id: clave de idempotencia del evento.
+    """
+    existing = await db.scalar(
+        select(LearningEventOutbox).where(
+            LearningEventOutbox.client_event_id == client_event_id
+        )
+    )
+    if existing is None:
+        db.add(
+            LearningEventOutbox(
+                profile_id=profile_id,
+                client_event_id=client_event_id,
+                event_type=event_type,
+            )
+        )
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+    log_event(logger, "learning_event_queued", event_type=event_type)
+
+
+async def _drain_one(db: AsyncSession, pending: _PendingEvent) -> bool:
+    """Intenta registrar un evento de la cola y lo borra si se registró.
+
+    Args:
+        db: sesión de base de datos.
+        pending: copia del evento pendiente.
+
+    Returns:
+        True si se registró y se quitó de la cola; False si volvió a fallar.
+    """
+    try:
+        await _emit_metric_event(
+            db, pending.profile_id, pending.event_type, pending.client_event_id
+        )
+    except SQLAlchemyError:
+        await db.rollback()
+        log_event(logger, "learning_event_drain_failed", event_type=pending.event_type)
+        return False
+    await db.execute(delete(LearningEventOutbox).where(LearningEventOutbox.id == pending.id))
+    await db.commit()
+    return True
+
+
+async def drain_outbox(
+    db: AsyncSession,
+    profile_id: uuid.UUID | None = None,
+    limit: int = MAX_DRAIN_BATCH,
+) -> int:
+    """Reintenta registrar los eventos que quedaron pendientes en la cola (Req 4.7).
+
+    Procesa del más antiguo al más nuevo y se detiene en el primer fallo para no
+    insistir contra una base de datos caída. El registro en Metrics es idempotente,
+    así que repetir un evento ya registrado no lo duplica. `FOR UPDATE SKIP LOCKED`
+    evita que dos procesos tomen el mismo evento a la vez.
+
+    Args:
+        db: sesión de base de datos.
+        profile_id: si se indica, solo los eventos de ese Usuario (el de la sesión);
+            si es None, de todos (para un worker).
+        limit: máximo de eventos por invocación.
+
+    Returns:
+        Cuántos eventos se registraron y se quitaron de la cola.
+    """
+    stmt = (
+        select(LearningEventOutbox)
+        .order_by(LearningEventOutbox.created_at)
+        .limit(limit)
+        .with_for_update(skip_locked=True)
+    )
+    if profile_id is not None:
+        stmt = stmt.where(LearningEventOutbox.profile_id == profile_id)
+    rows = (await db.scalars(stmt)).all()
+    batch = [_PendingEvent(r.id, r.profile_id, r.event_type, r.client_event_id) for r in rows]
+    drained = 0
+    for pending in batch:
+        if not await _drain_one(db, pending):
+            break
+        drained += 1
+    return drained
 
 
 async def _emit_metric_event(
@@ -369,9 +738,13 @@ async def get_path_status(
     next_id = next((cid for cid in path_capsules if cid not in done), None)
     completed = done.issuperset(path_capsules) and len(path_capsules) > 0
 
-    # Adaptación: hay señales si existe progreso con al menos una finalización
-    # o un último paso registrado (Req 17.1, 17.2); sin señales → estándar (17.5).
-    adapted = bool(progress and (done or progress.last_completed_step > 0))
+    # Adaptación (Req 17.1, 17.2): se simplifica y se baja el ritmo de la siguiente
+    # microcápsula si la última finalización fue una repetición o excedió el tiempo,
+    # o si el Usuario falló la comprobación de comprensión. Sin esas señales la ruta
+    # es la estándar (Req 17.5).
+    simplify = bool(progress and progress.needs_simplification)
+    if not simplify:
+        simplify = await _failed_comprehension_check(db, current_user_id, path_id)
 
     log_event(
         logger,
@@ -379,7 +752,7 @@ async def get_path_status(
         completed=completed,
         completed_count=len(done),
         total_count=len(path_capsules),
-        adapted=adapted,
+        adapted=simplify,
     )
     return PathStatusResponse(
         path_id=path_id,
@@ -387,5 +760,122 @@ async def get_path_status(
         completed_count=len(done),
         total_count=len(path_capsules),
         next_microcapsule_id=next_id,
-        adapted=adapted,
+        adapted=simplify,
+        simplify=simplify,
+        pace=PACE_SLOW if simplify else PACE_STANDARD,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Listado de rutas con el avance del Usuario (alimenta el tablero y "Mi ruta").
+# --------------------------------------------------------------------------- #
+
+
+async def _fetch_paths(db: AsyncSession) -> list[LearningPath]:
+    """Todas las rutas publicadas (con título), ordenadas por título."""
+    stmt = select(LearningPath).where(LearningPath.title.is_not(None)).order_by(LearningPath.title)
+    return list((await db.execute(stmt)).scalars().all())
+
+
+async def _fetch_capsules_by_id(
+    db: AsyncSession, capsule_ids: set[uuid.UUID]
+) -> dict[uuid.UUID, Microcapsule]:
+    """Microcápsulas por identificador (consulta parametrizada con IN)."""
+    if not capsule_ids:
+        return {}
+    stmt = select(Microcapsule).where(Microcapsule.id.in_(capsule_ids))
+    return {c.id: c for c in (await db.execute(stmt)).scalars().all()}
+
+
+async def _fetch_progress_by_path(
+    db: AsyncSession, current_user_id: uuid.UUID
+) -> dict[uuid.UUID, PathProgress]:
+    """Progreso del Usuario autenticado por ruta; nunca el de otro Usuario (anti-BOLA)."""
+    stmt = select(PathProgress).where(PathProgress.profile_id == current_user_id)
+    return {p.path_id: p for p in (await db.execute(stmt)).scalars().all()}
+
+
+async def _fetch_passed_paths(db: AsyncSession, current_user_id: uuid.UUID) -> set[uuid.UUID]:
+    """Rutas cuya evaluación aprobó el Usuario autenticado."""
+    # Import diferido: Assessment ya depende de Learning; así no hay ciclo de carga.
+    from app.assessment.models import AssessmentAttempt
+
+    stmt = select(AssessmentAttempt.path_id).where(
+        AssessmentAttempt.profile_id == current_user_id,
+        AssessmentAttempt.passed.is_(True),
+    )
+    return set((await db.scalars(stmt)).all())
+
+
+def _is_relevant(audience_tags: list[str], activity: str) -> bool:
+    """La ruta es para el Usuario si trae contenido de su actividad o es general."""
+    return GENERAL_TAG in audience_tags or (bool(activity) and activity in audience_tags)
+
+
+def _build_route(
+    path: LearningPath,
+    capsules: dict[uuid.UUID, Microcapsule],
+    progress: PathProgress | None,
+    assessment_passed: bool,
+) -> RouteOut:
+    """Arma una ruta con el estado de cada cápsula para el Usuario.
+
+    Omite las cápsulas que ya no existen. La primera sin finalizar queda como `next`.
+    """
+    done = set(progress.completed_microcapsules or []) if progress else set()
+    found = [capsules[cid] for cid in path.microcapsule_ids or [] if cid in capsules]
+    next_id = next((c.id for c in found if c.id not in done), None)
+    items = [
+        RouteCapsuleOut(
+            position=index + 1,
+            status="completed" if c.id in done else ("next" if c.id == next_id else "pending"),
+            capsule=_to_microcapsule_response(c),
+        )
+        for index, c in enumerate(found)
+    ]
+    completed_count = sum(1 for item in items if item.status == "completed")
+    return RouteOut(
+        path_id=path.id,
+        title=path.title,
+        summary=path.summary,
+        audience_tags=sorted({tag for c in found for tag in (c.activity_tags or [])}),
+        total_count=len(items),
+        completed_count=completed_count,
+        completed=bool(items) and completed_count == len(items),
+        next_microcapsule_id=next_id,
+        assessment_passed=assessment_passed,
+        items=items,
+    )
+
+
+async def list_routes(db: AsyncSession, current_user_id: uuid.UUID) -> RoutesResponse:
+    """Lista las rutas relevantes para el Usuario autenticado con su avance real.
+
+    Relevantes son las de su actividad (según el Perfil, resuelta en servidor) y las
+    generales; las rutas sin título no se publican. La ruta propia va primero. Cada
+    cápsula trae su estado (completada, siguiente o pendiente) y su contenido, de modo
+    que el cliente no calcula nada (Req 17.3). Solo se lee el progreso del titular.
+
+    Args:
+        db: sesión de base de datos.
+        current_user_id: Usuario autenticado, tomado de la sesión.
+
+    Returns:
+        Las rutas con su avance.
+    """
+    # Import diferido: evita acoplar la carga de este módulo a la de `profile`.
+    from app.profile.models import Profile
+
+    profile = await db.get(Profile, current_user_id)
+    activity = ((profile.activity_type if profile else None) or "").strip().lower()
+    paths = await _fetch_paths(db)
+    capsules = await _fetch_capsules_by_id(db, {cid for p in paths for cid in p.microcapsule_ids or []})
+    progress = await _fetch_progress_by_path(db, current_user_id)
+    passed = await _fetch_passed_paths(db, current_user_id)
+    routes = [
+        _build_route(path, capsules, progress.get(path.id), path.id in passed) for path in paths
+    ]
+    relevant = [r for r in routes if _is_relevant(r.audience_tags, activity)]
+    relevant.sort(key=lambda r: (activity not in r.audience_tags, r.title or ""))
+    log_event(logger, "routes_listed", route_count=len(relevant))
+    return RoutesResponse(routes=relevant)

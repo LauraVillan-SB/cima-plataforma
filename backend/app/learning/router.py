@@ -22,9 +22,8 @@ from app.learning.dto import (
     FinalizeResponse,
     MicrocapsuleSelection,
     PathStatusResponse,
+    RoutesResponse,
 )
-from app.profile.models import Profile
-
 router = APIRouter(prefix="/api/v1/aprendizaje", tags=["aprendizaje"])
 
 
@@ -39,9 +38,7 @@ async def listar_microcapsulas(
     nunca se acepta del cliente. Si el Perfil no tiene actividad, la respuesta
     marca `prompt_activity` para que el agente la solicite (Req 4.8, 4.9).
     """
-    profile = await db.get(Profile, current_user_id)
-    activity_type = profile.activity_type if profile else None
-    return await service.select_microcapsules(db, activity_type)
+    return await service.select_for_user(db, current_user_id)
 
 
 @router.post(
@@ -78,3 +75,17 @@ async def estado_de_ruta(
     siguiente paso se resuelve en backend (Req 17.3, 17.5).
     """
     return await service.get_path_status(db, current_user_id, path_id)
+
+
+@router.get("/rutas", response_model=RoutesResponse)
+async def listar_rutas(
+    db: AsyncSession = Depends(get_session),
+    current_user_id: uuid.UUID = Depends(get_current_user_id),
+) -> RoutesResponse:
+    """Lista las rutas del Usuario autenticado con el estado de cada microcápsula.
+
+    No recibe ningún identificador: la actividad y el progreso salen de la sesión
+    (anti-BOLA, Req 9.6). Devuelve el contenido de cada cápsula y su estado, de modo
+    que el cliente solo presenta lo que el backend resolvió (Req 17.3).
+    """
+    return await service.list_routes(db, current_user_id)

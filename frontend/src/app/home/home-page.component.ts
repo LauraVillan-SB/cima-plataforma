@@ -53,6 +53,20 @@ import { UserContextService } from '../core/user-context.service';
           <button
             type="button"
             class="sb-ui-button sb-ui-button--primary sb-ui-button--stroke sb-ui-button--large accion"
+            (click)="ir('/mi-ruta')"
+          >
+            Ver mi ruta de aprendizaje
+          </button>
+          <button
+            type="button"
+            class="sb-ui-button sb-ui-button--primary sb-ui-button--stroke sb-ui-button--large accion"
+            (click)="ir('/ranking')"
+          >
+            Ver el ranking
+          </button>
+          <button
+            type="button"
+            class="sb-ui-button sb-ui-button--primary sb-ui-button--stroke sb-ui-button--large accion"
             (click)="ir('/logros')"
           >
             Ver mis logros

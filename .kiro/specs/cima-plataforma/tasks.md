@@ -234,6 +234,7 @@ Convenciones:
     - _Properties: 10, 11, 12_
   - [x] 13.2 Implementar fallback a tema general y solicitud de perfil incompleto
     - Sin coincidencias → tema "adaptación al clima" + notificación; perfil incompleto → el agente solicita cultivo/comercio hasta 3 veces y luego tema general sin personalización
+    - Nota: el tope de 3 solicitudes se aplica con el contador `profile_activity_prompts` (migración `0012`, incremento atómico). Antes `MAX_PROFILE_PROMPTS` existía sin usarse y el agente pedía la actividad indefinidamente. Cuenta cada consulta con el Perfil incompleto, no cada pregunta realmente hecha.
     - _Requirements: 4.4, 4.5, 4.8, 4.9_
     - _Properties: 13_
   - [x] 13.3 Implementar finalización de microcápsula y completitud de ruta
@@ -244,6 +245,7 @@ Convenciones:
     - _Properties: 14, 15_
   - [x] 13.4 Implementar lógica de adaptación en backend (ritmo/simplificación)
     - `GET /api/v1/aprendizaje/rutas/{id}`; adaptar siguiente microcápsula por repetición/exceso de tiempo/fallo de comprensión usando solo señales ya capturadas; evolucionable a PgVector sin cambiar contrato; default a ruta estándar sin señales
+    - Nota: la adaptación real (señales de repetición, tiempo y evaluación fallida; campos `simplify` y `pace`) se implementó con la migración `0012`. Antes `adapted` solo significaba "tiene progreso" y `difficulty` solo se copiaba. **Pendiente:** (1) no hay variantes simplificadas del contenido: el backend entrega la indicación y el front debe aplicarla; (2) `EXPECTED_TIME_FACTOR = 2` es un valor de referencia pendiente de validar con negocio; (3) el tiempo lo mide el cliente y no es verificable, por lo que solo influye en el ritmo del propio usuario; (4) no se implementó la recuperación por similitud con PgVector (Req 17.4).
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
   - [x]* 13.5 Escribir test de propiedad para duración de microcápsula
     - **Property 10: Invariante de duración de microcápsula**
@@ -260,9 +262,10 @@ Convenciones:
   - [x]* 13.9 Escribir test de propiedad para completitud de ruta
     - **Property 14: Completitud de ruta como bicondicional**
     - **Validates: Requirements 4.10**
-  - [ ]* 13.10 Escribir test de propiedad para resiliencia de registro con reintentos
+  - [x]* 13.10 Escribir test de propiedad para resiliencia de registro con reintentos
     - **Property 15: Resiliencia de registro con reintentos acotados**
     - **Validates: Requirements 4.7, 8.4**
+    - Nota: el registro de `microcapsula_completada` y `ruta_completada` reintenta hasta 3 veces y luego conserva el evento en `learning_event_outbox` (migración `0013`); `drain_outbox` lo recupera. Prueba en `tests/learning/test_resilience.py` (Hypothesis sobre secuencias de fallos; el límite está fijado en la prueba, no derivado del código). **Pendiente:** no hay un worker que drene la cola de todos los usuarios (hoy drena cada usuario al finalizar); el evento `ruta_completada` solo se emite en la transición, por lo que no se recupera si ni la cola pudo guardarse; los reintentos son inmediatos, sin espera.
 
 - [x] 14. Assessment Service — Evaluaciones (Req 7)
   - [x] 14.1 Implementar presentación de evaluación y validación de respuestas en servidor
@@ -326,6 +329,7 @@ Convenciones:
     - `POST /api/v1/gamificacion/reconocimientos`; otorga al completar microcápsula o ruta (disparado por el Learning Service en tarea 13.3); reglas de otorgamiento ejecutadas exclusivamente en backend; idempotente por `client_event_id` + insignia (no duplica, conserva el registro existente); reintentos ≤ 3 conservando el evento sin pérdida; reconocimiento visible ≤ 5 s; validación de elegibilidad de beneficio sobre microseguro en backend (coordinación con Conversion Service, Tarea 16)
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6_
     - _Properties: 41_
+    - Nota (extensión): se agregaron `GET /api/v1/gamificacion/resumen` (puntos, nivel, racha, Insignias con las pendientes) y `GET /api/v1/gamificacion/ranking` (top N seudónimo y posición del titular), con racha diaria atómica (migración `0015`). Nivel, racha y ranking **no están en `requirements.md`**: son experiencia de usuario derivada de datos existentes y sus valores (umbrales de nivel) están por validar con negocio. La visibilidad del ranking entre personas requiere validación de privacidad antes de producción. No hay tienda de canje: fuera del alcance de CIMA.
     - Nota: motor de otorgamiento implementado en `app/gamification/` (`service.grant_recognition`): reglas solo en backend (`RECOGNITION_RULES`, catálogo de ejemplo pendiente de validar por negocio), idempotente por `client_event_id` y por (perfil, insignia), puntos sumados una sola vez, hasta 3 intentos ante conflictos de concurrencia y `ReconocimientoPendienteError` si persisten. Modelos `user_badges` y `user_points` + migración `0003`. **Pendiente:** (1) **No se expuso `POST /api/v1/gamificacion/reconocimientos` a usuarios**: un endpoint abierto permitiría darse insignias y puntos sin completar nada (Req 19.3) y hoy no hay forma de verificar una finalización ni autenticación entre servicios; el Learning Service (13.3) debe invocar `grant_recognition` dentro del backend. Si se necesita un endpoint HTTP, requiere autenticación servicio a servicio (o rol `admin`). (2) Req 19.4 (elegibilidad de beneficio sobre Microseguro): ninguna Insignia otorga beneficios, por lo que no se aplica ninguno; falta definir la regla de negocio. (3) Req 19.6: no hay cola durable; el invocador conserva el evento y reintenta con el mismo `client_event_id`. (4) Se usó un catálogo estático en código en lugar de la tabla `badges` del diseño.
   - [x] 17.2 Implementar consulta de reconocimientos con autorización por titular
     - `GET /api/v1/gamificacion/reconocimientos`; lista las insignias y el total de puntos del titular autenticado; acceso a reconocimientos ajenos → error de autorización sin exponer PII
