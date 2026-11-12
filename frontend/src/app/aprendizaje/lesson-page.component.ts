@@ -3,7 +3,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { GamificationService } from '../gamificacion/gamification.service';
-import { AssistantFabComponent } from '../shell/assistant-fab.component';
 import {
   ItemRuta,
   LearningService,
@@ -27,7 +26,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
 @Component({
   selector: 'cima-lesson-page',
   standalone: true,
-  imports: [RouterLink, AssistantFabComponent],
+  imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="leccion">
@@ -86,14 +85,11 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
         }
         <a routerLink="/aprendizaje" class="volver">Volver a las microcápsulas</a>
       }
-      @if (item()) {
-        <cima-assistant-fab />
-      }
     </article>
   `,
   styles: [
     `
-      .leccion { padding: 1rem 1rem 6rem; max-width: 680px; margin: 0 auto; font-size: 1.125rem; line-height: 1.6; }
+      .leccion { padding: 1rem; max-width: 680px; margin: 0 auto; font-size: 1.125rem; line-height: 1.6; }
       .tema { font-weight: 700; color: var(--cima-verde-oscuro); }
       .titulo { margin: 0.25rem 0 1rem; font-size: 1.6rem; }
       .parrafo { margin: 0 0 1rem; }

@@ -14,27 +14,28 @@ import { ChatPageComponent } from '../chat/chat-page.component';
 
 /**
  * Recuerda, mientras dure la sesion de la app, si la persona ya cerro el
- * saludo: asi no reaparece en cada leccion. Solo guarda un booleano en memoria
- * (no hay datos personales ni almacenamiento del navegador).
+ * saludo: asi no reaparece al cambiar de pantalla. Solo guarda un booleano en
+ * memoria (no hay datos personales ni almacenamiento del navegador).
  */
 let saludoYaCerrado = false;
 
 /**
- * Asistente flotante. Se muestra en cada microcapsula como un boton circular
- * amarillo con el nombre debajo y un globo de saludo con una "x" para cerrarlo.
- * Al tocar el boton se abre el chat en un panel, sin sacar a la persona de la
- * leccion: en celular ocupa toda la pantalla y desde 640 px es una ventana en
- * la esquina.
+ * Asistente flotante CIMA. Se muestra en todas las pantallas con sesion como un
+ * boton circular amarillo con contorno blanco, icono y nombre en verde, y un
+ * globo de saludo con una "x" para cerrarlo. Al tocar el boton se abre el chat
+ * en un panel, sin sacar a la persona de la pantalla en la que esta: en celular
+ * ocupa toda la pantalla y desde 640 px es una ventana en la esquina.
  *
  * El chat se carga bajo demanda la primera vez que se abre y reutiliza la
  * pantalla del asistente tal cual: la redaccion de PII, los guardrails y el
  * control de acceso viven en el backend.
  *
- * Accesibilidad (Req 13.2, 13.3): el boton mide 88 px, tiene nombre accesible,
- * `aria-expanded` y `aria-controls`, y un borde oscuro para que se distinga del
- * fondo (contraste de controles, WCAG 1.4.11); el saludo se cierra con un
- * boton de 44 px; el panel es un dialogo con nombre; al abrir el foco pasa a
- * "Cerrar" y al cerrar vuelve al boton; Escape lo cierra.
+ * Accesibilidad (Req 13.2, 13.3): el boton mide 88 px, su nombre accesible
+ * contiene el texto visible ("CIMA"), tiene `aria-expanded` y `aria-controls`;
+ * el texto y el icono van en verde oscuro sobre amarillo (contraste mayor a
+ * 6:1); el saludo se cierra con un boton de 44 px; el panel es un dialogo con
+ * nombre; al abrir el foco pasa a "Cerrar" y al cerrar vuelve al boton; Escape
+ * lo cierra.
  */
 @Component({
   selector: 'cima-assistant-fab',
@@ -50,12 +51,12 @@ let saludoYaCerrado = false;
           <span class="saludo__barra" aria-hidden="true"></span>
           <p class="saludo__texto">
             <strong>Cuéntame, ¿qué necesitas?</strong>
-            Soy tu asistente virtual de CIMA
+            Soy tu asistente virtual CIMA
           </p>
           <button
             type="button"
             class="saludo__cerrar"
-            aria-label="Cerrar el saludo del asistente"
+            aria-label="Cerrar el saludo del asistente CIMA"
             (click)="cerrarSaludo()"
           >
             <span aria-hidden="true">✕</span>
@@ -66,7 +67,7 @@ let saludoYaCerrado = false;
         #fab
         type="button"
         class="fab"
-        aria-label="Abrir el asistente de CIMA"
+        aria-label="Abrir el asistente CIMA"
         aria-controls="panel-asistente"
         [attr.aria-expanded]="abierto()"
         (click)="alternar()"
@@ -89,11 +90,11 @@ let saludoYaCerrado = false;
             stroke-linecap="round"
           />
         </svg>
-        <span class="fab__texto" aria-hidden="true">Asistente</span>
+        <span class="fab__texto" aria-hidden="true">CIMA</span>
       </button>
     </div>
     @if (abierto()) {
-      <div id="panel-asistente" class="panel" role="dialog" aria-label="Asistente de CIMA">
+      <div id="panel-asistente" class="panel" role="dialog" aria-label="Asistente CIMA">
         <div class="panel__cabecera">
           <button #cerrarBtn type="button" class="panel__cerrar" (click)="cerrar()">
             Cerrar
@@ -126,27 +127,29 @@ let saludoYaCerrado = false;
         width: max-content;
         max-width: calc(100vw - 2rem);
       }
+      /* Amarillo con contorno blanco; icono y texto en verde oscuro. */
       .fab {
         flex: none;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0.1rem;
+        gap: 0.15rem;
         width: 88px;
         height: 88px;
         padding: 0;
-        border: 2px solid var(--cima-verde-oscuro);
+        border: 3px solid #fff;
         border-radius: 50%;
         background: var(--cima-dorado);
-        color: var(--cima-texto);
+        color: var(--cima-verde-oscuro);
         font: inherit;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
         cursor: pointer;
       }
       .fab__texto {
-        font-size: 0.72rem;
-        font-weight: 700;
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
         line-height: 1;
       }
       .saludo {
@@ -161,7 +164,7 @@ let saludoYaCerrado = false;
         border-radius: 10px;
         background: var(--cima-dorado);
         color: var(--cima-texto);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
       }
       .saludo__barra {
         align-self: stretch;

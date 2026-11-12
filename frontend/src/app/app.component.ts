@@ -1,20 +1,32 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+import { filter, map } from 'rxjs';
 
 import { AuthService } from './auth/auth.service';
 import { GamificationService } from './gamificacion/gamification.service';
+import { AssistantFabComponent } from './shell/assistant-fab.component';
 import { ConnectionStatusComponent } from './shell/connection-status.component';
 import { UserMenuComponent } from './shell/user-menu.component';
+
+/** Pantallas donde el asistente flotante no se muestra (ya es la pantalla del chat o no hay sesion). */
+const RUTAS_SIN_ASISTENTE: readonly string[] = ['/asistente', '/entrar'];
 
 /**
  * Componente raiz (shell) de la PWA de CIMA. Encabezado verde oscuro con el
  * logo de Seguros Bolivar; con sesion muestra los chips de racha, puntos y
  * nivel (datos reales del backend), el menu de la cuenta (perfil, cambiar clave
- * y salir), la navegacion principal y el pie institucional. Al abrir la app se
- * intenta restaurar la sesion vigente sin pedir la Clave (Req 2.6); la sesion
- * vive en la cookie HttpOnly del backend. Muestra el indicador de conexion
- * (Req 2.9, 18.5). Usa OnPush para minimizar el trabajo de deteccion de
- * cambios (Req 2).
+ * y salir), la navegacion principal, el asistente flotante y el pie
+ * institucional. Al abrir la app se intenta restaurar la sesion vigente sin
+ * pedir la Clave (Req 2.6); la sesion vive en la cookie HttpOnly del backend.
+ * Muestra el indicador de conexion (Req 2.9, 18.5). Usa OnPush para minimizar
+ * el trabajo de deteccion de cambios (Req 2).
  */
 @Component({
   selector: 'cima-root',
@@ -24,6 +36,7 @@ import { UserMenuComponent } from './shell/user-menu.component';
     RouterLinkActive,
     ConnectionStatusComponent,
     UserMenuComponent,
+    AssistantFabComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -70,13 +83,16 @@ import { UserMenuComponent } from './shell/user-menu.component';
     <main id="contenido" class="contenido">
       <router-outlet />
     </main>
-    <footer class="pie">
+    <footer class="pie" [class.pie--con-asistente]="mostrarAsistente()">
       <img src="logos/sb-logo-horizontal-white.svg" alt="Seguros Bolívar" width="120" height="32" />
       <p>
         CIMA es la plataforma educativa de la Escuela de Sostenibilidad e Inclusión de
         Seguros Bolívar. Aquí aprendes; no se hacen pagos ni se expiden pólizas.
       </p>
     </footer>
+    @if (mostrarAsistente()) {
+      <cima-assistant-fab />
+    }
   `,
   styles: [
     `
@@ -215,6 +231,10 @@ import { UserMenuComponent } from './shell/user-menu.component';
         text-align: center;
         font-size: 0.95rem;
       }
+      /* Deja libre la esquina donde flota el asistente para que no tape el texto. */
+      .pie--con-asistente {
+        padding-bottom: 7.5rem;
+      }
       .pie p {
         max-width: 560px;
         margin: 0.75rem auto 0;
@@ -245,8 +265,24 @@ import { UserMenuComponent } from './shell/user-menu.component';
 export class AppComponent {
   protected readonly auth = inject(AuthService);
   private readonly gamificacion = inject(GamificationService);
+  private readonly router = inject(Router);
 
   protected readonly resumen = this.gamificacion.resumen;
+
+  private readonly rutaActual = toSignal(
+    this.router.events.pipe(
+      filter((evento): evento is NavigationEnd => evento instanceof NavigationEnd),
+      map((evento) => evento.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** El asistente flotante se muestra con sesion, salvo en la propia pantalla del chat. */
+  protected readonly mostrarAsistente = computed(
+    () =>
+      this.auth.autenticado() &&
+      !RUTAS_SIN_ASISTENTE.some((ruta) => this.rutaActual().startsWith(ruta)),
+  );
 
   constructor() {
     // Si la cookie de sesion sigue vigente, la app lo sabe sin pedir la Clave.
