@@ -111,13 +111,21 @@ import { UserMenuComponent } from './shell/user-menu.component';
         gap: 0.75rem 1rem;
         padding: 0.75rem 1rem;
       }
+      /*
+       * En celular: fila 1 = marca + "Mi cuenta", fila 2 = chips a todo el ancho.
+       * Desde 640 px todo cabe en una sola fila (marca, chips, cuenta).
+       */
       .barra__marca {
+        order: 1;
         display: flex;
         align-items: center;
         gap: 0.75rem;
         margin-inline-end: auto;
         color: #fff;
         text-decoration: none;
+      }
+      cima-user-menu {
+        order: 2;
       }
       .barra__marca img {
         height: 32px;
@@ -130,12 +138,23 @@ import { UserMenuComponent } from './shell/user-menu.component';
         color: var(--cima-dorado);
       }
       .chips {
+        order: 3;
+        flex-basis: 100%;
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         list-style: none;
         margin: 0;
         padding: 0;
+      }
+      @media (min-width: 640px) {
+        .chips {
+          order: 2;
+          flex-basis: auto;
+        }
+        cima-user-menu {
+          order: 3;
+        }
       }
       .chip {
         display: inline-flex;
@@ -159,14 +178,21 @@ import { UserMenuComponent } from './shell/user-menu.component';
         overflow: hidden;
         clip: rect(0 0 0 0);
       }
+      /* Barra desplazable: cada enlace conserva su ancho y no se encima con el vecino. */
       .nav {
         display: flex;
         gap: 0.25rem;
         overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
         padding: 0 0.75rem;
         background: rgba(0, 0, 0, 0.18);
       }
+      .nav::-webkit-scrollbar {
+        display: none;
+      }
       .nav a {
+        flex: none;
         display: inline-flex;
         align-items: center;
         padding: 0 1rem;
@@ -193,6 +219,26 @@ import { UserMenuComponent } from './shell/user-menu.component';
       .pie p {
         max-width: 560px;
         margin: 0.75rem auto 0;
+      }
+      /*
+       * Celulares angostos: marca mas compacta para que "Mi cuenta" quepa en la
+       * primera fila. Va al final para ganar a las reglas base de igual
+       * especificidad.
+       */
+      @media (max-width: 420px) {
+        .barra__fila {
+          padding-inline: 0.75rem;
+          gap: 0.6rem 0.5rem;
+        }
+        .barra__marca {
+          gap: 0.5rem;
+        }
+        .barra__marca img {
+          height: 26px;
+        }
+        .barra__producto {
+          font-size: 1.1rem;
+        }
       }
     `,
   ],

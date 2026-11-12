@@ -55,7 +55,7 @@ import { UserContextService } from '../core/user-context.service';
             class="sb-ui-button sb-ui-button--primary sb-ui-button--stroke sb-ui-button--large accion"
             (click)="ir('/mi-ruta')"
           >
-            Ver mi ruta de aprendizaje
+            Ver mi ruta
           </button>
           <button
             type="button"
