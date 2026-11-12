@@ -25,6 +25,7 @@ from hypothesis import strategies as st
 from app.chat import service
 from app.chat.dto import ChatTextMessageIn, ModelResult
 from app.chat.errors import RedaccionPiiError
+from app.chat.prompt import PromptConversacional
 from app.chat.redaction import MIN_DIGITOS_IDENTIFICADOR, redactar_pii
 from tests.chat.test_service import _FakeSession
 
@@ -138,8 +139,9 @@ class _ModeloQueCaptura:
     def __init__(self) -> None:
         self.recibidos: list[str] = []
 
-    async def generate(self, redacted_text: str) -> ModelResult:
-        self.recibidos.append(redacted_text)
+    async def generate(self, prompt: PromptConversacional) -> ModelResult:
+        # Todo lo que llega al modelo, en cualquier rol.
+        self.recibidos.extend(contenido for _rol, contenido in prompt.mensajes())
         return ModelResult(text="te ayudo con eso", model_version="prueba-v1")
 
 

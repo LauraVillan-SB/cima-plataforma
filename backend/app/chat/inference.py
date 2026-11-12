@@ -1,10 +1,11 @@
 """Contrato del modelo de IA generativa para la inferencia del chat.
 
 Define la interfaz que el worker usa para obtener una respuesta del modelo, sin
-acoplarse a un proveedor concreto. La implementación real (prompts
-system/developer/user separados, STT/TTS, guardrails) corresponde a la Tarea
-11.4/11.5; aquí solo vive el contrato y una implementación de respaldo segura
-que permite operar el pipeline de extremo a extremo sin un proveedor externo.
+acoplarse a un proveedor concreto. El modelo recibe un prompt con los mensajes
+system/developer/user separados (`app/chat/prompt.py`, Tarea 11.4). Aquí viven
+los contratos y respaldos seguros que permiten operar el pipeline de extremo a
+extremo sin proveedores externos; los adaptadores reales de LLM y STT/TTS
+quedan pendientes de la elección del proveedor.
 
 El worker invoca al modelo a través del circuit breaker de
 `app/common/resilience.py` (Req 11.5, 11.6) y le pasa SIEMPRE texto ya redactado
@@ -16,13 +17,20 @@ from __future__ import annotations
 from typing import Protocol
 
 from app.chat.dto import ModelResult, TranscriptionResult, TtsResult
+from app.chat.prompt import PromptConversacional
 
 
 class GenerativeModel(Protocol):
-    """Modelo de IA generativa capaz de responder a un texto ya redactado."""
+    """Modelo de IA generativa que responde a un prompt con roles separados.
 
-    async def generate(self, redacted_text: str) -> ModelResult:
-        """Genera una respuesta para el texto (sin PII) y devuelve su versión."""
+    Recibe el `PromptConversacional` (system/developer/user) y NO un texto suelto:
+    el adaptador del proveedor debe enviar cada rol en su campo propio y nunca
+    concatenar las instrucciones con el texto del Usuario (Tarea 11.4, OWASP
+    LLM01). `prompt.user` ya viene redactado de PII.
+    """
+
+    async def generate(self, prompt: PromptConversacional) -> ModelResult:
+        """Genera una respuesta para el prompt (sin PII) y devuelve su versión."""
         ...
 
 
@@ -58,7 +66,7 @@ class SafeFallbackModel:
 
     MODEL_VERSION = "fallback-seguro-v1"
 
-    async def generate(self, redacted_text: str) -> ModelResult:
+    async def generate(self, prompt: PromptConversacional) -> ModelResult:
         """Devuelve una respuesta de respaldo segura e identificable como IA."""
         return ModelResult(
             text=(
