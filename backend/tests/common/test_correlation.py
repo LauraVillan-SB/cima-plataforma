@@ -29,6 +29,7 @@ from hypothesis import strategies as st
 from app.common import http_client
 from app.common.correlation import (
     CORRELATION_HEADER,
+    CORRELATION_ID_MAX_LENGTH,
     CorrelationIdMiddleware,
     es_correlation_id_valido,
     get_correlation_id,
@@ -76,7 +77,7 @@ async def _saliente() -> dict[str, str]:
 cliente_app = TestClient(app)
 
 # Ids con la forma admitida: se deben conservar sin cambios en toda la cadena.
-_ids_validos = st.from_regex(r"[A-Za-z0-9._:-]{1,128}", fullmatch=True)
+_ids_validos = st.from_regex(rf"[A-Za-z0-9._:-]{{1,{CORRELATION_ID_MAX_LENGTH}}}", fullmatch=True)
 # Ids con al menos un carácter no admitido (ASCII imprimible, sin espacios en los
 # bordes porque el middleware los recorta) o demasiado largos.
 _no_admitidos = "!\"#$%&'()*+,/;<=>?@[\\]^`{|}~"
@@ -86,7 +87,11 @@ _ids_con_caracter_invalido = st.builds(
     st.sampled_from(list(_no_admitidos)),
     st.text(alphabet=string.ascii_letters, max_size=10),
 )
-_ids_largos = st.text(alphabet=string.ascii_letters + string.digits, min_size=129, max_size=300)
+_ids_largos = st.text(
+    alphabet=string.ascii_letters + string.digits,
+    min_size=CORRELATION_ID_MAX_LENGTH + 1,
+    max_size=300,
+)
 
 
 # --------------------------------------------------------------------------- #
