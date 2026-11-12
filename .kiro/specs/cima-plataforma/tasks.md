@@ -210,9 +210,10 @@ Convenciones:
   - [ ]* 11.8 Escribir test de propiedad para validación de la nota de voz
     - **Property 8: Validación de la nota de voz**
     - **Validates: Requirements 3.4**
-  - [ ]* 11.9 Escribir test de propiedad para no fuga de PII hacia el modelo
+  - [x]* 11.9 Escribir test de propiedad para no fuga de PII hacia el modelo
     - **Property 9: No fuga de PII hacia el modelo**
     - **Validates: Requirements 3.10, 3.11, 14.6**
+    - Nota: `tests/chat/test_property_9_pii.py` (función de redacción y flujo encolar → worker con un modelo que captura su entrada). Encontró y se corrigieron fugas de celulares: con espacios de más, con " - ", "/" o "_" entre grupos, y seguidos de "mil gracias". Limitación conocida: una cédula partida con doble espacio no se redacta (no se distingue de dos cantidades).
   - [ ]* 11.10 Escribir test de propiedad para ramificación por confianza de STT
     - **Property 38: Ramificación por confianza de STT**
     - **Validates: Requirements 14.5**
