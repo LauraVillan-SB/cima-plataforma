@@ -21,7 +21,7 @@ import {
   throwError,
 } from 'rxjs';
 
-import { AuthService } from '../auth/auth.service';
+import { AuthService, limpiarDatosLocales } from '../auth/auth.service';
 import { RUTA_REFRESCO, debeIntentarRefresco } from './sesion';
 
 /** Marca una petición que ya se repitió tras renovar, para no repetirla otra vez. */
@@ -79,6 +79,9 @@ export const sesionInterceptor: HttpInterceptorFn = (req, next) => {
         switchMap((renovada) => {
           if (!renovada) {
             auth.autenticado.set(false);
+            // La sesión expiró: los datos que dejó en caché no deben quedar a la
+            // vista del siguiente que use el celular (ver core/limpieza-local.ts).
+            void limpiarDatosLocales();
             void router.navigate(['/entrar']);
             return throwError(() => error);
           }

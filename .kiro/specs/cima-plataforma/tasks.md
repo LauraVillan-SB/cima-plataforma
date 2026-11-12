@@ -20,13 +20,13 @@ Convenciones:
   - Añadir `.gitignore` (`.idea`, `node_modules`, `.vscode`, `dist`, `__pycache__`, `.pytest_cache`)
   - _Requirements: 12.1, 17.4_
 
-- [~] 2. Configuración del proyecto frontend (Angular PWA)
+- [x] 2. Configuración del proyecto frontend (Angular PWA)
   - Crear proyecto Angular con Angular CLI y Service Worker (`@angular/service-worker`), dependencias ancladas desde JFrog
   - Configurar performance budgets en el build: bundle inicial ≤ 500 KB y visita posterior ≤ 50 KB
   - Configurar estructura por dominio (feature modules) y `HttpClient` con interceptor base
   - Añadir `fast-check` + Jest para pruebas de lógica pura del frontend
   - _Requirements: 2.1, 2.3, 2.4_
-  - Nota: scaffold, Service Worker, interceptor de Correlation-ID, Jest y fast-check listos; budget inicial ≤ 500 KB configurado en `angular.json`. Falta definir y medir el límite de visita posterior ≤ 50 KB.
+  - Nota: scaffold, Service Worker, interceptor de Correlation-ID, Jest y fast-check listos; budget inicial ≤ 500 KB configurado en `angular.json`. El límite de visita posterior ≤ 50 KB se mide con `npm run presupuesto` (`scripts/presupuesto-carga.cjs`) sobre el build real: carga inicial 229 kB gzip, visita posterior 1,4 kB. El budget de `angular.json` no ve el Design System (`sb-ui-seguros-bolivar.min.css/js`, 713 kB sin comprimir), que se copia como asset y carga `index.html`; el script sí lo cuenta. Sin comprimir, la carga inicial suma 1.040 kB: queda como aviso frente al 1 MB del Req 10.3 (el requisito no precisa si es transferido o sin comprimir).
 
 - [x] 3. Infraestructura transversal: Correlation-ID, logging estructurado y manejo de errores
   - [x] 3.1 Implementar middleware de Correlation-ID en el backend
@@ -405,15 +405,15 @@ Convenciones:
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 22. Frontend PWA — Shell, caché offline y detección de red (Req 2, Req 18)
-  - [~] 22.1 Implementar shell de la app y estrategias de Service Worker
+  - [x] 22.1 Implementar shell de la app y estrategias de Service Worker
     - Shell ligero; cache-first para estáticos y microcápsulas descargadas; network-first con timeout para datos dinámicos; fallback sin caché descargando por visita
     - _Requirements: 2.1, 2.4, 2.5, 18.1_
-    - Nota: shell y `ngsw-config.json` con estáticos (prefetch/lazy) y API dinámica `freshness` con timeout 3 s listos. Falta el grupo de caché para microcápsulas descargadas (depende del Learning Service, Tarea 13).
+    - Nota: shell y `ngsw-config.json` con estáticos (prefetch/lazy) y API dinámica `freshness` con timeout 3 s listos. Falta el grupo de caché para microcápsulas descargadas (depende del Learning Service, Tarea 13). Actualización: el comodín `/api/v1/**` se reemplazó por una allowlist (los `dataGroups` no admiten patrones negativos): `aprendizaje-offline` (microcápsulas, rutas y evaluaciones, 30 d) y `conversacion-offline` (historial del chat, 7 d), ambos `freshness` con timeout 3 s para que sin conexión se consulten (Req 18.1, 18.2) y con conexión lleguen frescos, porque la selección depende del Perfil. Ya no se cachean `/auth/sesion`, el Perfil, los certificados ni los reportes. Al salir, entrar, registrarse o expirar la sesión se vacían las cachés de datos del Service Worker (`core/limpieza-local.ts`), sin tocar los estáticos. Cuando exista el contenido multimedia de las microcápsulas (rama de Laura) podrá ir en un grupo `performance` (cache-first), como dice el diseño.
   - [~] 22.2 Implementar detección de red, cola local idempotente y precarga
     - Indicador de estado ≤ 2 s tras interrupción ≥ 3 s conservando último paso; cola local con `client_event_id` sincronizada vía Offline Sync; precarga de siguiente microcápsula; estado de sincronización en lenguaje simple
     - _Requirements: 2.8, 2.9, 18.2, 18.3, 18.5_
     - Nota: detección de red (umbral 3 s), indicador de conexión y cola local con `client_event_id` listos. Falta la precarga de la siguiente microcápsula (depende de la Tarea 13).
-  - [ ]* 22.3 Escribir test de propiedad (fast-check) para generación de clave de idempotencia de la cola
+  - [x]* 22.3 Escribir test de propiedad (fast-check) para generación de clave de idempotencia de la cola
     - **Property 36: Idempotencia de la sincronización offline** (lógica cliente de la cola)
     - **Validates: Requirements 18.2**
 
@@ -434,9 +434,10 @@ Convenciones:
     - Contraste y tamaños de fuente AA; objetivos táctiles ≥ 44×44 px; operable a 320 px y 3G; textos en español coloquial
     - _Requirements: 13.2, 13.3, 13.5, 13.6_
     - Nota: se subió la base tipográfica a 18 px (en porcentaje, respeta el tamaño del dispositivo), títulos a 28 px, campos y botones con las variantes `--large` del Design System, tarjetas de 560 px, opciones de evaluación de 56 px y foco visible de 3 px; se agregó un menú de la cuenta persistente (quién soy, perfil, cambiar clave, cerrar sesión) con `aria-expanded`/`aria-controls`, cierre con Escape y opciones de 56 px, y se corrigió el `<main>` anidado de la pantalla de entrada. **Pendiente de verificar:** operación a 320 px y en 3G, medición de contraste con axe-core/Lighthouse (Tarea 23.5; el texto blanco sobre el verde `#009056` del encabezado da ~4.1:1, válido solo por ser texto grande en negrita), y la alternativa de lectura/entrada por voz de cada contenido (Req 13.4, Tarea 23.2).
-  - [ ]* 23.5 Escribir pruebas de accesibilidad y performance budget
+  - [~]* 23.5 Escribir pruebas de accesibilidad y performance budget
     - axe-core/Lighthouse para contraste/roles AA y objetivos táctiles; budgets de bundle (≤ 500 KB / ≤ 50 KB) y TTI ≤ 3 s con throttling 3G
     - _Requirements: 2.2, 2.3, 2.4, 13.2, 13.3_
+    - Nota: budgets de bundle cubiertos con `npm run presupuesto` (≤ 500 kB inicial, ≤ 50 kB visita posterior, medido sobre el build real y con pruebas en `scripts/presupuesto-carga.spec.cjs`). **Falta:** axe-core/Lighthouse para contraste, roles y objetivos táctiles, y TTI ≤ 3 s con throttling 3G (Req 2.2), que requieren un navegador.
 
 - [ ] 24. Integración y cableado final
   - [~] 24.1 Cablear API Gateway, headers de seguridad y OpenAPI

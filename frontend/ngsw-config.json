@@ -19,12 +19,26 @@
   ],
   "dataGroups": [
     {
-      "name": "api-dinamica",
-      "urls": ["/api/v1/**"],
+      "name": "aprendizaje-offline",
+      "urls": [
+        "/api/v1/aprendizaje/microcapsulas",
+        "/api/v1/aprendizaje/rutas/",
+        "/api/v1/evaluaciones/"
+      ],
       "cacheConfig": {
         "strategy": "freshness",
-        "maxSize": 100,
-        "maxAge": "1h",
+        "maxSize": 50,
+        "maxAge": "30d",
+        "timeout": "3s"
+      }
+    },
+    {
+      "name": "conversacion-offline",
+      "urls": ["/api/v1/chat/historial"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 1,
+        "maxAge": "7d",
         "timeout": "3s"
       }
     }
