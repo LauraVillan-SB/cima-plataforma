@@ -61,7 +61,6 @@ import { UserMenuComponent } from './shell/user-menu.component';
           <a routerLink="/inicio" routerLinkActive="activo">Inicio</a>
           <a routerLink="/aprendizaje" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }">Microcápsulas</a>
           <a routerLink="/mi-ruta" routerLinkActive="activo">Mi ruta</a>
-          <a routerLink="/asistente" routerLinkActive="activo">Asistente</a>
           <a routerLink="/reconocimientos" routerLinkActive="activo">Reconocimientos</a>
           <a routerLink="/ranking" routerLinkActive="activo">Ranking</a>
         </nav>
