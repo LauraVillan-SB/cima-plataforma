@@ -57,6 +57,21 @@ a,
   min-width: 44px;
 }
 
+/* Campos de formulario tambien de al menos 44 px de alto (radios y casillas aparte). */
+input:not([type="radio"]):not([type="checkbox"]),
+select,
+textarea {
+  min-height: 44px;
+  max-width: 100%;
+}
+
+/* Imagenes y video nunca deben desbordar el ancho de la pantalla. */
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
 /*
  * Foco siempre visible para quien navega con teclado o lector de pantalla
  * (WCAG 2.4.7). Doble anillo (dorado y verde oscuro) para que se vea tanto

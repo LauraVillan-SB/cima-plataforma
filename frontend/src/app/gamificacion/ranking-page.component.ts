@@ -32,7 +32,7 @@ import { GamificationService, Ranking } from './gamification.service';
               <tr>
                 <th scope="col">Puesto</th>
                 <th scope="col">Participante</th>
-                <th scope="col">Nivel</th>
+                <th scope="col" class="col-nivel">Nivel</th>
                 <th scope="col">Puntos</th>
               </tr>
             </thead>
@@ -40,8 +40,11 @@ import { GamificationService, Ranking } from './gamification.service';
               @for (f of r.entries; track f.rank) {
                 <tr [class.yo]="f.is_me">
                   <td>{{ f.rank }}</td>
-                  <td>{{ f.alias }}@if (f.is_me) { (tú) }</td>
-                  <td>{{ f.level_name }}</td>
+                  <td>
+                    {{ f.alias }}@if (f.is_me) { (tú) }
+                    <span class="nivel-movil">{{ f.level_name }}</span>
+                  </td>
+                  <td class="col-nivel">{{ f.level_name }}</td>
                   <td>{{ f.total_points }}</td>
                 </tr>
               }
@@ -65,7 +68,17 @@ import { GamificationService, Ranking } from './gamification.service';
       .resumen { color: var(--cima-texto-suave); }
       .tabla { width: 100%; border-collapse: collapse; background: #fff; border-radius: var(--cima-radio); overflow: hidden; }
       th { background: var(--cima-verde-oscuro); color: #fff; text-align: left; padding: 0.75rem; }
-      td { padding: 0.75rem; border-top: 1px solid var(--cima-borde); }
+      td { padding: 0.75rem; border-top: 1px solid var(--cima-borde); overflow-wrap: break-word; }
+      .nivel-movil { display: none; }
+      /* En celular la columna de nivel se pasa debajo del alias para que la tabla quepa. */
+      @media (max-width: 559px) {
+        .tabla { table-layout: fixed; }
+        th, td { padding: 0.6rem 0.5rem; }
+        th:first-child { width: 4.2rem; }
+        th:last-child { width: 4.8rem; }
+        .col-nivel { display: none; }
+        .nivel-movil { display: block; font-size: 0.85rem; font-weight: 400; color: var(--cima-texto-suave); }
+      }
       .yo td { background: var(--cima-dorado); font-weight: 700; }
       .mi-puesto { background: var(--cima-dorado); border-radius: var(--cima-radio); padding: 0.75rem 1rem; font-weight: 700; }
       .solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
