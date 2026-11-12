@@ -44,35 +44,36 @@ Convenciones:
   - [x]* 3.4 Escribir test de propiedad para enmascaramiento de PII
     - **Property 18: Enmascaramiento de PII en respuestas y logs**
     - **Validates: Requirements 5.9, 9.4**
-  - [ ]* 3.5 Escribir test de propiedad para propagación del Correlation-ID
+  - [x]* 3.5 Escribir test de propiedad para propagación del Correlation-ID
     - **Property 35: Propagación del Correlation-ID**
     - **Validates: Requirements 11.1**
 
-- [ ] 4. Modelos de datos y migraciones
+- [x] 4. Modelos de datos y migraciones
   - [x] 4.1 Definir modelos SQLAlchemy y esquemas Pydantic base
     - Crear entidades `profiles`, `microcapsules` (con columna `embedding` VECTOR/PgVector), `learning_paths`, `path_progress`, `assessments`, `assessment_attempts`, `certificates`, `incentives`, `conversion_intents`, `metric_events`, `metric_aggregates`, `ai_interactions`, `badges`, `user_badges`, `user_points`, `surveys`, `survey_responses`
     - Tipado estricto, cifrado at-rest de PII (`phone_e164`), restricción UNIQUE(`profile_id`,`path_id`) en certificados, `client_event_id` UUID v4 para idempotencia
     - Gamificación: `badges` (catálogo con `points_value`), `user_badges` con restricción UNIQUE(`profile_id`,`badge_id`) y `client_event_id` UUID v4 para otorgamiento idempotente, y `user_points` (total de puntos por perfil)
     - Encuesta de satisfacción: `surveys` (definición de preguntas con escala 1–5) y `survey_responses` con restricción UNIQUE(`profile_id`,`path_id`) y `client_event_id` UUID v4 para idempotencia de registro, y `rating` en escala 1–5
     - _Requirements: 1.5, 4.1, 4.2, 6.4, 8.1, 8.2, 9.1, 17.4, 19.2, 19.5, 20.3, 20.6_
-  - [~] 4.2 Crear migraciones Alembic iniciales
+  - [x] 4.2 Crear migraciones Alembic iniciales
     - Migración de creación de tablas, extensión PgVector, índices y roles de BD separados (lectura/escritura/admin)
-    - Nota: infraestructura Alembic y migraciones `0001` (`profiles`, `metric_events` + PgVector) y `0002` (`conversion_intents`, `no_offer_events`) creadas; un solo head (`0002_conversion_microseguros`). Los roles de BD separados quedan como provisión de infraestructura (no en migración versionada). **Pendiente:** faltan las migraciones de `surveys` y `survey_responses` (Survey Service), `sync_actions` y `sync_path_progress` (Sync Service): tienen modelo ORM pero ninguna migración las crea, por lo que fallarían en una base creada con `alembic upgrade head`. Tampoco existen aún los modelos de `ai_interactions`, `incentives`, `badges`, `user_badges` ni `user_points`.
+    - Nota: infraestructura Alembic y migraciones `0001` (`profiles`, `metric_events` + PgVector) y `0002` (`conversion_intents`, `no_offer_events`) creadas; un solo head (`0002_conversion_microseguros`). Los roles de BD separados quedan como provisión de infraestructura (no en migración versionada). Hoy hay 11 migraciones (`0001` a `0011_survey_sync_tablas`) con un solo head; incluyen `surveys`, `survey_responses`, `sync_actions`, `sync_path_progress`, `ai_interactions`, `incentives` y gamificación. Verificado en una base vacía: `upgrade head` crea 18 tablas, `alembic check` no detecta diferencias con los modelos, y `downgrade base` + `upgrade head` vuelven a dejarla en el head.
     - _Requirements: 8.1, 17.4_
-  - [ ]* 4.3 Escribir pruebas unitarias de los esquemas de datos
+  - [x]* 4.3 Escribir pruebas unitarias de los esquemas de datos
     - Validar restricciones, tipos y defaults (p. ej. `pass_threshold` default 70)
     - _Requirements: 4.1, 4.2, 7.3_
+    - Nota: `tests/test_esquemas_datos.py` (29 pruebas) sobre los modelos y sobre el DDL offline de las migraciones (`pass_threshold` DEFAULT 70 en la base). Verifica además que los valores del dominio quepan en sus columnas; así se encontró que un Correlation-ID válido de 65–128 caracteres daba 500 en el chat (columna de 64). Pendiente con los dueños: la base no tiene CHECK de rango para `duration_sec` (180–300), `topic`, `pass_threshold` (0–100) ni `rating` (1–5); hoy solo los validan los DTOs, y `pass_threshold` ni eso.
 
-- [ ] 5. Checkpoint — Verificar que la base compila y las migraciones aplican
+- [x] 5. Checkpoint — Verificar que la base compila y las migraciones aplican
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Profile Service — Perfil y protección de datos (Req 9)
+- [x] 6. Profile Service — Perfil y protección de datos (Req 9)
   - [x] 6.1 Implementar validación y normalización del perfil (allowlist, trim)
     - Esquema Pydantic con allowlist de campos (teléfono, tipo de cultivo/comercio, zona); rechazo de claves no permitidas; validación teléfono 7–15 dígitos, tipo en lista permitida, zona ≤ 100 chars
     - _Requirements: 9.1, 9.2, 9.3_
     - _Properties: 30, 31_
   - [x] 6.2 Implementar endpoints de perfil con DTO allowlist y enmascaramiento
-    - `POST /api/v1/perfiles`, `GET/PUT /api/v1/perfiles/me`; respuestas con DTO autorizado y PII enmascarada
+    - `GET/PUT /api/v1/perfiles/me`; respuestas con DTO autorizado y PII enmascarada. El Perfil se crea con el registro; la creación pública `POST /api/v1/perfiles` se quitó porque revelaba qué teléfonos tienen cuenta (Req 1.7)
     - _Requirements: 9.1, 9.4, 9.5_
     - _Properties: 18, 32_
   - [x] 6.3 Implementar autorización por propiedad (anti-BOLA) y rate limiting de abuso
@@ -90,7 +91,7 @@ Convenciones:
   - [x]* 6.6 Escribir test de propiedad para normalización y validación del perfil
     - **Property 31: Normalización y validación de campos del Perfil**
     - **Validates: Requirements 9.2, 9.3**
-  - [ ]* 6.7 Escribir test de propiedad para DTO con allowlist en respuestas
+  - [x]* 6.7 Escribir test de propiedad para DTO con allowlist en respuestas
     - **Property 32: DTO con allowlist en respuestas de Perfil**
     - **Validates: Requirements 9.5**
   - [x]* 6.8 Escribir test de propiedad para autorización por propiedad (anti-BOLA)
@@ -113,11 +114,11 @@ Convenciones:
     - Access ≤ 15 min + refresh con rotación; cookies Secure/HttpOnly/SameSite; sin tokens en localStorage; `POST /api/v1/auth/refresco`, `POST /api/v1/auth/salir`
     - _Requirements: 1.10, 1.13_
     - _Properties: 6_
-  - [~] 7.4 Implementar bloqueo por intentos, reactivación e inactividad
+  - [x] 7.4 Implementar bloqueo por intentos, reactivación e inactividad
     - 5 fallos consecutivos → bloqueo 15 min por teléfono; reactivación con contador en cero; invalidación por 30 min de inactividad; `PUT /api/v1/auth/clave` exige Clave actual
     - _Requirements: 1.11, 1.12, 1.13, 1.14_
     - _Properties: 4, 5_
-    - Nota: bloqueo por intentos, reactivación y `PUT /api/v1/auth/clave` implementados. Falta la invalidación de sesión por 30 min de inactividad.
+    - Nota: bloqueo por intentos, reactivación, `PUT /api/v1/auth/clave` e invalidación por 30 min de inactividad (sesión deslizante, `app/auth/activity.py`, PR #76) implementados.
   - [~] 7.5 Implementar restauración de sesión y SSO con WordPress
     - `GET /api/v1/auth/sesion` restaura sesión vigente; SSO valida sesión WordPress contra IdP; redirige conservando destino si expiró o >30 min inactividad
     - _Requirements: 2.6, 2.7, 10.1, 10.2_
@@ -131,30 +132,31 @@ Convenciones:
   - [x]* 7.8 Escribir test de propiedad para error de ingreso indistinguible
     - **Property 3: Error de ingreso indistinguible**
     - **Validates: Requirements 1.7**
-  - [ ]* 7.9 Escribir test de propiedad para bloqueo por intentos fallidos
+  - [x]* 7.9 Escribir test de propiedad para bloqueo por intentos fallidos
     - **Property 4: Bloqueo por intentos fallidos consecutivos**
     - **Validates: Requirements 1.11**
-  - [ ]* 7.10 Escribir test de propiedad para reactivación tras expirar el bloqueo
+  - [x]* 7.10 Escribir test de propiedad para reactivación tras expirar el bloqueo
     - **Property 5: Reactivación tras expirar el bloqueo**
     - **Validates: Requirements 1.12**
   - [x]* 7.11 Escribir test de propiedad para propiedades del token de sesión
     - **Property 6: Propiedades del token de sesión**
     - **Validates: Requirements 1.10**
 
-- [ ] 8. Checkpoint — Verificar autenticación y perfil end-to-end
+- [x] 8. Checkpoint — Verificar autenticación y perfil end-to-end
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Control de SSRF para consumo externo (Req 10)
-  - [ ] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
+- [x] 9. Control de SSRF para consumo externo (Req 10)
+  - [x] 9.1 Implementar cliente HTTP seguro con allowlist de dominios
     - Allowlist de dominios, HTTPS obligatorio, bloqueo de IPs privadas/link-local, timeout ≤ 5 s, máx. 2 redirecciones; llamadas autenticadas con token firmado; registro de intentos bloqueados con Correlation-ID
     - _Requirements: 10.4, 10.5_
     - _Properties: 34_
-  - [ ]* 9.2 Escribir test de propiedad para control de SSRF
+    - Nota: allowlist, HTTPS, bloqueo de IPs internas, timeout, límite de redirecciones (verificadas antes de enviar cada salto) y propagación del Correlation-ID implementados en `app/common/http_client.py`. `solicitar` exige un token firmado (`token=`, validado con allowlist de caracteres) y lo envía como `Authorization: Bearer`; httpx no lo reenvía en redirecciones a otro origen y nunca se registra (`tests/common/test_token_saliente.py`). El origen del token lo provee el llamador: depende del contrato del IdP institucional, pendiente igual que la 7.5.
+  - [x]* 9.2 Escribir test de propiedad para control de SSRF
     - **Property 34: Control de SSRF en consumo externo**
     - **Validates: Requirements 10.4, 10.5**
 
 - [ ] 10. Observabilidad, resiliencia y escalabilidad (Req 11, Req 12)
-  - [ ] 10.1 Implementar circuit breaker, timeout y fallback para dependencias externas
+  - [x] 10.1 Implementar circuit breaker, timeout y fallback para dependencias externas
     - Envolver invocaciones a LLM, STT/TTS, pagos y core de pólizas con circuit breaker + timeout bajo + fallback documentado; registrar activación con Correlation-ID sin PII
     - _Requirements: 11.5, 11.6_
   - [ ] 10.2 Exponer señales doradas con SLO y alertas
@@ -164,12 +166,13 @@ Convenciones:
     - Rate limiting con respuesta de reintento y registro sin PII; sesión en almacén compartido para escalado horizontal sin pérdida; acuse observable (202) para tareas largas
     - _Requirements: 12.2, 12.3, 12.4, 12.5_
     - _Properties: 33_
-  - [ ]* 10.4 Escribir test de propiedad para rate limiting
+  - [x]* 10.4 Escribir test de propiedad para rate limiting
     - **Property 33: Rate limiting en componentes core**
     - **Validates: Requirements 9.7, 12.2, 12.5**
-  - [ ]* 10.5 Escribir pruebas de integración de circuit breaker y escalado sin pérdida de sesión
+  - [~]* 10.5 Escribir pruebas de integración de circuit breaker y escalado sin pérdida de sesión
     - Mocks de dependencias que fallan o exceden timeout; verificar fallback; almacén compartido entre instancias
     - _Requirements: 11.5, 11.6, 12.3_
+    - Nota: circuit breaker cubierto en `tests/common/test_resilience.py` (12 pruebas: fallos, timeout, fallback, abierto, semiabierto con una sola llamada de prueba, registro con Correlation-ID y sin PII); las pruebas encontraron y fijaron que en semiabierto pasaban todas las llamadas concurrentes. **Falta:** escalado sin pérdida de sesión con almacén compartido, que depende de la 10.3.
 
 - [ ] 11. Conversational Agent Service — Pipeline de IA responsable y voz-first (Req 3, Req 14, Req 16)
   - [x] 11.1 Implementar validación de entrada de texto y de nota de voz
@@ -339,7 +342,7 @@ Convenciones:
     - **Property 42: Autorización por propiedad en consulta de reconocimientos**
     - **Validates: Requirements 19.7, 19.8**
 
-- [ ] 18. Metrics Service + Tablero ODS (Req 8, Req 15)
+- [x] 18. Metrics Service + Tablero ODS (Req 8, Req 15)
   - [x] 18.1 Implementar registro de eventos con asignación de zona idempotente
     - `POST /api/v1/metricas/eventos` con `client_event_id`; tipo, zona (o "sin_zona" no clasificado) y timestamp ISO-8601; reintentos ≤ 3 + cola de pendientes ante fallo
     - _Requirements: 8.1, 8.2, 8.4_
@@ -366,7 +369,7 @@ Convenciones:
     - **Validates: Requirements 8.5, 15.3**
     - Nota: cubierta en `tests/metrics/test_reportes.py` (el DTO `ZoneAggregate` solo expone campos agregados: zona, tipo, conteo y Usuarios distintos; nunca `profile_id`).
 
-- [ ] 19. Survey Service — Encuesta de satisfacción (Req 20)
+- [x] 19. Survey Service — Encuesta de satisfacción (Req 20)
   - [x] 19.1 Implementar presentación de la encuesta con idempotencia
     - `GET /api/v1/encuestas/{rutaId}`; presenta la encuesta breve y opcional (escala 1–5) solo si no ha sido respondida ni omitida para esa ruta y Usuario; habilitada al completar la Ruta_de_Aprendizaje o hito (enganche con Learning Service); respuesta por texto o voz coherente con voz-first; omitible sin bloquear
     - _Requirements: 20.1, 20.2, 20.6_
@@ -431,16 +434,18 @@ Convenciones:
     - Consumo de endpoints de learning, assessment, certification y conversion; indicador de procesamiento de IA; mínimos pasos de interacción
     - _Requirements: 3.6, 3.7, 13.1_
     - Nota: implementadas las vistas de aprendizaje y evaluación. Aprendizaje en `frontend/src/app/aprendizaje/` (`LearningService` + `LearningPageComponent`, ruta lazy `aprendizaje`, acceso desde inicio): lista las microcápsulas de `GET /api/v1/aprendizaje/microcapsulas` con el Design System, aviso de contenido general (Req 4.5), estados de carga/error accesibles y sin PII. Evaluación en `frontend/src/app/evaluacion/` (`AssessmentService` + `AssessmentPageComponent`, ruta lazy `evaluacion/:rutaId`): carga el cuestionario de `GET /api/v1/evaluaciones/{ruta_id}`, envía respuestas a `POST .../respuestas` y muestra el resultado (puntaje, aprobado, intentos restantes, cooldown). Todo es solo presentación (la lógica vive en el backend). `ng build` dentro de presupuesto y `jest` en verde. **Pendiente:** flujo de conversión en la UI, indicador de procesamiento de IA del chat, y la finalización de microcápsula con cola offline.
-  - [ ] 23.4 Aplicar conformidad de accesibilidad WCAG 2.1 AA
+  - [~] 23.4 Aplicar conformidad de accesibilidad WCAG 2.1 AA
     - Contraste y tamaños de fuente AA; objetivos táctiles ≥ 44×44 px; operable a 320 px y 3G; textos en español coloquial
     - _Requirements: 13.2, 13.3, 13.5, 13.6_
+    - Nota: se subió la base tipográfica a 18 px (en porcentaje, respeta el tamaño del dispositivo), títulos a 28 px, campos y botones con las variantes `--large` del Design System, tarjetas de 560 px, opciones de evaluación de 56 px y foco visible de 3 px; se agregó un menú de la cuenta persistente (quién soy, perfil, cambiar clave, cerrar sesión) con `aria-expanded`/`aria-controls`, cierre con Escape y opciones de 56 px, y se corrigió el `<main>` anidado de la pantalla de entrada. **Pendiente de verificar:** operación a 320 px y en 3G, medición de contraste con axe-core/Lighthouse (Tarea 23.5; el texto blanco sobre el verde `#009056` del encabezado da ~4.1:1, válido solo por ser texto grande en negrita), y la alternativa de lectura/entrada por voz de cada contenido (Req 13.4, Tarea 23.2).
   - [ ]* 23.5 Escribir pruebas de accesibilidad y performance budget
     - axe-core/Lighthouse para contraste/roles AA y objetivos táctiles; budgets de bundle (≤ 500 KB / ≤ 50 KB) y TTI ≤ 3 s con throttling 3G
     - _Requirements: 2.2, 2.3, 2.4, 13.2, 13.3_
 
 - [ ] 24. Integración y cableado final
-  - [ ] 24.1 Cablear API Gateway, headers de seguridad y OpenAPI
+  - [~] 24.1 Cablear API Gateway, headers de seguridad y OpenAPI
     - Enrutar `/api/v1/*` por el gateway con TLS, rate limiting y Correlation-ID; headers HSTS, CSP, nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy; exponer OpenAPI como contrato
+    - Nota: headers de seguridad implementados en la API (`app/common/security_headers.py`): toda respuesta, incluidas las de error y el 500, lleva HSTS (sin `preload`), CSP `default-src 'none'`, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` y `Permissions-Policy`; solo `/docs` y `/redoc` usan una CSP acotada a lo que cargan. OpenAPI se expone en `/openapi.json`. **Falta:** el API Gateway con TLS y rate limiting (infraestructura, repositorio `-infra`) y los headers del frontend, que se fijan donde se sirve la PWA (CloudFront), con CSP por nonce y `microphone=(self)` para la voz
     - _Requirements: 11.1, 12.2_
   - [ ] 24.2 Integrar frontend y backend end-to-end
     - Conectar PWA con todos los servicios de dominio vía gateway; verificar sesión por cookie httpOnly; graceful shutdown

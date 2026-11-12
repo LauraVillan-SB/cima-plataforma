@@ -1,28 +1,36 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService } from './auth/auth.service';
 import { GamificationService } from './gamificacion/gamification.service';
 import { ConnectionStatusComponent } from './shell/connection-status.component';
+import { UserMenuComponent } from './shell/user-menu.component';
 
 /**
  * Componente raiz (shell) de la PWA de CIMA. Encabezado verde oscuro con el
- * logo de Seguros Bolivar, chips de racha, puntos y nivel (datos reales del
- * backend), navegacion principal y pie institucional. En la pantalla de
- * entrada solo se muestra el logo. Usa OnPush para minimizar el trabajo de
- * deteccion de cambios (Req 2). Muestra el indicador de conexion (Req 2.9, 18.5).
+ * logo de Seguros Bolivar; con sesion muestra los chips de racha, puntos y
+ * nivel (datos reales del backend), el menu de la cuenta (perfil, cambiar clave
+ * y salir), la navegacion principal y el pie institucional. Al abrir la app se
+ * intenta restaurar la sesion vigente sin pedir la Clave (Req 2.6); la sesion
+ * vive en la cookie HttpOnly del backend. Muestra el indicador de conexion
+ * (Req 2.9, 18.5). Usa OnPush para minimizar el trabajo de deteccion de
+ * cambios (Req 2).
  */
 @Component({
   selector: 'cima-root',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ConnectionStatusComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    ConnectionStatusComponent,
+    UserMenuComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a class="saltar" href="#contenido">Saltar al contenido</a>
     <header class="barra">
       <div class="barra__fila">
-        <a routerLink="/aprendizaje" class="barra__marca" aria-label="CIMA, ir al inicio">
+        <a routerLink="/inicio" class="barra__marca" aria-label="CIMA, ir al inicio">
           <img
             src="logos/sb-logo-horizontal-white.svg"
             alt="Seguros Bolívar"
@@ -31,9 +39,9 @@ import { ConnectionStatusComponent } from './shell/connection-status.component';
           />
           <span class="barra__producto">CIMA</span>
         </a>
-        @if (conSesion()) {
-          <ul class="chips" aria-label="Tu avance">
-            @if (resumen(); as r) {
+        @if (auth.autenticado()) {
+          @if (resumen(); as r) {
+            <ul class="chips" aria-label="Tu avance">
               <li class="chip" title="Días seguidos aprendiendo">
                 <span aria-hidden="true">🔥</span> {{ r.streak_days }}
                 <span class="solo-lector">días seguidos</span>
@@ -43,17 +51,17 @@ import { ConnectionStatusComponent } from './shell/connection-status.component';
                 <span class="solo-lector">puntos</span>
               </li>
               <li class="chip chip--nivel" title="Tu nivel">{{ r.level.name }}</li>
-            }
-          </ul>
-          <button type="button" class="salir" [disabled]="saliendo()" (click)="salir()">
-            Salir
-          </button>
+            </ul>
+          }
+          <cima-user-menu />
         }
       </div>
-      @if (conSesion()) {
+      @if (auth.autenticado()) {
         <nav class="nav" aria-label="Principal">
+          <a routerLink="/inicio" routerLinkActive="activo">Inicio</a>
           <a routerLink="/aprendizaje" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }">Microcápsulas</a>
           <a routerLink="/mi-ruta" routerLinkActive="activo">Mi ruta</a>
+          <a routerLink="/asistente" routerLinkActive="activo">Asistente</a>
           <a routerLink="/reconocimientos" routerLinkActive="activo">Reconocimientos</a>
           <a routerLink="/ranking" routerLinkActive="activo">Ranking</a>
         </nav>
@@ -85,12 +93,14 @@ import { ConnectionStatusComponent } from './shell/connection-status.component';
       .saltar:focus {
         left: 0.5rem;
         top: 0.5rem;
-        z-index: 10;
+        z-index: 30;
         background: var(--cima-dorado);
         color: var(--cima-texto);
         padding: 0.5rem 1rem;
       }
+      /* position: relative ancla el panel del menu de la cuenta. */
       .barra {
+        position: relative;
         background: var(--cima-verde-oscuro);
         color: #fff;
       }
@@ -98,14 +108,14 @@ import { ConnectionStatusComponent } from './shell/connection-status.component';
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
+        gap: 0.75rem 1rem;
         padding: 0.75rem 1rem;
       }
       .barra__marca {
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        margin-inline-end: auto;
         color: #fff;
         text-decoration: none;
       }
@@ -114,6 +124,7 @@ import { ConnectionStatusComponent } from './shell/connection-status.component';
         width: auto;
       }
       .barra__producto {
+        font-size: 1.25rem;
         font-weight: 700;
         letter-spacing: 0.08em;
         color: var(--cima-dorado);
@@ -147,16 +158,6 @@ import { ConnectionStatusComponent } from './shell/connection-status.component';
         height: 1px;
         overflow: hidden;
         clip: rect(0 0 0 0);
-      }
-      .salir {
-        border: 2px solid #fff;
-        background: transparent;
-        color: #fff;
-        border-radius: 999px;
-        padding: 0 1rem;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
       }
       .nav {
         display: flex;
@@ -197,42 +198,30 @@ import { ConnectionStatusComponent } from './shell/connection-status.component';
   ],
 })
 export class AppComponent {
-  private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
   private readonly gamificacion = inject(GamificationService);
 
-  readonly resumen = this.gamificacion.resumen;
-  readonly conSesion = signal<boolean>(false);
-  readonly saliendo = signal<boolean>(false);
+  protected readonly resumen = this.gamificacion.resumen;
 
   constructor() {
-    this.router.events
-      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe((e) => void this.alNavegar(e.urlAfterRedirects));
-  }
-
-  /** Muestra el menú fuera de la entrada y carga los chips si faltan. */
-  private async alNavegar(url: string): Promise<void> {
-    const enEntrada = url.startsWith('/entrar');
-    this.conSesion.set(!enEntrada);
-    if (!enEntrada && this.resumen() === null) {
-      try {
-        await this.gamificacion.cargarResumen();
-      } catch {
-        // Sin resumen no se muestran chips; las vistas manejan su propio error.
+    // Si la cookie de sesion sigue vigente, la app lo sabe sin pedir la Clave.
+    void this.auth.restaurarSesion();
+    // Con sesion se cargan los chips; al salir se limpian para no mostrar datos ajenos.
+    effect(() => {
+      if (this.auth.autenticado()) {
+        void this.cargarChips();
+      } else {
+        this.gamificacion.limpiar();
       }
-    }
+    });
   }
 
-  /** Cierra la sesión, limpia el estado de gamificación y vuelve a la entrada. */
-  async salir(): Promise<void> {
-    this.saliendo.set(true);
+  /** Carga el resumen del encabezado; sin resumen no se muestran chips. */
+  private async cargarChips(): Promise<void> {
     try {
-      await this.auth.salir();
-    } finally {
-      this.gamificacion.limpiar();
-      this.saliendo.set(false);
-      await this.router.navigate(['/entrar']);
+      await this.gamificacion.cargarResumen();
+    } catch {
+      // Las vistas manejan su propio error; el encabezado simplemente no muestra chips.
     }
   }
 }

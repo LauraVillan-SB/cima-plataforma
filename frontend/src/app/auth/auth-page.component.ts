@@ -8,16 +8,19 @@ import { esClaveValida, normalizarTelefono, CLAVE_LONGITUD } from './clave';
 
 /** Mensaje generico: el backend no revela si el telefono existe (Req 1.8). */
 const MENSAJE_GENERICO = 'No pudimos entrar. Revisa tu celular y tu clave e intenta de nuevo.';
+/** Mensaje generico del registro: tampoco revela si el celular ya tiene cuenta. */
+const MENSAJE_REGISTRO = 'No pudimos crear tu cuenta. Revisa tus datos e intenta de nuevo.';
 const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nuevo en unos minutos.';
 
 /**
  * Pantalla de autenticación sin fricción (Tarea 23.1).
  *
  * Solo teléfono + Clave de 4 dígitos, mensajes en español coloquial, sin correo
- * ni descargas (Req 1.1, 1.8). En el registro muestra un texto de ayuda que
- * sugiere usar los últimos 4 dígitos de la cédula como pista para recordar la
- * Clave, sin validarla contra la cédula ni almacenarla (solo texto de UI,
- * Req 1.3). Controles accesibles ≥ 44×44 px (Req 13.3). Solo presentación: la
+ * ni descargas (Req 1.1, 1.8). En el registro pide escribir la Clave dos veces
+ * (doble confirmación, Req 1.3) y muestra un texto de ayuda que sugiere usar
+ * los últimos 4 dígitos de la cédula como pista para recordarla, sin validarla
+ * contra la cédula ni almacenarla (solo texto de UI). Campos y botones grandes
+ * (variantes `--large` del Design System, Req 13.2, 13.3). Solo presentación: la
  * autorización es del backend.
  *
  * Estilos: clases del Design System de Seguros Bolívar (`sb-ui-*`, bundle
@@ -25,11 +28,10 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
  */
 @Component({
   selector: 'cima-auth-page',
-  standalone: true,
   imports: [FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="pantalla">
+    <section class="pantalla">
       <div class="sb-ui-card sb-ui-card--outlined tarjeta">
         <div class="sb-ui-card__body">
           <header class="cabecera">
@@ -56,7 +58,7 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
                 type="tel"
                 inputmode="numeric"
                 autocomplete="tel"
-                class="sb-ui-input"
+                class="sb-ui-input sb-ui-input--large"
                 [ngModel]="telefono()"
                 (ngModelChange)="telefono.set($event)"
                 placeholder="Ej: 3001234567"
@@ -74,7 +76,7 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
                 inputmode="numeric"
                 autocomplete="one-time-code"
                 maxlength="4"
-                class="sb-ui-input"
+                class="sb-ui-input sb-ui-input--large"
                 [ngModel]="clave()"
                 (ngModelChange)="clave.set($event)"
                 aria-describedby="ayuda-clave"
@@ -88,9 +90,34 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
               }
             </div>
 
+            @if (modoRegistro()) {
+              <div class="sb-ui-input-container campo">
+                <label class="sb-ui-input-label" for="confirmacion">Escribe otra vez tu clave</label>
+                <input
+                  id="confirmacion"
+                  name="confirmacion"
+                  type="password"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  maxlength="4"
+                  class="sb-ui-input sb-ui-input--large"
+                  [ngModel]="confirmacion()"
+                  (ngModelChange)="confirmacion.set($event)"
+                  aria-describedby="ayuda-confirmacion"
+                />
+                <span id="ayuda-confirmacion" class="sb-ui-input-helper" aria-live="polite">
+                  @if (noCoinciden()) {
+                    Las dos claves no son iguales. Revísalas.
+                  } @else {
+                    Tiene que ser igual a la clave de arriba.
+                  }
+                </span>
+              </div>
+            }
+
             <button
               type="submit"
-              class="sb-ui-button sb-ui-button--primary sb-ui-button--fill enviar"
+              class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large enviar"
               [disabled]="!formularioValido() || cargando()"
             >
               {{ cargando() ? 'Un momento...' : modoRegistro() ? 'Crear cuenta' : 'Entrar' }}
@@ -106,7 +133,7 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
           <div class="cambiar-modo">
             <button
               type="button"
-              class="sb-ui-button sb-ui-button--primary sb-ui-button--text"
+              class="sb-ui-button sb-ui-button--primary sb-ui-button--text sb-ui-button--large"
               (click)="alternarModo()"
             >
               {{ modoRegistro() ? 'Ya tengo cuenta, quiero entrar' : 'Soy nuevo, quiero crear mi cuenta' }}
@@ -114,18 +141,18 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
           </div>
         </div>
       </div>
-    </main>
+    </section>
   `,
   styles: [
     `
       .pantalla {
         display: flex;
         justify-content: center;
-        padding: 2.5rem 1rem;
+        padding: 2rem 1rem;
       }
       .tarjeta {
         width: 100%;
-        max-width: 420px;
+        max-width: 560px;
         padding: 2rem 1.5rem;
         background: #fff;
         overflow: hidden;
@@ -146,15 +173,14 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
       }
       .subtitulo {
         margin: 0.5rem 0 0;
-        font-size: 0.85rem;
+        font-size: 1rem;
       }
       .titulo {
         margin: 0 0 1.5rem;
         text-align: center;
-        font-size: 1.25rem;
       }
       .campo {
-        margin-bottom: 1rem;
+        margin-bottom: 1.25rem;
       }
       .aviso {
         margin-top: 1rem;
@@ -174,15 +200,26 @@ export class AuthPageComponent {
   readonly modoRegistro = signal<boolean>(false);
   readonly telefono = signal<string>('');
   readonly clave = signal<string>('');
+  readonly confirmacion = signal<string>('');
   readonly cargando = signal<boolean>(false);
   readonly mensaje = signal<string>('');
 
-  readonly formularioValido = computed(
-    () => normalizarTelefono(this.telefono()).replace('+', '').length >= 7 && esClaveValida(this.clave()),
+  /** Avisa que las dos claves difieren, solo cuando ya escribió la confirmación completa. */
+  readonly noCoinciden = computed(
+    () => esClaveValida(this.confirmacion()) && this.confirmacion() !== this.clave(),
   );
+
+  readonly formularioValido = computed(() => {
+    const base =
+      normalizarTelefono(this.telefono()).replace('+', '').length >= 7 &&
+      esClaveValida(this.clave());
+    // En el registro la Clave se escribe dos veces y deben ser iguales (Req 1.3).
+    return this.modoRegistro() ? base && this.confirmacion() === this.clave() : base;
+  });
 
   alternarModo(): void {
     this.modoRegistro.update((v) => !v);
+    this.confirmacion.set('');
     this.mensaje.set('');
   }
 
@@ -195,7 +232,7 @@ export class AuthPageComponent {
     const tel = normalizarTelefono(this.telefono());
     try {
       if (this.modoRegistro()) {
-        await this.auth.registrar(tel, this.clave());
+        await this.auth.registrar(tel, this.clave(), this.confirmacion());
       } else {
         await this.auth.ingresar(tel, this.clave());
       }
@@ -210,13 +247,13 @@ export class AuthPageComponent {
   /**
    * Traduce el error del backend a un mensaje para el Usuario. Solo el bloqueo
    * (HTTP 429) usa el texto del servidor, que indica los minutos de espera; el
-   * resto conserva el mensaje generico para no revelar si el telefono existe.
+   * resto conserva un mensaje generico para no revelar si el telefono existe.
    */
   private mensajeDeError(error: unknown): string {
     if (error instanceof HttpErrorResponse && error.status === 429) {
       const detalle: unknown = error.error?.detail;
       return typeof detalle === 'string' && detalle.trim() ? detalle : MENSAJE_BLOQUEO;
     }
-    return MENSAJE_GENERICO;
+    return this.modoRegistro() ? MENSAJE_REGISTRO : MENSAJE_GENERICO;
   }
 }

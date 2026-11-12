@@ -24,6 +24,18 @@ export interface Insignia {
   readonly earned: boolean;
 }
 
+/** Insignia ganada por el Usuario, tal como la lista `reconocimientos`. */
+export interface InsigniaGanada {
+  readonly badge_code: string;
+  readonly badge_name: string;
+}
+
+/** Insignias ganadas y puntos del Usuario autenticado (Req 19.7); sin PII. */
+export interface Reconocimientos {
+  readonly badges: readonly InsigniaGanada[];
+  readonly total_points: number;
+}
+
 /** Resumen de gamificación del titular (`GET /api/v1/gamificacion/resumen`). */
 export interface ResumenGamificacion {
   readonly total_points: number;
@@ -52,9 +64,11 @@ export interface Ranking {
 }
 
 /**
- * Cliente de gamificación. Solo lee: puntos, nivel, racha, insignias y ranking
- * los calcula el backend; el cliente nunca otorga reconocimientos (Req 19.3).
- * Expone el resumen en una señal para que el encabezado y las vistas lo compartan.
+ * Cliente del Gamification Service. Solo lectura: puntos, nivel, racha,
+ * insignias y ranking los calcula el backend al completar contenido; el
+ * cliente nunca otorga reconocimientos (Req 19.3). No se envía `perfil_id`: el
+ * titular sale de la cookie HttpOnly (anti-BOLA). Expone el resumen en una
+ * señal para que el encabezado y las vistas lo compartan.
  */
 @Injectable({ providedIn: 'root' })
 export class GamificationService {
@@ -62,6 +76,15 @@ export class GamificationService {
 
   /** Último resumen cargado; null mientras no haya sesión o no se haya cargado. */
   readonly resumen = signal<ResumenGamificacion | null>(null);
+
+  /** `GET /api/v1/gamificacion/reconocimientos` */
+  async obtenerReconocimientos(): Promise<Reconocimientos> {
+    return firstValueFrom(
+      this.http.get<Reconocimientos>('/api/v1/gamificacion/reconocimientos', {
+        withCredentials: true,
+      }),
+    );
+  }
 
   /** Carga el resumen del Usuario autenticado y lo publica en la señal. */
   async cargarResumen(): Promise<ResumenGamificacion> {

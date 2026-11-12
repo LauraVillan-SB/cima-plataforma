@@ -10,7 +10,9 @@ Requisitos: 1.2-1.7, 1.10, 1.11, 1.13.
 
 from __future__ import annotations
 
+import logging
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, Cookie, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,25 +27,41 @@ from app.auth.dto import (
 )
 from app.auth.tokens import (
     TOKEN_TYPE_REFRESH,
+    TokenExpiradoError,
     TokenInvalidoError,
-    crear_access_token,
-    crear_refresh_token,
-    decodificar_token,
+    decodificar_sesion,
+    emitir_sesion,
+    sesion_vencida,
 )
 from app.common.database import get_session
 from app.common.errors import CredencialesInvalidasError
+from app.common.logging import log_event
 from app.common.security import get_current_user_id
+
+logger = logging.getLogger("cima.auth")
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
-def _emitir_sesion(response: Response, sesion: SesionResponse) -> SesionResponse:
-    """Emite access + refresh tokens en cookies seguras para la sesión dada."""
+def _fijar_cookies(
+    response: Response, profile_id: uuid.UUID, auth_time: datetime | None = None
+) -> None:
+    """Emite el par access + refresh en cookies seguras (Req 1.10, 1.14).
+
+    Sin `auth_time` es un ingreso nuevo; en un refresco se conserva el original.
+    """
+    sesion = emitir_sesion(profile_id, auth_time)
     set_session_cookies(
         response,
-        access_token=crear_access_token(sesion.id),
-        refresh_token=crear_refresh_token(sesion.id),
+        access_token=sesion.access_token,
+        refresh_token=sesion.refresh_token,
+        refresh_max_age=sesion.refresh_max_age,
     )
+
+
+def _emitir_sesion(response: Response, sesion: SesionResponse) -> SesionResponse:
+    """Abre una sesión nueva en cookies seguras para el titular dado."""
+    _fijar_cookies(response, sesion.id)
     return sesion
 
 
@@ -74,25 +92,32 @@ async def refresco(
     response: Response,
     cima_refresh: str | None = Cookie(default=None),
 ) -> SesionResponse:
-    """Rota el refresh token y emite un nuevo access token (Req 1.11).
+    """Rota el refresh token y emite un nuevo access token (Req 1.11, 1.14).
 
-    Lee el refresh token de la cookie `HttpOnly`; si falta o es inválido/expirado
-    responde con el error genérico de credenciales inválidas, sin detalle.
+    Lee el refresh token de la cookie `HttpOnly`. El refresh vence a los 30 min
+    de la última actividad: si venció, la sesión expiró por inactividad y hay que
+    volver a autenticarse (Req 1.14). También se rechaza si la sesión alcanzó su
+    tope absoluto desde el ingreso. En todos los casos la respuesta es el error
+    genérico de credenciales inválidas, sin detalle.
     """
     if not cima_refresh:
         raise CredencialesInvalidasError(internal_detail="missing refresh cookie")
     try:
-        profile_id = decodificar_token(cima_refresh, TOKEN_TYPE_REFRESH)
+        datos = decodificar_sesion(cima_refresh, TOKEN_TYPE_REFRESH)
+    except TokenExpiradoError as exc:
+        # Sin PII: el token vencido no se registra ni se decodifica sin verificar.
+        log_event(logger, "auth_sesion_expirada_por_inactividad")
+        raise CredencialesInvalidasError(internal_detail="refresh token expired") from exc
     except TokenInvalidoError as exc:
         raise CredencialesInvalidasError(internal_detail="invalid refresh token") from exc
 
-    # Rotación: se emiten nuevos access y refresh (nuevo jti) en cada refresco.
-    set_session_cookies(
-        response,
-        access_token=crear_access_token(profile_id),
-        refresh_token=crear_refresh_token(profile_id),
-    )
-    return SesionResponse(id=profile_id, telefono="")
+    if sesion_vencida(datos.auth_time):
+        log_event(logger, "auth_sesion_tope_absoluto", profile_id=str(datos.profile_id))
+        raise CredencialesInvalidasError(internal_detail="session absolute lifetime reached")
+
+    # Rotación: nuevos access y refresh (nuevo jti), conservando la hora del ingreso.
+    _fijar_cookies(response, datos.profile_id, datos.auth_time)
+    return SesionResponse(id=datos.profile_id, telefono="")
 
 
 @router.get("/sesion", response_model=SesionResponse)

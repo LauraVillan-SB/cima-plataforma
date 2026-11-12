@@ -12,7 +12,12 @@ export const routes: Routes = [
       import('./auth/auth-page.component').then((m) => m.AuthPageComponent),
     title: 'Entrar a CIMA',
   },
-  { path: 'inicio', redirectTo: 'aprendizaje', pathMatch: 'full' },
+  {
+    path: 'inicio',
+    loadComponent: () =>
+      import('./home/home-page.component').then((m) => m.HomePageComponent),
+    title: 'CIMA',
+  },
   {
     path: 'aprendizaje',
     loadComponent: () =>
@@ -34,6 +39,50 @@ export const routes: Routes = [
     title: 'Mi ruta - CIMA',
   },
   {
+    path: 'perfil',
+    loadComponent: () =>
+      import('./profile/profile-page.component').then((m) => m.ProfilePageComponent),
+    title: 'Mi perfil - CIMA',
+  },
+  {
+    path: 'clave',
+    loadComponent: () =>
+      import('./auth/change-password-page.component').then(
+        (m) => m.ChangePasswordPageComponent,
+      ),
+    title: 'Cambiar mi clave - CIMA',
+  },
+  {
+    path: 'evaluacion/:rutaId',
+    loadComponent: () =>
+      import('./evaluacion/assessment-page.component').then(
+        (m) => m.AssessmentPageComponent,
+      ),
+    title: 'Evaluación - CIMA',
+  },
+  {
+    path: 'asistente',
+    loadComponent: () =>
+      import('./chat/chat-page.component').then((m) => m.ChatPageComponent),
+    title: 'Asistente - CIMA',
+  },
+  {
+    path: 'conversion/:rutaId',
+    loadComponent: () =>
+      import('./conversion/conversion-page.component').then(
+        (m) => m.ConversionPageComponent,
+      ),
+    title: 'Microseguros - CIMA',
+  },
+  {
+    path: 'logros',
+    loadComponent: () =>
+      import('./gamificacion/gamification-page.component').then(
+        (m) => m.GamificationPageComponent,
+      ),
+    title: 'Tus logros - CIMA',
+  },
+  {
     path: 'reconocimientos',
     loadComponent: () =>
       import('./gamificacion/recognitions-page.component').then(
@@ -46,14 +95,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./gamificacion/ranking-page.component').then((m) => m.RankingPageComponent),
     title: 'Ranking - CIMA',
-  },
-  {
-    path: 'evaluacion/:rutaId',
-    loadComponent: () =>
-      import('./evaluacion/assessment-page.component').then(
-        (m) => m.AssessmentPageComponent,
-      ),
-    title: 'Evaluación - CIMA',
   },
   { path: '', redirectTo: 'entrar', pathMatch: 'full' },
   { path: '**', redirectTo: 'entrar' },

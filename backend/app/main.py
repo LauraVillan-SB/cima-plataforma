@@ -10,7 +10,9 @@ from app.common.config import get_settings
 from app.common.correlation import CorrelationIdMiddleware
 from app.common.errors import register_error_handlers
 from app.common.logging import configure_logging
+from app.common.security_headers import SecurityHeadersMiddleware
 from app.assessment.router import router as assessment_router
+from app.auth.activity import ActividadSesionMiddleware
 from app.auth.router import router as auth_router
 from app.chat.router import router as chat_router
 from app.certification.router import router as certification_router
@@ -34,6 +36,10 @@ app = FastAPI(
 
 # Infraestructura transversal.
 app.add_middleware(CorrelationIdMiddleware)
+# Renueva la sesión en cada petición autenticada (inactividad de 30 min, Req 1.14).
+app.add_middleware(ActividadSesionMiddleware)
+# Cabeceras de seguridad (HSTS, CSP, nosniff, ...) en toda respuesta (OWASP A02).
+app.add_middleware(SecurityHeadersMiddleware)
 register_error_handlers(app)
 
 # Routers de dominio.

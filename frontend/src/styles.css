@@ -1,4 +1,4 @@
-/* Estilos globales de CIMA. Mobile-first, accesible (WCAG 2.1 AA). */
+/* Estilos globales de CIMA. Mobile-first, accesible (WCAG 2.1 AA, Req 13). */
 :root {
   /* Paleta oficial del design system de Seguros Bolívar. */
   --cima-verde: #009056;
@@ -12,11 +12,21 @@
   --cima-borde: #d9dedb;
   --cima-exito: #28a745;
   --cima-error: #dc3545;
+  --cima-foco: #1a1a1a;
   --cima-radio: 16px;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/*
+ * Tamaño base 18px. Se expresa en porcentaje para respetar el tamaño de letra
+ * que la persona haya elegido en su dispositivo. Todos los componentes usan
+ * rem, por lo que el texto crece de forma proporcional.
+ */
+html {
+  font-size: 112.5%;
 }
 
 html,
@@ -26,8 +36,17 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--cima-texto);
   background: var(--cima-fondo);
-  font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+}
+
+h1 {
+  font-size: 1.75rem;
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: 1.4rem;
+  line-height: 1.3;
 }
 
 /* Objetivos tactiles minimos 44x44 px (accesibilidad, Req 13.3). */
@@ -38,7 +57,11 @@ a,
   min-width: 44px;
 }
 
-/* Foco visible para navegación con teclado (WCAG 2.4.7). */
+/*
+ * Foco siempre visible para quien navega con teclado o lector de pantalla
+ * (WCAG 2.4.7). Doble anillo (dorado y verde oscuro) para que se vea tanto
+ * sobre el encabezado oscuro como sobre fondos claros.
+ */
 :focus-visible {
   outline: 3px solid var(--cima-dorado);
   outline-offset: 2px;

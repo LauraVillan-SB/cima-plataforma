@@ -14,9 +14,12 @@ export interface Perfil {
   readonly geo_zone: string;
 }
 
-/** Datos para crear o actualizar el Perfil (contrato de entrada del backend). */
-export interface PerfilEntrada {
-  readonly phone: string;
+/**
+ * Datos para actualizar el Perfil propio. No lleva el celular: es la identidad
+ * de ingreso, no se edita por aquí y el cliente solo lo conoce enmascarado
+ * (Req 9.4); el backend rechaza un `phone` en la actualización.
+ */
+export interface PerfilActualizacion {
   readonly activity_type: string;
   readonly geo_zone: string;
 }
@@ -38,19 +41,12 @@ export class ProfileService {
     );
   }
 
-  /** Crea el Perfil del Usuario autenticado (`POST /api/v1/perfiles`). */
-  async crear(datos: PerfilEntrada): Promise<Perfil> {
-    return firstValueFrom(
-      this.http.post<Perfil>('/api/v1/perfiles', datos, { withCredentials: true }),
-    );
-  }
-
   /**
    * Actualiza el Perfil propio (`PUT /api/v1/perfiles/{id}`). El backend
    * verifica que el recurso pertenezca al Usuario autenticado antes de aplicar
    * el cambio; el `id` solo identifica el recurso, no otorga permiso.
    */
-  async actualizar(id: string, datos: PerfilEntrada): Promise<Perfil> {
+  async actualizar(id: string, datos: PerfilActualizacion): Promise<Perfil> {
     return firstValueFrom(
       this.http.put<Perfil>(`/api/v1/perfiles/${id}`, datos, { withCredentials: true }),
     );
