@@ -34,10 +34,21 @@ from app.conversion.catalog import normalizar_texto
 _BLOCKED_INPUT = tuple(re.compile(p, re.IGNORECASE) for p in BLOCKED_INPUT_PATTERNS)
 _SENSITIVE = tuple(re.compile(p, re.IGNORECASE) for p in SENSITIVE_TOPIC_PATTERNS)
 _OFFER_FIGURES = re.compile(OFFER_FIGURES_PATTERN, re.IGNORECASE)
-_MARCADORES_NO_RESPALDABLES = tuple(
-    normalizar_texto(m)
-    for m in OFFER_OUTPUT_MARKERS
-    if m not in CATALOG_BACKED_OFFER_MARKERS
+
+
+def _por_inicio_de_palabra(marcadores: tuple[str, ...]) -> re.Pattern[str]:
+    """Une los marcadores (sin tildes) en un patrón que exige inicio de palabra.
+
+    Por inicio de palabra y no como subcadena: "bono" no debe coincidir dentro de
+    "abono", muy frecuente en respuestas para agricultores.
+    """
+    alternativas = "|".join(re.escape(normalizar_texto(m)) for m in marcadores)
+    return re.compile(rf"\b(?:{alternativas})")
+
+
+_OFERTA = _por_inicio_de_palabra(OFFER_OUTPUT_MARKERS)
+_MARCADORES_NO_RESPALDABLES = _por_inicio_de_palabra(
+    tuple(m for m in OFFER_OUTPUT_MARKERS if m not in CATALOG_BACKED_OFFER_MARKERS)
 )
 
 
@@ -51,7 +62,10 @@ def evaluar_entrada(texto_redactado: str) -> str:
         `GUARDRAIL_PERMITIDO` si la entrada puede ir al modelo, o
         `GUARDRAIL_BLOQUEO_ENTRADA` si contiene un patrón inseguro o fuera de dominio.
     """
-    if any(patron.search(texto_redactado) for patron in _BLOCKED_INPUT):
+    # Sin tildes, en minúsculas y con espacios colapsados: una transcripción con
+    # tildes descompuestas (NFD) o MAYÚSCULAS no debe saltarse el guardrail.
+    texto = normalizar_texto(texto_redactado)
+    if any(patron.search(texto) for patron in _BLOCKED_INPUT):
         return GUARDRAIL_BLOQUEO_ENTRADA
     return GUARDRAIL_PERMITIDO
 
@@ -93,7 +107,8 @@ def requiere_derivacion(texto_redactado: str, confianza: float, umbral: float) -
     """
     if confianza < umbral:
         return GUARDRAIL_DERIVADO
-    if any(patron.search(texto_redactado) for patron in _SENSITIVE):
+    texto = normalizar_texto(texto_redactado)
+    if any(patron.search(texto) for patron in _SENSITIVE):
         return GUARDRAIL_DERIVADO
     return GUARDRAIL_PERMITIDO
 
@@ -137,7 +152,7 @@ def oferta_respaldada_por_catalogo(
     if not menciona_oferta(respuesta):
         return True
     texto = normalizar_texto(respuesta)
-    if any(m in texto for m in _MARCADORES_NO_RESPALDABLES):
+    if _MARCADORES_NO_RESPALDABLES.search(texto):
         return False
     if not nombres_permitidos or _OFFER_FIGURES.search(texto):
         return False
@@ -152,8 +167,7 @@ def menciona_oferta(respuesta: str) -> bool:
         respuesta: texto generado por el modelo.
 
     Returns:
-        True si contiene algún marcador de oferta (comparación sin distinguir
-        mayúsculas).
+        True si alguna palabra empieza por un marcador de oferta (sin distinguir
+        mayúsculas ni tildes).
     """
-    minuscula = respuesta.lower()
-    return any(marcador in minuscula for marcador in OFFER_OUTPUT_MARKERS)
+    return _OFERTA.search(normalizar_texto(respuesta)) is not None

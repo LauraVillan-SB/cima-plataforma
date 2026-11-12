@@ -12,7 +12,7 @@ from __future__ import annotations
 import uuid
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 
 AudioFormat = Literal["m4a", "aac", "ogg", "mp3"]
 
@@ -59,7 +59,11 @@ class TranscriptionResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     text: str
-    confidence: float
+    # Zero Trust sobre la respuesta del proveedor: la confianza debe ser un número
+    # finito en [0, 1]. Con NaN, `confianza < umbral` da False y la transcripción
+    # se habría procesado como confiable (Property 38). Un valor inválido hace
+    # fallar la transcripción y el servicio pide repetir (Req 14.5).
+    confidence: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
 
 
 class TtsResult(BaseModel):
