@@ -89,7 +89,8 @@ BLOCKED_INPUT_PATTERNS: tuple[str, ...] = (
     r"\bgaranti[az]\w*\s+(ganancia|retorno|rentabilidad)",
     r"\binvierte?\s+todo\b",
     r"\bpr[eé]stamo\s+gota\s+a\s+gota\b",
-    r"\bc[oó]mo\s+(fabricar|hacer)\s+(un\s+)?(arma|explosivo|bomba)",
+    # "una?" cubre el artículo femenino ("cómo fabricar una bomba") (Req 3.4).
+    r"\bc[oó]mo\s+(fabricar|hacer)\s+(una?\s+)?(arma|explosivo|bomba)",
 )
 
 # Marcadores de oferta que SÍ pueden respaldarse con el catálogo de Microseguros
@@ -108,6 +109,17 @@ OFFER_OUTPUT_MARKERS: tuple[str, ...] = (
     "descuento",
     "beneficio",
     "promoci",
+    # Incentivos dichos con otras palabras (Property 39): sin estos, una salida
+    # como "te damos un bono de 50.000 pesos" pasaba sin validarse. Se buscan por
+    # INICIO de palabra y sin tildes (ver guardrails), así "abono" no es "bono".
+    "bono",
+    "bonific",
+    "regal",
+    "gratis",
+    "gratuit",
+    "rebaja",
+    "premio",
+    "cupon",
 )
 
 # Temas sensibles que derivan a canal humano / respuesta segura (Req 16.3).

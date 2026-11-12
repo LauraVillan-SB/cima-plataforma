@@ -204,25 +204,30 @@ Convenciones:
     - _Requirements: 3.9, 16.4_
     - _Properties: 40_
     - Nota: `registrar_auditoria` en `app/chat/audit.py` emite un único evento estructurado (`chat_ai_interaction_audit`) por interacción al log central, con entrada redactada, salida, versión del modelo, decisión del guardrail y Correlation-ID (vía `log_event`). No incluye `profile_id` ni PII y acota el contenido a 2000 chars. Se invoca en los tres finales del worker (listo, error y respaldo). Se añadieron 6 pruebas (`tests/chat/test_audit.py`).
-  - [ ]* 11.7 Escribir test de propiedad para validación de longitud de texto
+  - [x]* 11.7 Escribir test de propiedad para validación de longitud de texto
     - **Property 7: Validación de longitud del mensaje de texto**
     - **Validates: Requirements 3.2**
-  - [ ]* 11.8 Escribir test de propiedad para validación de la nota de voz
+    - Nota: `tests/chat/test_propiedades_chat.py` (función de validación y flujo encolar: un texto vacío tras trim o > 2000 chars no invoca el modelo ni persiste).
+  - [x]* 11.8 Escribir test de propiedad para validación de la nota de voz
     - **Property 8: Validación de la nota de voz**
     - **Validates: Requirements 3.4**
+    - Nota: en `tests/chat/test_propiedades_chat.py`, con firmas binarias reales (formatos soportados y no soportados) y duraciones dentro y fuera de [1, 120] s. Las cabeceras truncadas se prueban sin cola, porque "OggS" seguido de bytes ya es un OGG válido por firma.
   - [x]* 11.9 Escribir test de propiedad para no fuga de PII hacia el modelo
     - **Property 9: No fuga de PII hacia el modelo**
     - **Validates: Requirements 3.10, 3.11, 14.6**
     - Nota: `tests/chat/test_property_9_pii.py` (función de redacción y flujo encolar → worker con un modelo que captura su entrada). Encontró y se corrigieron fugas de celulares: con espacios de más, con " - ", "/" o "_" entre grupos, y seguidos de "mil gracias". Limitación conocida: una cédula partida con doble espacio no se redacta (no se distingue de dos cantidades).
-  - [ ]* 11.10 Escribir test de propiedad para ramificación por confianza de STT
+  - [x]* 11.10 Escribir test de propiedad para ramificación por confianza de STT
     - **Property 38: Ramificación por confianza de STT**
     - **Validates: Requirements 14.5**
-  - [ ]* 11.11 Escribir test de propiedad para guardrails y validación de salida
+    - Nota: en `tests/chat/test_propiedades_chat.py`. Encontró que una confianza NaN, mayor que 1 o negativa del proveedor se aceptaba (con NaN el audio se procesaba como confiable). Se corrigió en `TranscriptionResult` (`confidence` en [0, 1], sin NaN ni infinito): un valor inválido cuenta como falla del STT y se pide repetir.
+  - [x]* 11.11 Escribir test de propiedad para guardrails y validación de salida
     - **Property 39: Guardrails de entrada y validación de salida de IA**
     - **Validates: Requirements 16.1, 16.2**
-  - [ ]* 11.12 Escribir test de propiedad para registro auditable sin PII
+    - Nota: en `tests/chat/test_propiedades_chat.py`. Encontró y se corrigió: (1) el guardrail de entrada no reconocía el texto con tildes descompuestas (NFD) ni "cómo fabricar una bomba" (solo "un"); ahora compara sobre el texto normalizado; (2) "bono", "regalo", "gratis", "rebaja", "premio" y "cupón" en la salida no se validaban como incentivo; ahora se detectan por inicio de palabra, para que "abono" no cuente como "bono". Siguen siendo patrones, no un clasificador: frases inocuas como "es gratis inscribirse" caen a la respuesta segura.
+  - [x]* 11.12 Escribir test de propiedad para registro auditable sin PII
     - **Property 40: Registro auditable de IA sin PII**
     - **Validates: Requirements 3.9, 16.4**
+    - Nota: en `tests/chat/test_propiedades_chat.py`. Encontró que la respuesta del modelo se registraba sin redactar (un celular o correo en la salida llegaba al log). `audit._sin_pii` ahora redacta entrada y salida; si la redacción falla, registra `[CONTENIDO_OMITIDO]`.
 
 - [ ] 12. Checkpoint — Verificar pipeline de IA voz-first con dependencias mockeadas
   - Ensure all tests pass, ask the user if questions arise.
