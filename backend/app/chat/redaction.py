@@ -8,9 +8,11 @@ enviarse al modelo (Req 3.11, Property 9).
 
 Detecta: correos, direcciones colombianas (Calle/Carrera/... # N-N),
 coordenadas, nombres tras "me llamo" / "mi nombre es", y secuencias de 6 o más
-dígitos (celulares, cédulas, cuentas). Los montos con "$" o seguidos de
-"pesos"/"mil"/"millones" se conservan porque son necesarios para la educación
-financiera. Es un detector por patrones: no reconoce nombres sin frase
+dígitos (celulares, cédulas, cuentas). Los celulares colombianos se detectan
+también con espacios de más o con " - " entre grupos, y aunque los siga "mil" o
+"pesos". Los montos con "$" o seguidos de "pesos"/"cop"/"mil"/"millones" se
+conservan porque son necesarios para la educación financiera; "mil gracias" no
+cuenta como moneda. Es un detector por patrones: no reconoce nombres sin frase
 introductoria ni nombres de municipios o veredas.
 
 La entrada llega acotada a 2000 caracteres (Tarea 11.1), lo que limita el costo
@@ -47,8 +49,25 @@ _DIRECCION = re.compile(
     re.IGNORECASE,
 )
 _COORDENADAS = re.compile(r"-?\d{1,3}\.\d{3,}\s*,\s*-?\d{1,3}\.\d{3,}")
+# Celular colombiano con estructura 3-3-4 (prefijo +57 opcional), con los grupos
+# separados por hasta 3 espacios o por un punto o guion rodeado de espacios:
+# "300 123 4567", "300  123  4567", "300 - 123 - 4567". El detector general de
+# abajo solo admite un separador de un carácter, así que esos formatos se partían
+# en grupos de menos de 6 dígitos y llegaban al modelo sin redactar. Se usa un
+# patrón dedicado (y no se amplía el general) para no unir rangos como
+# "300 - 400 plantas". Tampoco se trata como monto aunque lo siga "mil" o
+# "pesos"; solo se respeta si va precedido de "$". Los cuantificadores tienen
+# tope fijo, sin riesgo de retroceso catastrófico (ReDoS).
+# También "/" y "_": una fecha ("12/05/2024") no tiene la forma 3-3-4 que
+# empieza por 3, así que este patrón no la toca.
+_SEP_CELULAR = r"(?:\s{0,3}[.\-/_]\s{0,3}|\s{0,3})"
+_CELULAR = re.compile(
+    rf"(?<![\d$])(?:\+?57{_SEP_CELULAR})?3\d{{2}}{_SEP_CELULAR}\d{{3}}{_SEP_CELULAR}\d{{4}}(?!\d)"
+)
 _SECUENCIA_DIGITOS = re.compile(r"\+?\d(?:[\s.\-]?\d)+")
-_MONEDA_DESPUES = re.compile(r"\s*(?:pesos|cop|mil|millones)\b", re.IGNORECASE)
+# "mil gracias" es una expresión de cortesía, no una cantidad: no convierte en
+# monto al número que la precede ("mi cédula es 1023456789 mil gracias").
+_MONEDA_DESPUES = re.compile(r"\s*(?:pesos|cop|millones|mil\b(?!\s+gracias))\b", re.IGNORECASE)
 
 # Palabras que cortan la captura del nombre ("me llamo Ana y tengo..." -> "Ana").
 _CORTE_NOMBRE = r"(?:y|e|es|pero|tengo|soy|vivo|con|que|en|del|para|cultivo|siembro|trabajo)\b"
@@ -91,7 +110,9 @@ def contiene_pii(texto: str) -> bool:
     Returns:
         True si algún detector encuentra PII; False en caso contrario.
     """
-    if any(patron.search(texto) for patron in (_EMAIL, _DIRECCION, _COORDENADAS, _NOMBRE)):
+    if any(
+        patron.search(texto) for patron in (_EMAIL, _DIRECCION, _COORDENADAS, _NOMBRE, _CELULAR)
+    ):
         return True
     return any(_es_identificador(m, texto) for m in _SECUENCIA_DIGITOS.finditer(texto))
 
@@ -110,6 +131,7 @@ def _aplicar_detectores(texto: str, conteo: Counter[str]) -> str:
     resultado = _sustituir(_DIRECCION, PLACEHOLDER_DIRECCION, "direccion", resultado, conteo)
     resultado = _sustituir(_COORDENADAS, PLACEHOLDER_UBICACION, "ubicacion", resultado, conteo)
     resultado = _NOMBRE.sub(lambda m: _reemplazar_nombre(m, conteo), resultado)
+    resultado = _sustituir(_CELULAR, PLACEHOLDER_TELEFONO, "telefono", resultado, conteo)
     base = resultado
     return _SECUENCIA_DIGITOS.sub(lambda m: _reemplazar_secuencia(m, base, conteo), base)
 
