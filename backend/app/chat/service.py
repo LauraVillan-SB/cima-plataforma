@@ -55,7 +55,9 @@ from app.chat.inference import (
     TextToSpeech,
     UnavailableStt,
 )
+from app.chat.errors import RedaccionPiiError
 from app.chat.models import AiInteraction
+from app.chat.prompt import construir_prompt
 from app.chat.redaction import redactar_pii
 from app.chat.validation import validar_mensaje_texto, validar_nota_de_voz
 from app.common.config import get_settings
@@ -281,8 +283,21 @@ async def procesar_inferencia(
         await _finalizar_con_respaldo(db, interaccion, tts, GUARDRAIL_BLOQUEO_ENTRADA)
         return
 
+    # Prompt con roles separados (Tarea 11.4, OWASP LLM01): el texto del Usuario
+    # va solo en el mensaje `user`. Se arma FUERA del circuit breaker: si se
+    # rechaza (PII residual, Req 3.11), es un problema del contenido y no del
+    # proveedor, y no debe contar para abrir el circuito de todos los Usuarios.
+    try:
+        prompt = construir_prompt(texto_redactado)
+    except RedaccionPiiError:
+        log_event(logger, "chat_prompt_rechazado", interaction_id=str(interaccion.id))
+        interaccion.status = ESTADO_ERROR
+        await db.commit()
+        audit.registrar_auditoria(interaccion)
+        return
+
     async def _invocar() -> object:
-        return await modelo.generate(texto_redactado)
+        return await modelo.generate(prompt)
 
     try:
         resultado = await _llm_breaker.llamar(
