@@ -1,20 +1,32 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+import { filter, map } from 'rxjs';
 
 import { AuthService } from './auth/auth.service';
 import { GamificationService } from './gamificacion/gamification.service';
+import { AssistantFabComponent } from './shell/assistant-fab.component';
 import { ConnectionStatusComponent } from './shell/connection-status.component';
 import { UserMenuComponent } from './shell/user-menu.component';
+
+/** Pantallas donde el asistente flotante no se muestra (ya es la pantalla del chat o no hay sesion). */
+const RUTAS_SIN_ASISTENTE: readonly string[] = ['/asistente', '/entrar'];
 
 /**
  * Componente raiz (shell) de la PWA de CIMA. Encabezado verde oscuro con el
  * logo de Seguros Bolivar; con sesion muestra los chips de racha, puntos y
  * nivel (datos reales del backend), el menu de la cuenta (perfil, cambiar clave
- * y salir), la navegacion principal y el pie institucional. Al abrir la app se
- * intenta restaurar la sesion vigente sin pedir la Clave (Req 2.6); la sesion
- * vive en la cookie HttpOnly del backend. Muestra el indicador de conexion
- * (Req 2.9, 18.5). Usa OnPush para minimizar el trabajo de deteccion de
- * cambios (Req 2).
+ * y salir), la navegacion principal, el asistente flotante y el pie
+ * institucional. Al abrir la app se intenta restaurar la sesion vigente sin
+ * pedir la Clave (Req 2.6); la sesion vive en la cookie HttpOnly del backend.
+ * Muestra el indicador de conexion (Req 2.9, 18.5). Usa OnPush para minimizar
+ * el trabajo de deteccion de cambios (Req 2).
  */
 @Component({
   selector: 'cima-root',
@@ -24,6 +36,7 @@ import { UserMenuComponent } from './shell/user-menu.component';
     RouterLinkActive,
     ConnectionStatusComponent,
     UserMenuComponent,
+    AssistantFabComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -61,7 +74,6 @@ import { UserMenuComponent } from './shell/user-menu.component';
           <a routerLink="/inicio" routerLinkActive="activo">Inicio</a>
           <a routerLink="/aprendizaje" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }">Microcápsulas</a>
           <a routerLink="/mi-ruta" routerLinkActive="activo">Mi ruta</a>
-          <a routerLink="/asistente" routerLinkActive="activo">Asistente</a>
           <a routerLink="/reconocimientos" routerLinkActive="activo">Reconocimientos</a>
           <a routerLink="/ranking" routerLinkActive="activo">Ranking</a>
         </nav>
@@ -71,13 +83,16 @@ import { UserMenuComponent } from './shell/user-menu.component';
     <main id="contenido" class="contenido">
       <router-outlet />
     </main>
-    <footer class="pie">
+    <footer class="pie" [class.pie--con-asistente]="mostrarAsistente()">
       <img src="logos/sb-logo-horizontal-white.svg" alt="Seguros Bolívar" width="120" height="32" />
       <p>
         CIMA es la plataforma educativa de la Escuela de Sostenibilidad e Inclusión de
         Seguros Bolívar. Aquí aprendes; no se hacen pagos ni se expiden pólizas.
       </p>
     </footer>
+    @if (mostrarAsistente()) {
+      <cima-assistant-fab />
+    }
   `,
   styles: [
     `
@@ -111,13 +126,21 @@ import { UserMenuComponent } from './shell/user-menu.component';
         gap: 0.75rem 1rem;
         padding: 0.75rem 1rem;
       }
+      /*
+       * En celular: fila 1 = marca + "Mi cuenta", fila 2 = chips a todo el ancho.
+       * Desde 640 px todo cabe en una sola fila (marca, chips, cuenta).
+       */
       .barra__marca {
+        order: 1;
         display: flex;
         align-items: center;
         gap: 0.75rem;
         margin-inline-end: auto;
         color: #fff;
         text-decoration: none;
+      }
+      cima-user-menu {
+        order: 2;
       }
       .barra__marca img {
         height: 32px;
@@ -130,12 +153,23 @@ import { UserMenuComponent } from './shell/user-menu.component';
         color: var(--cima-dorado);
       }
       .chips {
+        order: 3;
+        flex-basis: 100%;
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         list-style: none;
         margin: 0;
         padding: 0;
+      }
+      @media (min-width: 640px) {
+        .chips {
+          order: 2;
+          flex-basis: auto;
+        }
+        cima-user-menu {
+          order: 3;
+        }
       }
       .chip {
         display: inline-flex;
@@ -159,14 +193,21 @@ import { UserMenuComponent } from './shell/user-menu.component';
         overflow: hidden;
         clip: rect(0 0 0 0);
       }
+      /* Barra desplazable: cada enlace conserva su ancho y no se encima con el vecino. */
       .nav {
         display: flex;
         gap: 0.25rem;
         overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
         padding: 0 0.75rem;
         background: rgba(0, 0, 0, 0.18);
       }
+      .nav::-webkit-scrollbar {
+        display: none;
+      }
       .nav a {
+        flex: none;
         display: inline-flex;
         align-items: center;
         padding: 0 1rem;
@@ -190,9 +231,33 @@ import { UserMenuComponent } from './shell/user-menu.component';
         text-align: center;
         font-size: 0.95rem;
       }
+      /* Deja libre la esquina donde flota el asistente para que no tape el texto. */
+      .pie--con-asistente {
+        padding-bottom: 7.5rem;
+      }
       .pie p {
         max-width: 560px;
         margin: 0.75rem auto 0;
+      }
+      /*
+       * Celulares angostos: marca mas compacta para que "Mi cuenta" quepa en la
+       * primera fila. Va al final para ganar a las reglas base de igual
+       * especificidad.
+       */
+      @media (max-width: 420px) {
+        .barra__fila {
+          padding-inline: 0.75rem;
+          gap: 0.6rem 0.5rem;
+        }
+        .barra__marca {
+          gap: 0.5rem;
+        }
+        .barra__marca img {
+          height: 26px;
+        }
+        .barra__producto {
+          font-size: 1.1rem;
+        }
       }
     `,
   ],
@@ -200,8 +265,24 @@ import { UserMenuComponent } from './shell/user-menu.component';
 export class AppComponent {
   protected readonly auth = inject(AuthService);
   private readonly gamificacion = inject(GamificationService);
+  private readonly router = inject(Router);
 
   protected readonly resumen = this.gamificacion.resumen;
+
+  private readonly rutaActual = toSignal(
+    this.router.events.pipe(
+      filter((evento): evento is NavigationEnd => evento instanceof NavigationEnd),
+      map((evento) => evento.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** El asistente flotante se muestra con sesion, salvo en la propia pantalla del chat. */
+  protected readonly mostrarAsistente = computed(
+    () =>
+      this.auth.autenticado() &&
+      !RUTAS_SIN_ASISTENTE.some((ruta) => this.rutaActual().startsWith(ruta)),
+  );
 
   constructor() {
     // Si la cookie de sesion sigue vigente, la app lo sabe sin pedir la Clave.
