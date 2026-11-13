@@ -134,15 +134,26 @@ async def _antes_de_enviar(request: httpx.Request) -> None:
         request.headers[CORRELATION_HEADER] = get_correlation_id() or str(uuid.uuid4())
 
 
-def crear_cliente(transport: httpx.AsyncBaseTransport | None = None) -> httpx.AsyncClient:
+def crear_cliente(
+    transport: httpx.AsyncBaseTransport | None = None,
+    *,
+    timeout: float | None = None,
+    follow_redirects: bool = True,
+) -> httpx.AsyncClient:
     """Crea un `AsyncClient` con timeout bajo, límite de redirecciones y el hook de SSRF.
 
-    `transport` solo existe para pruebas (p. ej. `httpx.MockTransport`).
+    Args:
+        transport: solo para pruebas (p. ej. `httpx.MockTransport`).
+        timeout: segundos de espera; por defecto `http_timeout_seconds`. Un
+            proveedor lento (p. ej. un LLM) puede pedir más, nunca sin tope.
+        follow_redirects: `False` para llamadas autenticadas con una cabecera
+            propia (p. ej. `x-goog-api-key`): httpx solo quita `Authorization` al
+            redirigir a otro origen, no las cabeceras personalizadas.
     """
     settings = get_settings()
     return httpx.AsyncClient(
-        timeout=settings.http_timeout_seconds,
-        follow_redirects=True,
+        timeout=settings.http_timeout_seconds if timeout is None else timeout,
+        follow_redirects=follow_redirects,
         max_redirects=settings.http_max_redirects,
         event_hooks={"request": [_antes_de_enviar]},
         transport=transport,
