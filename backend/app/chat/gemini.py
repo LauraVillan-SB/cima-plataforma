@@ -49,6 +49,10 @@ _MOTIVO_VALIDO = re.compile(r"[A-Z_]{1,40}")
 # Temperatura baja: respuestas educativas consistentes, sin creatividad de más.
 _TEMPERATURA = 0.3
 
+# Niveles de razonamiento aceptados. "low" bajó la respuesta de ~7 s a ~3 s en
+# las mediciones, con la misma calidad para respuestas educativas cortas.
+NIVELES_RAZONAMIENTO = frozenset({"low", "high"})
+
 
 class ProveedorIaError(Exception):
     """El proveedor de IA no devolvió una respuesta utilizable.
@@ -96,6 +100,7 @@ class GeminiModel:
         *,
         timeout_segundos: float,
         max_output_tokens: int,
+        nivel_razonamiento: str | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         """Crea el adaptador.
@@ -105,20 +110,24 @@ class GeminiModel:
             modelo: nombre del modelo, p. ej. `gemini-3.8-flash`.
             timeout_segundos: espera máxima de la llamada HTTP.
             max_output_tokens: tope de tokens de la respuesta.
+            nivel_razonamiento: `low` o `high`; `None` deja el del modelo.
             transport: solo para pruebas (`httpx.MockTransport`).
 
         Raises:
-            ValueError: si la key o el modelo no tienen un formato válido. El
+            ValueError: si la key, el modelo o el nivel no son válidos. El
                 mensaje nunca incluye la key.
         """
         if not isinstance(api_key, str) or not _KEY_VALIDA.fullmatch(api_key):
             raise ValueError("api key de Gemini ausente o con formato invalido")
         if not isinstance(modelo, str) or not _MODELO_VALIDO.fullmatch(modelo):
             raise ValueError("nombre de modelo de Gemini invalido")
+        if nivel_razonamiento is not None and nivel_razonamiento not in NIVELES_RAZONAMIENTO:
+            raise ValueError("nivel de razonamiento de Gemini invalido")
         self.__api_key = api_key
         self._modelo = modelo
         self._timeout = timeout_segundos
         self._max_output_tokens = max_output_tokens
+        self._nivel_razonamiento = nivel_razonamiento
         self._transport = transport
 
     def __repr__(self) -> str:
@@ -129,17 +138,24 @@ class GeminiModel:
         """Arma el cuerpo de la petición con cada rol en su campo propio.
 
         `system` y `developer` van como dos partes de `systemInstruction`; el
-        texto del Usuario va solo en `contents`, con rol `user`.
+        texto del Usuario va solo en `contents`, con rol `user`. El contexto del
+        Perfil, si existe, va como una parte aparte del mismo turno `user`, antes
+        del mensaje: es información del lado del Usuario, nunca instrucción.
         """
+        partes_usuario = [{"text": prompt.contexto}] if prompt.contexto else []
+        partes_usuario.append({"text": prompt.user})
+        configuracion: dict[str, object] = {
+            "temperature": _TEMPERATURA,
+            "maxOutputTokens": self._max_output_tokens,
+        }
+        if self._nivel_razonamiento:
+            configuracion["thinkingConfig"] = {"thinkingLevel": self._nivel_razonamiento}
         return {
             "systemInstruction": {
                 "parts": [{"text": prompt.system}, {"text": prompt.developer}],
             },
-            "contents": [{"role": "user", "parts": [{"text": prompt.user}]}],
-            "generationConfig": {
-                "temperature": _TEMPERATURA,
-                "maxOutputTokens": self._max_output_tokens,
-            },
+            "contents": [{"role": "user", "parts": partes_usuario}],
+            "generationConfig": configuracion,
         }
 
     async def generate(self, prompt: PromptConversacional) -> ModelResult:

@@ -57,7 +57,7 @@ from app.chat.inference import (
 from app.chat.errors import RedaccionPiiError
 from app.chat.models import AiInteraction
 from app.chat.proveedores import obtener_modelo
-from app.chat.prompt import construir_prompt
+from app.chat.prompt import ETIQUETAS_ACTIVIDAD, construir_prompt, contexto_del_perfil
 from app.chat.redaction import redactar_pii
 from app.chat.validation import validar_mensaje_texto, validar_nota_de_voz
 from app.common.config import get_settings
@@ -289,8 +289,12 @@ async def procesar_inferencia(
     # va solo en el mensaje `user`. Se arma FUERA del circuit breaker: si se
     # rechaza (PII residual, Req 3.11), es un problema del contenido y no del
     # proveedor, y no debe contar para abrir el circuito de todos los Usuarios.
+    # El Perfil se lee una sola vez, del `profile_id` guardado en el servidor
+    # (anti-BOLA): sirve para el contexto del prompt y para validar ofertas.
+    perfil = await db.get(Profile, interaccion.profile_id)
+    contexto = _contexto_del_usuario(perfil, interaccion)
     try:
-        prompt = construir_prompt(texto_redactado)
+        prompt = construir_prompt(texto_redactado, contexto=contexto)
     except RedaccionPiiError:
         log_event(logger, "chat_prompt_rechazado", interaction_id=str(interaccion.id))
         interaccion.status = ESTADO_ERROR
@@ -317,7 +321,7 @@ async def procesar_inferencia(
 
     # Validación de salida y derivación (Req 16.2, 16.3). Las ofertas solo se
     # permiten si están respaldadas por el catálogo del Usuario (Req 5.4).
-    decision = await _evaluar_salida(db, interaccion, resultado.text)
+    decision = _evaluar_salida(perfil, resultado.text)
     if decision != GUARDRAIL_PERMITIDO:
         await _finalizar_con_respaldo(db, interaccion, tts, decision, resultado.model_version)
         return
@@ -333,17 +337,33 @@ async def procesar_inferencia(
     audit.registrar_auditoria(interaccion)
 
 
-async def _oferta_respaldada(
-    db: AsyncSession, interaccion: AiInteraction, respuesta: str
-) -> bool:
+def _contexto_del_usuario(perfil: Profile | None, interaccion: AiInteraction) -> str | None:
+    """Arma el contexto del Perfil para el modelo (Req 4.8, 6.7), sin PII.
+
+    `perfil` es el del `profile_id` de la interacción guardada en el servidor,
+    nunca un dato del cliente (anti-BOLA). Solo usa el tipo de actividad y la
+    zona; el teléfono no sale de aquí. Si no hay Perfil, el prompt sale sin
+    contexto. El registro solo indica qué campos se incluyeron, no sus valores.
+    """
+    if perfil is None:
+        return None
+    contexto = contexto_del_perfil(perfil.activity_type, perfil.geo_zone)
+    log_event(
+        logger,
+        "chat_contexto_perfil",
+        interaction_id=str(interaccion.id),
+        con_actividad=perfil.activity_type in ETIQUETAS_ACTIVIDAD,
+        con_zona="zona:" in contexto,
+    )
+    return contexto
+
+
+def _oferta_respaldada(perfil: Profile | None, respuesta: str) -> bool:
     """Indica si las ofertas de la respuesta están respaldadas por el catálogo (Req 16.2).
 
-    Solo consulta el Perfil cuando la respuesta menciona una oferta. El perfil
-    se obtiene de la interacción guardada en el servidor, nunca del cliente.
-
     Args:
-        db: sesión de base de datos.
-        interaccion: interacción en proceso (dueña del `profile_id`).
+        perfil: Perfil del dueño de la interacción, leído en el servidor; sin
+            Perfil, ninguna oferta está respaldada.
         respuesta: texto generado por el modelo.
 
     Returns:
@@ -351,28 +371,24 @@ async def _oferta_respaldada(
     """
     if not guardrails.menciona_oferta(respuesta):
         return True
-    perfil = await db.get(Profile, interaccion.profile_id)
     permitidos = nombres_de_ofertas(perfil.activity_type) if perfil else frozenset()
     return guardrails.oferta_respaldada_por_catalogo(
         respuesta, permitidos, nombres_de_todas_las_ofertas()
     )
 
 
-async def _evaluar_salida(
-    db: AsyncSession, interaccion: AiInteraction, respuesta: str
-) -> str:
+def _evaluar_salida(perfil: Profile | None, respuesta: str) -> str:
     """Aplica validación de salida y detección de tema sensible (Req 16.2, 16.3).
 
     Args:
-        db: sesión de base de datos.
-        interaccion: interacción en proceso.
+        perfil: Perfil del dueño de la interacción, leído en el servidor.
         respuesta: texto generado por el modelo.
 
     Returns:
         `GUARDRAIL_PERMITIDO` si la salida puede presentarse, o la decisión del
         guardrail que obliga a usar la respuesta de respaldo.
     """
-    respaldada = await _oferta_respaldada(db, interaccion, respuesta)
+    respaldada = _oferta_respaldada(perfil, respuesta)
     salida = guardrails.validar_salida(respuesta, oferta_respaldada=respaldada)
     if salida != GUARDRAIL_PERMITIDO:
         return salida
