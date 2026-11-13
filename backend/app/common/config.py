@@ -1,6 +1,8 @@
 """Configuración central del backend CIMA cargada desde variables de entorno."""
 from functools import lru_cache
+from typing import Literal
 
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -46,6 +48,17 @@ class Settings(BaseSettings):
     # degrada y responde solo con el mensaje de respaldo seguro, sin invocar el
     # modelo. Se activa vía variable de entorno ante un incidente operativo.
     chat_agent_enabled: bool = True
+    # Proveedor del modelo del Agente Conversacional (Tarea 11.4). Por defecto el
+    # respaldo seguro, sin llamadas externas; "gemini" usa la API de Gemini.
+    chat_llm_provider: Literal["respaldo", "gemini"] = "respaldo"
+    # API key de Gemini: solo desde backend/.env (local) o Secret Manager
+    # (stage/prod). `SecretStr` evita que aparezca al imprimir la configuración.
+    gemini_api_key: SecretStr | None = None
+    # Nombre del modelo; patrón estricto porque va en la ruta de la URL.
+    gemini_model: str = Field(default="gemini-3.8-flash", pattern=r"^[a-z0-9][a-z0-9.\-]{0,62}$")
+    # Un LLM tarda más que una API corriente; el worker además corta a los 60 s.
+    gemini_timeout_seconds: float = Field(default=30.0, gt=0, le=60)
+    gemini_max_output_tokens: int = Field(default=1024, ge=64, le=8192)
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

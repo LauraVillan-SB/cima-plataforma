@@ -50,13 +50,13 @@ from app.chat.dto import (
 from app.chat.inference import (
     GenerativeModel,
     NoopTts,
-    SafeFallbackModel,
     SpeechToText,
     TextToSpeech,
     UnavailableStt,
 )
 from app.chat.errors import RedaccionPiiError
 from app.chat.models import AiInteraction
+from app.chat.proveedores import obtener_modelo
 from app.chat.prompt import construir_prompt
 from app.chat.redaction import redactar_pii
 from app.chat.validation import validar_mensaje_texto, validar_nota_de_voz
@@ -255,9 +255,11 @@ async def procesar_inferencia(
     Args:
         db: sesión de base de datos.
         interaction_id: interacción a procesar.
-        modelo: modelo de IA a usar; por defecto, el de respaldo seguro.
+        modelo: modelo de IA a usar; por defecto, el que indica la
+            configuración (`obtener_modelo`), que cae al respaldo seguro si el
+            proveedor no puede usarse.
     """
-    modelo = modelo or SafeFallbackModel()
+    modelo = modelo or obtener_modelo()
     tts = tts or NoopTts()
     interaccion = await db.get(AiInteraction, interaction_id)
     if interaccion is None:
