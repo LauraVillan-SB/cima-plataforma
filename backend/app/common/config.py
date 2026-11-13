@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     # Un LLM tarda más que una API corriente; el worker además corta a los 60 s.
     gemini_timeout_seconds: float = Field(default=30.0, gt=0, le=60)
     gemini_max_output_tokens: int = Field(default=1024, ge=64, le=8192)
+    # Razonamiento previo del modelo: "low" baja la respuesta de ~7 s a ~3 s;
+    # "none" no envía el parámetro (para modelos que no lo admiten).
+    gemini_thinking_level: Literal["low", "high", "none"] = "low"
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

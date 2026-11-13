@@ -137,7 +137,7 @@ class _FakeSession:
             self.perfil_consultado += 1
             if self.activity_type is None:
                 return None
-            return SimpleNamespace(id=pk, activity_type=self.activity_type)
+            return SimpleNamespace(id=pk, activity_type=self.activity_type, geo_zone="Huila")
         return next((r for r in self.rows if r.id == pk), None)
 
 
@@ -197,8 +197,15 @@ async def test_worker_rechaza_oferta_si_no_hay_perfil(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.asyncio
-async def test_worker_no_consulta_perfil_sin_oferta(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Sin mención de oferta no se hace la lectura del Perfil."""
+async def test_worker_consulta_el_perfil_una_sola_vez(monkeypatch: pytest.MonkeyPatch) -> None:
+    """El Perfil se lee una vez por interacción: para el contexto del prompt
+    (Req 4.8, 6.7) y, si hay oferta, para validarla, sin una segunda lectura."""
     db, inter = await _procesar(monkeypatch, "cafe", "Aparta una parte cada semana.")
-    assert db.perfil_consultado == 0
+    assert db.perfil_consultado == 1
+    assert inter.guardrail_decision == GUARDRAIL_PERMITIDO
+
+    db, inter = await _procesar(
+        monkeypatch, "cafe", "Existe el microseguro Amparo de cosecha para tu cafetal."
+    )
+    assert db.perfil_consultado == 1
     assert inter.guardrail_decision == GUARDRAIL_PERMITIDO

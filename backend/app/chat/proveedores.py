@@ -50,6 +50,9 @@ def obtener_modelo(settings: Settings | None = None) -> GenerativeModel:
             config.gemini_model,
             timeout_segundos=config.gemini_timeout_seconds,
             max_output_tokens=config.gemini_max_output_tokens,
+            nivel_razonamiento=(
+                None if config.gemini_thinking_level == "none" else config.gemini_thinking_level
+            ),
         )
     except ValueError:
         # El mensaje de GeminiModel no incluye la key; aquí tampoco se registra.
