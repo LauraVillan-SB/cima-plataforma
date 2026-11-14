@@ -21,6 +21,9 @@ aprobado en el proyecto), sin SDK adicional:
   el circuit breaker cuenta como fallo y el worker resuelve con el respaldo
   seguro.
 - Nada de esto registra la key ni el contenido: los errores llevan solo códigos.
+
+`validar_key_y_modelo`, `interpretar_respuesta` y `enviar` son comunes a los
+adaptadores de Gemini (modelo de texto y transcripción de voz).
 """
 
 from __future__ import annotations
@@ -90,6 +93,75 @@ class _RespuestaGemini(BaseModel):
     modelVersion: str | None = None  # noqa: N815 (nombre del contrato de Gemini)
 
 
+def validar_key_y_modelo(api_key: object, modelo: object) -> None:
+    """Valida la forma de la API key y del nombre de modelo.
+
+    Raises:
+        ValueError: si alguno no es válido. El mensaje nunca incluye la key.
+    """
+    if not isinstance(api_key, str) or not _KEY_VALIDA.fullmatch(api_key):
+        raise ValueError("api key de Gemini ausente o con formato invalido")
+    if not isinstance(modelo, str) or not _MODELO_VALIDO.fullmatch(modelo):
+        raise ValueError("nombre de modelo de Gemini invalido")
+
+
+async def enviar(
+    api_key: str,
+    modelo: str,
+    cuerpo: dict[str, object],
+    *,
+    timeout_segundos: float,
+    transport: httpx.AsyncBaseTransport | None = None,
+) -> httpx.Response:
+    """Envía un `generateContent` con el cliente seguro y la key solo en cabecera.
+
+    Raises:
+        SsrfBlockedError: el dominio de Gemini no está en la allowlist.
+        httpx.HTTPError: fallo de red o timeout.
+    """
+    url = _URL_GENERAR.format(modelo=modelo)
+    async with crear_cliente(transport, timeout=timeout_segundos, follow_redirects=False) as cliente:
+        return await cliente.post(url, json=cuerpo, headers={"x-goog-api-key": api_key})
+
+
+def interpretar_respuesta(respuesta: httpx.Response, modelo: str) -> ModelResult:
+    """Valida una respuesta de `generateContent` (Zero Trust) y extrae el texto.
+
+    Solo acepta HTTP 200, cuerpo válido, al menos un candidato terminado con
+    `STOP` y texto no vacío (sin partes de razonamiento). La versión del modelo
+    se toma de la respuesta si tiene forma válida; si no, la configurada.
+
+    Raises:
+        ProveedorIaError: con un código interno, nunca con contenido.
+    """
+    if respuesta.status_code != 200:
+        # 3xx incluido: no se siguen redirecciones (ver docstring del módulo).
+        raise ProveedorIaError(f"gemini_http_{respuesta.status_code}")
+    try:
+        datos = _RespuestaGemini.model_validate_json(respuesta.content)
+    except PydanticValidationError:
+        raise ProveedorIaError("gemini_respuesta_malformada") from None
+    if not datos.candidates:
+        # Sin candidatos: p. ej. el prompt fue bloqueado por el proveedor.
+        raise ProveedorIaError("gemini_sin_candidatos")
+    candidato = datos.candidates[0]
+    if candidato.finishReason != "STOP":
+        # MAX_TOKENS deja la respuesta cortada; SAFETY, RECITATION u otros la
+        # bloquean. En todos los casos se prefiere el respaldo seguro.
+        motivo = candidato.finishReason or "NINGUNO"
+        if not _MOTIVO_VALIDO.fullmatch(motivo):
+            motivo = "otro"
+        raise ProveedorIaError(f"gemini_fin_{motivo.lower()}")
+    partes = candidato.content.parts if candidato.content else []
+    texto = "".join(p.text for p in partes if p.text and not p.thought).strip()
+    if not texto:
+        raise ProveedorIaError("gemini_texto_vacio")
+    version = datos.modelVersion
+    if not version or not _MODELO_VALIDO.fullmatch(version):
+        version = modelo
+    return ModelResult(text=texto, model_version=version)
+
+
 class GeminiModel:
     """`GenerativeModel` respaldado por la API de Gemini."""
 
@@ -117,10 +189,7 @@ class GeminiModel:
             ValueError: si la key, el modelo o el nivel no son válidos. El
                 mensaje nunca incluye la key.
         """
-        if not isinstance(api_key, str) or not _KEY_VALIDA.fullmatch(api_key):
-            raise ValueError("api key de Gemini ausente o con formato invalido")
-        if not isinstance(modelo, str) or not _MODELO_VALIDO.fullmatch(modelo):
-            raise ValueError("nombre de modelo de Gemini invalido")
+        validar_key_y_modelo(api_key, modelo)
         if nivel_razonamiento is not None and nivel_razonamiento not in NIVELES_RAZONAMIENTO:
             raise ValueError("nivel de razonamiento de Gemini invalido")
         self.__api_key = api_key
@@ -167,42 +236,11 @@ class GeminiModel:
             SsrfBlockedError: el dominio de Gemini no está en la allowlist.
             httpx.HTTPError: fallo de red o timeout.
         """
-        url = _URL_GENERAR.format(modelo=self._modelo)
-        async with crear_cliente(
-            self._transport, timeout=self._timeout, follow_redirects=False
-        ) as cliente:
-            respuesta = await cliente.post(
-                url,
-                json=self.cuerpo(prompt),
-                headers={"x-goog-api-key": self.__api_key},
-            )
-        return self._interpretar(respuesta)
-
-    def _interpretar(self, respuesta: httpx.Response) -> ModelResult:
-        """Valida la respuesta de Gemini (Zero Trust) y extrae el texto final."""
-        if respuesta.status_code != 200:
-            # 3xx incluido: no se siguen redirecciones (ver docstring del módulo).
-            raise ProveedorIaError(f"gemini_http_{respuesta.status_code}")
-        try:
-            datos = _RespuestaGemini.model_validate_json(respuesta.content)
-        except PydanticValidationError:
-            raise ProveedorIaError("gemini_respuesta_malformada") from None
-        if not datos.candidates:
-            # Sin candidatos: p. ej. el prompt fue bloqueado por el proveedor.
-            raise ProveedorIaError("gemini_sin_candidatos")
-        candidato = datos.candidates[0]
-        if candidato.finishReason != "STOP":
-            # MAX_TOKENS deja la respuesta cortada; SAFETY, RECITATION u otros la
-            # bloquean. En todos los casos se prefiere el respaldo seguro.
-            motivo = candidato.finishReason or "NINGUNO"
-            if not _MOTIVO_VALIDO.fullmatch(motivo):
-                motivo = "otro"
-            raise ProveedorIaError(f"gemini_fin_{motivo.lower()}")
-        partes = candidato.content.parts if candidato.content else []
-        texto = "".join(p.text for p in partes if p.text and not p.thought).strip()
-        if not texto:
-            raise ProveedorIaError("gemini_texto_vacio")
-        version = datos.modelVersion
-        if not version or not _MODELO_VALIDO.fullmatch(version):
-            version = self._modelo
-        return ModelResult(text=texto, model_version=version)
+        respuesta = await enviar(
+            self.__api_key,
+            self._modelo,
+            self.cuerpo(prompt),
+            timeout_segundos=self._timeout,
+            transport=self._transport,
+        )
+        return interpretar_respuesta(respuesta, self._modelo)
