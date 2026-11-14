@@ -13,6 +13,7 @@ import { AuthService } from './auth/auth.service';
 import { GamificationService } from './gamificacion/gamification.service';
 import { AssistantFabComponent } from './shell/assistant-fab.component';
 import { ConnectionStatusComponent } from './shell/connection-status.component';
+import { LectorPaginaComponent } from './shell/lector-pagina.component';
 import { UserMenuComponent } from './shell/user-menu.component';
 
 /** Pantallas donde el asistente flotante no se muestra (ya es la pantalla del chat o no hay sesion). */
@@ -37,6 +38,7 @@ const RUTAS_SIN_ASISTENTE: readonly string[] = ['/asistente', '/entrar'];
     ConnectionStatusComponent,
     UserMenuComponent,
     AssistantFabComponent,
+    LectorPaginaComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -92,6 +94,9 @@ const RUTAS_SIN_ASISTENTE: readonly string[] = ['/asistente', '/entrar'];
     </footer>
     @if (mostrarAsistente()) {
       <cima-assistant-fab />
+    }
+    @if (auth.autenticado()) {
+      <cima-lector-pagina />
     }
   `,
   styles: [

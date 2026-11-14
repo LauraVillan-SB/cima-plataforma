@@ -33,35 +33,72 @@ export class LectorVozService {
     return this.sintesis !== null;
   }
 
+  /** Posición del texto que se está diciendo en una lectura por partes, o null. */
+  readonly segmento = signal<number | null>(null);
+
+  /** Cambia en cada lectura nueva: los avisos de una lectura cancelada se ignoran. */
+  private turno = 0;
+
   /** Lee la respuesta del mensaje `id`; si ya se estaba leyendo otra, la corta. */
   leer(id: string, respuesta: string): void {
+    this.leerPorPartes(id, [respuesta]);
+  }
+
+  /**
+   * Lee varios textos seguidos (por ejemplo, los párrafos de la página) y avisa en
+   * `segmento` cuál se está diciendo, para resaltarlo en pantalla. Leer por partes
+   * además evita que algunos navegadores corten las lecturas largas.
+   */
+  leerPorPartes(id: string, textos: readonly string[]): void {
     const sintesis = this.sintesis;
-    const texto = textoParaLeer(respuesta);
-    if (!sintesis || !texto) {
+    const limpios = textos.map(textoParaLeer);
+    const ultimo = limpios.reduce((u, texto, i) => (texto ? i : u), -1);
+    if (!sintesis || ultimo < 0) {
       return;
     }
     sintesis.cancel();
+    const turno = ++this.turno;
+    const terminar = () => {
+      if (this.turno === turno) {
+        this.leyendo.set(null);
+        this.segmento.set(null);
+      }
+    };
+    limpios.forEach((texto, indice) => {
+      if (!texto) {
+        return;
+      }
+      const enunciado = this.enunciado(texto);
+      enunciado.onstart = () => {
+        if (this.turno === turno) {
+          this.segmento.set(indice);
+        }
+      };
+      enunciado.onerror = terminar;
+      if (indice === ultimo) {
+        enunciado.onend = terminar;
+      }
+      sintesis.speak(enunciado);
+    });
+    this.leyendo.set(id);
+  }
+
+  /** Detiene la lectura en curso. */
+  detener(): void {
+    this.turno++;
+    this.sintesis?.cancel();
+    this.leyendo.set(null);
+    this.segmento.set(null);
+  }
+
+  private enunciado(texto: string): SpeechSynthesisUtterance {
     const enunciado = new SpeechSynthesisUtterance(texto);
     enunciado.lang = this.voz?.lang ?? 'es-CO';
     if (this.voz) {
       enunciado.voice = this.voz;
     }
     enunciado.rate = 0.95;
-    const terminar = () => {
-      if (this.leyendo() === id) {
-        this.leyendo.set(null);
-      }
-    };
-    enunciado.onend = terminar;
-    enunciado.onerror = terminar;
-    this.leyendo.set(id);
-    sintesis.speak(enunciado);
-  }
-
-  /** Detiene la lectura en curso. */
-  detener(): void {
-    this.sintesis?.cancel();
-    this.leyendo.set(null);
+    return enunciado;
   }
 
   private cargarVoz(): void {
