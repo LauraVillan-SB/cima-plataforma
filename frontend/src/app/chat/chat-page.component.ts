@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 
 import { mensajeDeError } from '../core/mensaje-error';
+import { LectorVozService } from '../voz/lector-voz.service';
 import { NotaGrabada, VozControlComponent } from '../voz/voz-control.component';
 import {
+  ESTADO_LISTO,
   FaseChat,
   TIEMPO_MAXIMO_SEGUNDOS,
   esEstadoFinal,
@@ -29,6 +31,14 @@ interface Mensaje {
 }
 
 const TEXTO_NOTA_DE_VOZ = '🎤 Nota de voz';
+
+/** Texto de la burbuja del Usuario: en voz, lo entendido con el ícono del micrófono. */
+function entradaVisible(canal: string, texto: string | null | undefined): string {
+  if (canal !== 'voz') {
+    return texto ?? '';
+  }
+  return texto ? `🎤 ${texto}` : TEXTO_NOTA_DE_VOZ;
+}
 
 /**
  * Pantalla del asistente conversacional (Tarea 23.2, Req 3, 14, 16). Envía
@@ -80,6 +90,16 @@ const TEXTO_NOTA_DE_VOZ = '🎤 Nota de voz';
               @case ('listo') {
                 @if (m.respuesta) {
                   <p class="burbuja burbuja--ia">{{ m.respuesta }}</p>
+                  @if (lector.disponible) {
+                    <button
+                      type="button"
+                      class="sb-ui-button sb-ui-button--secondary boton-escuchar"
+                      [attr.aria-pressed]="lector.leyendo() === m.id"
+                      (click)="alternarLectura(m)"
+                    >
+                      {{ lector.leyendo() === m.id ? '⏹ Detener' : '🔊 Escuchar' }}
+                    </button>
+                  }
                 }
               }
               @case ('repetir_voz') {
@@ -186,11 +206,16 @@ const TEXTO_NOTA_DE_VOZ = '🎤 Nota de voz';
       .quien {
         font-weight: 600;
       }
+      .boton-escuchar {
+        align-self: flex-start;
+        min-height: 44px;
+      }
     `,
   ],
 })
 export class ChatPageComponent {
   private readonly chat = inject(ChatService);
+  protected readonly lector = inject(LectorVozService);
 
   readonly mensajes = signal<readonly Mensaje[]>([]);
   readonly cargandoHistorial = signal<boolean>(true);
@@ -204,6 +229,7 @@ export class ChatPageComponent {
   constructor() {
     inject(DestroyRef).onDestroy(() => {
       this.destruido = true;
+      this.lector.detener();
       this.temporizadores.forEach((t) => clearTimeout(t));
       this.temporizadores.clear();
     });
@@ -223,7 +249,7 @@ export class ChatPageComponent {
       const cargados = items.map<Mensaje>((i) => ({
         id: i.id,
         canal: i.input_channel,
-        entrada: i.input_redacted || (i.input_channel === 'voz' ? TEXTO_NOTA_DE_VOZ : ''),
+        entrada: entradaVisible(i.input_channel, i.input_redacted),
         estado: i.status,
         respuesta: i.response_text,
         segundos: 0,
@@ -274,6 +300,10 @@ export class ChatPageComponent {
         ...actuales,
         {
           ...base,
+          // En voz se muestra lo que se entendió, para que la persona vea si
+          // coincide con lo que dijo (el backend ya quitó los datos personales).
+          entrada:
+            base.canal === 'voz' ? entradaVisible('voz', acuse.input_redacted) : base.entrada,
           id: acuse.id,
           estado: acuse.status,
           respuesta: null,
@@ -317,6 +347,7 @@ export class ChatPageComponent {
           respuesta: resultado.response_text,
         });
         if (esEstadoFinal(resultado.status)) {
+          this.leerSiFueVoz(id);
           return;
         }
       } catch {
@@ -326,6 +357,23 @@ export class ChatPageComponent {
     };
 
     void paso();
+  }
+
+  /** Lee o detiene la lectura en voz alta de una respuesta (Req 14.3). */
+  alternarLectura(m: Mensaje): void {
+    if (this.lector.leyendo() === m.id) {
+      this.lector.detener();
+    } else if (m.respuesta) {
+      this.lector.leer(m.id, m.respuesta);
+    }
+  }
+
+  /** Si la persona habló, la respuesta se le lee en voz alta (voz primero). */
+  private leerSiFueVoz(id: string): void {
+    const m = this.mensajes().find((x) => x.id === id);
+    if (m && m.canal === 'voz' && m.estado === ESTADO_LISTO && m.respuesta) {
+      this.lector.leer(m.id, m.respuesta);
+    }
   }
 
   private actualizar(id: string, cambios: Partial<Mensaje>): void {

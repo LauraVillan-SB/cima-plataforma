@@ -105,6 +105,9 @@ class ChatMessageAccepted(BaseModel):
     id: uuid.UUID
     status: str
     processing_after_seconds: int
+    # Solo en Notas de Voz: lo que se entendió, ya redactado de PII, para que el
+    # Usuario vea si coincide con lo que dijo (salvaguarda de la transcripción).
+    input_redacted: str | None = None
 
 
 class ChatMessageResult(BaseModel):

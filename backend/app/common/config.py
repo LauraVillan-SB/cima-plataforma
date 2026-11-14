@@ -62,6 +62,13 @@ class Settings(BaseSettings):
     # Razonamiento previo del modelo: "low" baja la respuesta de ~7 s a ~3 s;
     # "none" no envía el parámetro (para modelos que no lo admiten).
     gemini_thinking_level: Literal["low", "high", "none"] = "low"
+    # Transcripción de Notas de Voz (Req 14.2, 14.5). Por defecto el respaldo, que
+    # siempre pide repetir; "gemini" transcribe con la misma key y allowlist.
+    chat_stt_provider: Literal["respaldo", "gemini"] = "respaldo"
+    # Lite + "describir primero" no inventó texto con silencio ni ruido en las
+    # pruebas (gemini-3.8-flash sí) y responde en ~2 s. Se probó sin razonamiento.
+    gemini_stt_model: str = Field(default="gemini-3.5-flash-lite", pattern=r"^[a-z0-9][a-z0-9.\-]{0,62}$")
+    gemini_stt_thinking_level: Literal["low", "high", "none"] = "none"
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
