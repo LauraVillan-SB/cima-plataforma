@@ -91,6 +91,12 @@ export function elegirVoz<T extends VozDisponible>(voces: readonly T[]): T | nul
 }
 
 /**
+ * Etiqueta de transparencia que el backend antepone a cada respuesta (Req 16.5).
+ * Se sigue viendo en pantalla, pero leerla en cada respuesta cansa: la voz la salta.
+ */
+const ETIQUETA_IA = /^asistente de cima\s*\(ia\)\s*:\s*/i;
+
+/**
  * Prepara la respuesta para leerla en voz alta: quita emojis y signos de
  * formato que la voz pronunciaría ("asterisco") y une los espacios. El texto
  * ya pasó por los filtros del backend; aquí solo se limpia la forma.
@@ -100,5 +106,6 @@ export function textoParaLeer(respuesta: string): string {
     .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, ' ')
     .replace(/[*_#`~>|]/g, ' ')
     .replace(/\s+/g, ' ')
-    .trim();
+    .trim()
+    .replace(ETIQUETA_IA, '');
 }

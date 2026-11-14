@@ -108,9 +108,15 @@ describe('elegirVoz', () => {
 });
 
 describe('textoParaLeer', () => {
-  it('quita los emojis y los signos de formato', () => {
+  it('quita los emojis, los signos de formato y la etiqueta de IA del inicio', () => {
     expect(textoParaLeer('🤖 Asistente de CIMA (IA): Guarda **una parte** de la venta. 👍')).toBe(
-      'Asistente de CIMA (IA): Guarda una parte de la venta.',
+      'Guarda una parte de la venta.',
+    );
+  });
+
+  it('solo salta la etiqueta al inicio, no si aparece dentro de la respuesta', () => {
+    expect(textoParaLeer('Hola. Asistente de CIMA (IA): es mi nombre.')).toBe(
+      'Hola. Asistente de CIMA (IA): es mi nombre.',
     );
   });
 
