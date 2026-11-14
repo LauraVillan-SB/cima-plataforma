@@ -83,6 +83,20 @@ iframe {
   box-shadow: 0 0 0 5px var(--cima-verde-oscuro);
 }
 
+/*
+ * Bloque que está leyendo en voz alta el botón "Leer esta página": fondo amarillo
+ * claro con texto oscuro (contraste alto) y borde, para que quien ve poco siga la
+ * lectura. scroll-margin deja espacio bajo el encabezado al traerlo a la vista.
+ */
+.cima-leyendo {
+  background: #fff6c8;
+  color: #1b1b1b;
+  outline: 3px solid var(--cima-verde-oscuro);
+  outline-offset: 3px;
+  border-radius: 6px;
+  scroll-margin: 6rem;
+}
+
 /* Respeta la preferencia de menos movimiento. */
 @media (prefers-reduced-motion: reduce) {
   * {

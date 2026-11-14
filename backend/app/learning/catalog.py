@@ -24,6 +24,7 @@ from typing import Final
 
 from app.learning.constants import (
     GENERAL_TAG,
+    MEDIA_FILE_PATTERN,
     TOPIC_ADAPTACION_CLIMA,
     TOPIC_FINANZAS,
     TOPIC_GESTION_RIESGOS,
@@ -69,6 +70,12 @@ class CapsuleSpec:
     paragraphs: tuple[str, ...]
     key_points: tuple[str, ...]
     video: VideoSpec | None = None
+    # Video propio en la carpeta de medios: solo el nombre del archivo (allowlist).
+    video_file: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.video_file is not None and not re.fullmatch(MEDIA_FILE_PATTERN, self.video_file):
+            raise ValueError("Nombre de archivo de video inválido.")
 
     @property
     def id(self) -> uuid.UUID:
@@ -248,6 +255,13 @@ _GENERAL_PLAN_B = CapsuleSpec(
         "Anota teléfonos de familiares, vecinos, la alcaldía y los organismos de socorro.",
         "Guarda copias de tus documentos y tómales fotos con el celular.",
         "Un fondo para imprevistos se arma poco a poco, siempre el mismo día.",
+    ),
+    # Short institucional de Seguros Bolívar sobre asumir riesgos con preparación. Se
+    # verificó con oEmbed y se revisó su contenido: es educativo y no vende un producto.
+    video=VideoSpec(
+        video_id="mjJ95UBh0tk",
+        title="¿Qué significa asumir un riesgo? Hágalo con preparación",
+        channel="Seguros Bolivar",
     ),
 )
 
@@ -673,6 +687,169 @@ _FINANZAS_GOTA_A_GOTA = CapsuleSpec(
     ),
 )
 
+# --------------------------------------------------------------------------- #
+# Módulo 1 (videos propios de la Escuela). El texto se escribió a partir de la
+# transcripción de cada video; el video es el complemento y se sirve con sesión.
+# --------------------------------------------------------------------------- #
+# Actividades del campo (allowlist del Perfil) a las que aplica el Módulo 1.
+_CAMPO: Final[tuple[str, ...]] = (
+    "cafe",
+    "platano",
+    "aguacate",
+    "cacao",
+    "arroz",
+    "maiz",
+    "ganaderia",
+    "hortalizas",
+)
+
+_AGRO_SOSTENIBLE = CapsuleSpec(
+    slug="agro-agricultura-sostenible",
+    topic=TOPIC_ADAPTACION_CLIMA,
+    tags=_CAMPO,
+    relevance=8.8,
+    title="Agricultura sostenible: producir hoy sin acabar con el mañana",
+    summary="Qué es la agricultura sostenible y cómo cuidar el suelo, el agua y la plata de tu finca al mismo tiempo.",
+    paragraphs=(
+        "La agricultura sostenible es una forma de trabajar el campo que busca tres cosas "
+        "al mismo tiempo: que la finca dé comida y plata, que la tierra, el agua y los "
+        "animales sigan sanos, y que la familia y la comunidad vivan mejor. No es una moda "
+        "ni un lujo de fincas grandes. Es cultivar hoy sin dejar la tierra cansada para los "
+        "que vienen después.",
+        "Muchos productores ya lo están viviendo. Con el cambio del clima las lluvias "
+        "llegan cuando no toca, la flor del café no pega o se cae, y la cosecha merma. "
+        "Cuando el suelo está pobre y sin cobertura, cada aguacero se lleva la capa buena "
+        "de la tierra y cada verano seca más rápido el cultivo. Una finca bien cuidada "
+        "aguanta mejor esos golpes.",
+        "El primer cuidado es el suelo, porque de él depende todo. Deja coberturas o "
+        "arvenses nobles entre los surcos para que la tierra no quede pelada, devuelve al "
+        "lote la pulpa y los residuos bien compostados y siembra en curvas de nivel si tu "
+        "terreno es pendiente. Un suelo vivo guarda más agua y necesita menos abono.",
+        "El segundo es el agua. Protege los nacimientos y las orillas de las quebradas con "
+        "árboles, no laves fumigadoras ni tires empaques cerca de ellas y no desperdicies el "
+        "agua del beneficio o del riego. El agua que se contamina arriba la toman abajo tus "
+        "vecinos y sus animales.",
+        "El tercero es manejar las plagas con cabeza. Antes de fumigar, revisa qué tanto "
+        "daño hay de verdad. Muchas veces la naturaleza ayuda: hay hongos, avispitas y "
+        "hormigas que se comen las plagas, y si echas veneno sin necesidad también los "
+        "matas. Cuando sí haga falta un producto, pregunta al técnico o al extensionista "
+        "cuál conviene y cómo aplicarlo con seguridad.",
+        "Y no te olvides de la plata. Una finca sostenible también tiene que ser rentable: "
+        "anota lo que gastas en insumos y lo que vendes, para saber qué prácticas te "
+        "ahorran y cuáles no. Cuidar el suelo y el agua casi siempre baja los costos con el "
+        "tiempo, porque necesitas menos abono, menos riego y menos remedios.",
+        "Esta semana camina tu finca con una libreta y anota tres cosas: dónde la tierra "
+        "queda pelada, por dónde corre el agua cuando llueve y qué tan cerca de la quebrada "
+        "fumigas o lavas los equipos. Escoge una sola de esas cosas para mejorar este mes. "
+        "Recuerda que la idea es mantener el equilibrio entre la naturaleza, tu familia y tu "
+        "bolsillo.",
+    ),
+    key_points=(
+        "Agricultura sostenible es producir comida y plata sin acabar con el suelo, el agua ni la comunidad.",
+        "Un suelo cubierto y con materia orgánica aguanta mejor los aguaceros y los veranos.",
+        "Protege los nacimientos y no laves equipos ni tires empaques cerca de las quebradas.",
+        "Antes de fumigar revisa el daño real y consulta al técnico qué producto usar.",
+    ),
+    video_file="agro-sostenible.mp4",
+)
+
+_AGRO_RIESGOS = CapsuleSpec(
+    slug="agro-riesgos-del-campo",
+    topic=TOPIC_GESTION_RIESGOS,
+    tags=_CAMPO,
+    relevance=8.7,
+    title="Los riesgos del campo: conócelos para estar preparado",
+    summary="Los cuatro riesgos principales de quien cultiva o cría animales, y cómo prevenirlos para que el golpe sea menor.",
+    paragraphs=(
+        "Riesgo es la posibilidad de sufrir una pérdida o un daño por algo que no está del "
+        "todo en tus manos. En el campo hay muchos: el clima que cambia, las plagas y "
+        "enfermedades, los precios del producto y de los insumos, y hasta las normas del "
+        "país. No se pueden eliminar todos, pero sí se pueden conocer, prevenir y preparar "
+        "para que el golpe sea menor.",
+        "El primero es el riesgo climático: heladas, vientos fuertes, aguaceros que no "
+        "paran, inundaciones, granizadas o sequías que dañan la cosecha. Aquí entran "
+        "también los deslizamientos que se forman cuando el exceso de lluvia satura la "
+        "tierra. Para prepararte, sigue los avisos del IDEAM, mantén limpios los canales y "
+        "desagües y no dejes la tierra pelada en las pendientes.",
+        "El segundo es el riesgo biológico: las plagas y enfermedades que atacan los "
+        "cultivos o los animales y bajan la cantidad y la calidad de lo que produces. En el "
+        "café, por ejemplo, la broca y la roya. La mejor defensa es revisar seguido, "
+        "recoger bien, mantener las plantas sanas y pedir asesoría al técnico antes de "
+        "aplicar cualquier producto.",
+        "El tercero es el riesgo geológico: terremotos, erupciones volcánicas y los "
+        "deslizamientos que ellos provocan. Estos no se pueden evitar, pero sí puedes "
+        "averiguar si tu finca está en una zona de amenaza, no construir la casa ni el "
+        "beneficio al pie de un talud y tener claro con tu familia por dónde salir y a "
+        "dónde ir si pasa algo.",
+        "El cuarto es el riesgo financiero: cuando el precio de lo que vendes baja o el de "
+        "los abonos sube, cuando el dólar cambia o cuando no consigues crédito a tiempo. "
+        "Para manejarlo, lleva las cuentas de cada cosecha, ten un ahorro para emergencias, "
+        "no dependas de un solo producto si puedes diversificar y desconfía de los "
+        "préstamos gota a gota.",
+        "Para los riesgos que no puedes controlar existen herramientas que reparten el "
+        "golpe, como los seguros agropecuarios: se paga una suma pequeña y, si pasa el daño "
+        "cubierto, se recibe una ayuda para recuperarse. Vale la pena entender bien cómo "
+        "funcionan y qué cubren antes de decidir. CIMA no vende seguros: aquí solo te "
+        "explicamos para que decidas con información.",
+        "Esta semana haz tu propio mapa de riesgos: en una hoja escribe los cuatro tipos y "
+        "al lado lo que más te ha afectado en los últimos años. Escoge el que más te "
+        "preocupa y anota una sola cosa que puedes hacer este mes para prepararte.",
+    ),
+    key_points=(
+        "Los cuatro riesgos principales del campo son climáticos, biológicos, geológicos y financieros.",
+        "Los riesgos siempre existen: lo importante es prevenirlos, prepararse y reducir su impacto.",
+        "Llevar las cuentas y tener un ahorro de emergencia te protege del riesgo financiero.",
+        "Antes de decidir sobre un seguro, entiende bien qué cubre y qué no.",
+    ),
+    video_file="agro-riesgos.mp4",
+)
+
+_TIENDA_VIDEOS = CapsuleSpec(
+    slug="tienda-tu-negocio-en-video",
+    topic=TOPIC_FINANZAS,
+    tags=("tienda_barrio", "fruteria"),
+    relevance=8.6,
+    title="Muestra tu negocio en video sin miedo a la cámara",
+    summary="Cómo grabar videos sencillos con tu celular para que más clientes conozcan tu tienda, sin gastar plata.",
+    paragraphs=(
+        "Si sabes atender a un cliente en el mostrador, ya sabes hacer un video. Hoy mucha "
+        "gente busca en el celular dónde comprar, y prefiere negocios de personas "
+        "trabajadoras y honestas que muestren cómo es su trabajo de verdad. Un video corto "
+        "en tu estado de WhatsApp o en tus redes puede traerte clientes nuevos sin gastar "
+        "un peso en publicidad.",
+        "El miedo a la cámara es normal. El truco es no pensar que le hablas a un aparato. "
+        "Cuando pongas el celular al frente, imagina que es tu compadre o tu clienta de "
+        "toda la vida que vino a preguntarte algo. Háblale con la misma confianza con que "
+        "la atiendes en la tienda, y el video sale natural.",
+        "No necesitas equipos caros. Limpia el lente del celular, ponte de frente a la luz "
+        "de la puerta o de una ventana y apóyalo en algo firme para que no tiemble. Graba en "
+        "un lugar sin mucho ruido y habla un poco más despacio de lo normal. Con un minuto "
+        "basta: la gente ve completos los videos cortos.",
+        "¿De qué hablar? De lo que tú sabes y tus clientes valoran: la fruta que acaba de "
+        "llegar y cómo escoger la más madura, la promoción de la semana, cómo guardar el "
+        "pan para que dure o el horario de los domingos. Muestra los productos de cerca y "
+        "di los precios claros. Tu experiencia vale y le sirve a otros.",
+        "Cuida también tu negocio y a tu gente. No grabes a clientes ni a niños sin su "
+        "permiso, no muestres la caja, el dinero ni dónde guardas la mercancía, y no digas "
+        "a qué hora cierras con la plata del día. Lo que publicas lo puede ver cualquiera.",
+        "Y haz cuentas para saber si funciona. Pregunta a los clientes nuevos cómo "
+        "supieron de ti y anota cuántos llegaron por un video. Si una idea trae gente, "
+        "repítela; si no, prueba otra. Así cada video es una pequeña inversión de tiempo "
+        "que puedes medir.",
+        "Esta semana graba un video de menos de un minuto mostrando el producto que más se "
+        "vende en tu tienda. Míralo, pregúntale a alguien de confianza qué le pareció y "
+        "publícalo en tu estado. Pierde el miedo: la confianza que le das a tus clientes en "
+        "el mostrador también se nota en la pantalla.",
+    ),
+    key_points=(
+        "Háblale a la cámara como si fuera un cliente de confianza, no un aparato.",
+        "Con luz de frente, el celular firme y un minuto de video es suficiente.",
+        "No grabes la caja, el dinero ni a personas sin su permiso.",
+        "Anota cuántos clientes llegan por tus videos para saber qué funciona.",
+    ),
+    video_file="tienda-videos.mp4",
+)
+
 CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _GENERAL_CLIMA,
     _GENERAL_AGUA,
@@ -686,9 +863,82 @@ CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _CAFE_BROCA,
     _TIENDA_INVENTARIO,
     _FINANZAS_GOTA_A_GOTA,
+    _AGRO_SOSTENIBLE,
+    _AGRO_RIESGOS,
+    _TIENDA_VIDEOS,
 )
 
 PATHS: Final[tuple[PathSpec, ...]] = (
+    PathSpec(
+        slug="ruta-campo-sostenibilidad-y-riesgos",
+        title="Ruta del campo: sostenibilidad y riesgos",
+        summary="Aprende a cuidar el suelo, el agua y la plata de tu finca, y a conocer los riesgos del campo para estar preparado.",
+        capsule_slugs=(_AGRO_SOSTENIBLE.slug, _AGRO_RIESGOS.slug),
+        questions=(
+            QuestionSpec(
+                "¿Qué busca la agricultura sostenible?",
+                (
+                    "Producir lo más posible sin importar el suelo",
+                    "Producir comida y plata cuidando el suelo, el agua y la comunidad",
+                    "Dejar de usar la tierra",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Cuáles son los cuatro riesgos principales del campo?",
+                (
+                    "Climáticos, biológicos, geológicos y financieros",
+                    "Solo las plagas",
+                    "Solo los precios del café",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "Antes de fumigar contra una plaga, ¿qué conviene hacer?",
+                (
+                    "Echar el doble de producto",
+                    "Fumigar toda la finca por si acaso",
+                    "Revisar el daño real y consultar al técnico",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-tienda-negocio-en-video",
+        title="Ruta corta: tu negocio en video",
+        summary="Aprende a grabar videos sencillos con tu celular para que más clientes conozcan tu tienda, cuidando tu seguridad.",
+        capsule_slugs=(_TIENDA_VIDEOS.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Cuál es el truco para perderle el miedo a la cámara?",
+                (
+                    "Hablarle como a un cliente de confianza",
+                    "Leer un papel sin mirar",
+                    "Grabar con los ojos cerrados",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Qué no se debe mostrar en un video de la tienda?",
+                (
+                    "Los productos y sus precios",
+                    "La caja, el dinero o clientes sin su permiso",
+                    "El horario de atención",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Cómo sabes si tus videos te traen clientes?",
+                (
+                    "No hay forma de saberlo",
+                    "Contando los me gusta",
+                    "Preguntando a los clientes nuevos cómo supieron de ti",
+                ),
+                2,
+            ),
+        ),
+    ),
     PathSpec(
         slug="ruta-cafe-broca",
         title="Ruta corta: la broca del café",

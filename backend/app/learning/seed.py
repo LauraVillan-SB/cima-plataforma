@@ -60,6 +60,7 @@ def _capsule_values(spec: CapsuleSpec) -> dict[str, object]:
         "video_id": video.video_id if video else None,
         "video_title": video.title if video else None,
         "video_channel": video.channel if video else None,
+        "video_file": spec.video_file,
     }
 
 

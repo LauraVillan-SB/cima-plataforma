@@ -84,6 +84,10 @@ class Microcapsule(Base):
     video_title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     video_channel: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
+    # Video propio opcional: solo el nombre del archivo en la carpeta de medios
+    # (`MEDIA_FILE_PATTERN`), nunca una ruta ni una URL. La dirección la arma el backend.
+    video_file: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+
     # Fecha de publicación; desempata el orden ante igual relevancia (Req 4.3).
     published_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

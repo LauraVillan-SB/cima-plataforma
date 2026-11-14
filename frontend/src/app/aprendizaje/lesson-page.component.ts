@@ -8,11 +8,15 @@ import {
   LearningService,
   ResultadoFinalizacion,
   Ruta,
+  VideoArchivo,
 } from './learning.service';
 import { etiquetaTema, minutos } from './temas';
 
 /** Tope de tiempo reportado, igual al del backend (24 h). */
 const MAX_ELAPSED_SEC = 86400;
+
+/** Video propio: solo la dirección relativa del backend, igual al patrón del servidor. */
+const PATRON_ARCHIVO = /^\/api\/v1\/aprendizaje\/medios\/[a-z0-9][a-z0-9-]{0,62}\.mp4$/;
 
 /** Solo se incrustan videos de YouTube por HTTPS con identificador de 11 caracteres. */
 const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-9_-]{11}$/;
@@ -52,6 +56,10 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
         <h1 class="titulo">{{ i.capsule.title ?? etiqueta(i.capsule.topic) }}</h1>
         @for (p of i.capsule.paragraphs; track $index) {
           <p class="parrafo">{{ p }}</p>
+        }
+        @if (videoArchivo(); as v) {
+          <video class="video video--archivo" [src]="v.url" controls preload="none" playsinline
+                 [attr.aria-label]="'Video: ' + v.title"></video>
         }
         @if (videoUrl(); as url) {
           <iframe class="video" [src]="url" title="Video complementario"
@@ -94,6 +102,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
       .titulo { margin: 0.25rem 0 1rem; font-size: 1.6rem; }
       .parrafo { margin: 0 0 1rem; }
       .video { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: var(--cima-radio); margin-bottom: 1rem; }
+      .video--archivo { aspect-ratio: auto; max-height: 70vh; background: #000; display: block; }
       .puntos { background: var(--cima-verde-claro); border-left: 6px solid var(--cima-verde); border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 1.5rem; }
       .enlace { display: inline-flex; align-items: center; justify-content: center; width: 100%; margin: 0.5rem 0; text-decoration: none; }
       .volver { display: inline-flex; align-items: center; color: var(--cima-verde-oscuro); font-weight: 600; }
@@ -122,6 +131,11 @@ export class LessonPageComponent {
   readonly item = computed<ItemRuta | null>(
     () => this.ruta()?.items.find((i) => i.capsule.id === this.capsuleId) ?? null,
   );
+  /** Video propio; solo si la dirección es la del backend (relativa y con el prefijo fijo). */
+  readonly videoArchivo = computed<VideoArchivo | null>(() => {
+    const video = this.item()?.capsule.video_file ?? null;
+    return video && PATRON_ARCHIVO.test(video.url) ? video : null;
+  });
   readonly videoUrl = computed<SafeResourceUrl | null>(() => {
     const url = this.item()?.capsule.video?.embed_url ?? '';
     return PATRON_EMBED.test(url) ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;

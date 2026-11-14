@@ -39,6 +39,10 @@ coverage/
 npm-debug.log*
 yarn-error.log*
 
+# ===== Videos de las microcápsulas (pesados; en prod van a almacenamiento de objetos) =====
+backend/media/
+docs/Capsulas/
+
 # ===== Logs =====
 *.log
 logs/

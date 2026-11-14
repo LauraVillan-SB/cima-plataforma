@@ -56,6 +56,14 @@ PACE_SLOW: Final = "slow"
 YOUTUBE_VIDEO_ID_PATTERN: Final = r"^[A-Za-z0-9_-]{11}$"
 YOUTUBE_EMBED_BASE_URL: Final = "https://www.youtube-nocookie.com/embed/"
 
+# Video propio de la microcápsula (alternativa a YouTube). Solo se guarda el nombre del
+# archivo, nunca una ruta: minúsculas, dígitos y guiones, terminado en `.mp4`. Así no
+# puede apuntar fuera de la carpeta de medios (path traversal). La dirección la arma el
+# backend con un prefijo fijo y se sirve solo a quien tiene sesión.
+MEDIA_FILE_PATTERN: Final = r"^[a-z0-9][a-z0-9-]{0,62}\.mp4$"
+MEDIA_URL_PREFIX: Final = "/api/v1/aprendizaje/medios/"
+MEDIA_URL_PATTERN: Final = r"^/api/v1/aprendizaje/medios/[a-z0-9][a-z0-9-]{0,62}\.mp4$"
+
 # Tope del tiempo reportado por el cliente al finalizar una cápsula (24 h). Acota la
 # entrada: un valor mayor no es una medición creíble y se rechaza (validación).
 MAX_ELAPSED_SEC: Final = 86400
