@@ -380,6 +380,7 @@ Convenciones:
     - `GET /api/v1/encuestas/{rutaId}`; presenta la encuesta breve y opcional (escala 1–5) solo si no ha sido respondida ni omitida para esa ruta y Usuario; habilitada al completar la Ruta_de_Aprendizaje o hito (enganche con Learning Service); respuesta por texto o voz coherente con voz-first; omitible sin bloquear
     - _Requirements: 20.1, 20.2, 20.6_
     - _Properties: 44_
+    - Nota (rama `feature/pantalla-encuesta`): pantalla `/encuesta/:rutaId` en el frontend, ofrecida en la celebración al completar la ruta y desde "Mi ruta"; las preguntas se siembran por ruta en `app/learning/seed.py`. El backend exige encuesta activa (404) y ruta completada (409) en presentación y registro, y una segunda respuesta devuelve 409. `answers` pasó a allowlist (`SurveyAnswers`, solo `comentario` ≤ 500) con redacción de PII. La voz se resuelve con el dictado del teclado del celular. Pendiente: persistir la omisión (Req 20.7) con la migración 0018 tras integrar la 0017, y proteger `GET /api/v1/encuestas/reportes` con un rol de analista.
   - [x] 19.2 Implementar validación en servidor y registro agregado sin PII
     - `POST /api/v1/encuestas/{rutaId}/respuestas`; valida tipo/formato/rango (calificación 1–5) antes de registrar, rechazo indicando campo inválido; registra asociado al Perfil_de_Usuario y zona sin PII en ≤ 5 s; reintentos ≤ 3 conservando la respuesta sin pérdida (coordinación con Metrics Service)
     - _Requirements: 20.3, 20.4, 20.5_

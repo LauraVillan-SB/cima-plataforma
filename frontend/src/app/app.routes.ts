@@ -75,6 +75,12 @@ export const routes: Routes = [
     title: 'Microseguros - CIMA',
   },
   {
+    path: 'encuesta/:rutaId',
+    loadComponent: () =>
+      import('./encuesta/survey-page.component').then((m) => m.SurveyPageComponent),
+    title: 'Tu opinión - CIMA',
+  },
+  {
     path: 'logros',
     loadComponent: () =>
       import('./gamificacion/gamification-page.component').then(

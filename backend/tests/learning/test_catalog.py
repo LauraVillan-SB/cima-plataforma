@@ -216,17 +216,18 @@ class _SeedSession:
 
 @pytest.mark.asyncio
 async def test_la_carga_procesa_todo_el_catalogo_en_una_sola_transaccion() -> None:
-    """Una sentencia por cápsula, y una por ruta y por evaluación; un solo commit."""
+    """Una sentencia por cápsula, y por ruta una para la ruta, la evaluación y la encuesta."""
     session = _SeedSession()
 
     resultado = await seed_catalog(session)
 
-    assert (resultado.capsules, resultado.paths, resultado.assessments) == (
+    assert (resultado.capsules, resultado.paths, resultado.assessments, resultado.surveys) == (
         len(CAPSULES),
         len(PATHS),
         len(PATHS),
+        len(PATHS),
     )
-    assert session.executed == len(CAPSULES) + 2 * len(PATHS)
+    assert session.executed == len(CAPSULES) + 3 * len(PATHS)
     assert session.commits == 1
 
 

@@ -44,6 +44,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
           @if (r.path_completed) {
             <p>¡Completaste la ruta! Ya puedes presentar la evaluación.</p>
             <a [routerLink]="['/evaluacion', r.path_id]" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill enlace">Presentar evaluación</a>
+            <a [routerLink]="['/encuesta', r.path_id]" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Cuéntanos qué te pareció (opcional)</a>
           }
           <a routerLink="/aprendizaje" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Volver a las microcápsulas</a>
         </div>
