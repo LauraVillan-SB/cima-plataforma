@@ -34,7 +34,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
         <p role="status" aria-live="polite">Preparando tu certificado...</p>
       } @else if (error(); as mensaje) {
         <div class="sb-ui-alert sb-ui-alert--warning" role="alert">{{ mensaje }}</div>
-        <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large enlace">
+        <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large enlace">
           Ir a mi ruta
         </a>
       } @else if (certificado(); as c) {
@@ -59,7 +59,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
           </p>
         </article>
         <div class="acciones" data-no-leer>
-          <button type="button" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large" (click)="imprimir()">
+          <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large" (click)="imprimir()">
             Imprimir o guardar en PDF
           </button>
           <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large enlace">

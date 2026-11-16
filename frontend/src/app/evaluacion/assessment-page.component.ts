@@ -39,7 +39,7 @@ import {
           @if (r.passed) {
             <p>¡Aprobaste! Tu puntaje fue {{ r.score }} de 100.</p>
             <a
-              class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large"
+              class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large"
               [routerLink]="['/certificado', rutaId]"
             >
               Ver mi certificado

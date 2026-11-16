@@ -63,7 +63,7 @@ import { etiquetaTema, minutos } from './temas';
             }
             @if (r.assessment_passed) {
               <p class="aprobada" role="status">¡Aprobaste la evaluación de esta ruta!</p>
-              <a class="sb-ui-button sb-ui-button--primary sb-ui-button--fill accion" [routerLink]="['/certificado', r.path_id]">
+              <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke accion" [routerLink]="['/certificado', r.path_id]">
                 Ver mi certificado
               </a>
             }
