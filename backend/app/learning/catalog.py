@@ -10,8 +10,10 @@ El contenido principal es el texto; el video de YouTube es un complemento opcion
 solo se carga con un identificador verificado (ver `VideoSpec`). Sin conexión el texto
 sigue funcionando.
 
-Cobertura actual: actividad general (respaldo, Req 4.4), café y tienda de barrio. Las
-demás actividades permitidas reciben el tema general hasta que se agregue su contenido.
+Cobertura actual: actividad general (respaldo, Req 4.4), café y tienda de barrio con los
+tres temas, el Módulo 1 para el campo y la tienda, y una cápsula de ejemplo con su ruta
+para cada una de las demás actividades permitidas (plátano, aguacate, cacao, arroz, maíz,
+ganadería, hortalizas, panadería y miscelánea).
 Requisitos: 4.1, 4.2, 4.3, 4.4, 7.1, 13.4.
 """
 
@@ -850,6 +852,454 @@ _TIENDA_VIDEOS = CapsuleSpec(
     video_file="tienda-videos.mp4",
 )
 
+# --------------------------------------------------------------------------- #
+# Cápsulas de ejemplo para las demás actividades. Texto escrito por el equipo como
+# EJEMPLO, pendiente de revisión técnica de la Escuela: son pautas generales, sin dosis
+# ni productos, que siempre remiten al técnico, al extensionista o al ICA. El video de
+# apoyo es de un canal institucional (AGROSAVIA, Fedegán o el Ministerio de
+# Agricultura), se verificó con oEmbed y se revisó su contenido: es educativo y no
+# promociona productos. Panadería y miscelánea no tienen video: no se encontró uno
+# institucional.
+# --------------------------------------------------------------------------- #
+_PLATANO_LABORES = CapsuleSpec(
+    slug="platano-labores-del-platanal",
+    topic=TOPIC_GESTION_RIESGOS,
+    tags=("platano",),
+    relevance=8.0,
+    title="Las labores del platanal que cuidan tu cosecha",
+    summary="Deshije, deshoje, desbellote y herramientas limpias: lo básico para que el platanal no se enferme y el racimo llene bien.",
+    paragraphs=(
+        "Un platanal sano no depende de la suerte sino de unas labores sencillas hechas "
+        "a tiempo. Cuando se dejan para después, las malezas le roban la comida a la "
+        "planta, las hojas enfermas riegan la sigatoka y las herramientas sucias llevan "
+        "enfermedades como el moko de una mata a otra. Con un poco de orden se pierde "
+        "menos y el racimo sale más pesado.",
+        "Los primeros cinco a siete meses son los más delicados, porque las malezas "
+        "compiten fuerte con la planta joven. Mantén limpio el plato alrededor de cada "
+        "mata y, entre los surcos, deja coberturas nobles que protejan el suelo sin "
+        "competir. Así la tierra no queda pelada con los aguaceros ni se seca tan rápido "
+        "en verano.",
+        "Haz el deshije con criterio: deja en cada sitio la planta madre, un hijo y un "
+        "nieto bien ubicados, y quita los demás colinos para que no se peleen la comida. "
+        "Con el deshoje retira las hojas secas, dobladas o muy manchadas, porque son la "
+        "casa de la sigatoka. Después de cosechar, corta el tallo viejo y pícalo para "
+        "que se descomponga en el lote.",
+        "Cuida el racimo. Quitar la bellota, la flor que queda colgando al final, cada "
+        "quince días evita que los insectos que la visitan lleven el moko a otras "
+        "plantas. Quitar las últimas manos pequeñas ayuda a que las demás llenen mejor, "
+        "y apuntalar o amarrar la mata evita que el viento la tumbe con el racimo "
+        "encima. La bolsa protege la fruta de golpes, plagas y quemaduras del sol.",
+        "Lo más importante es la higiene. Lava y desinfecta el machete y las demás "
+        "herramientas al pasar de una mata a otra, con el producto y la forma que te "
+        "indique el técnico. No traigas colinos ni tierra de otras fincas sin saber de "
+        "dónde vienen. Si ves plantas que se marchitan de un momento a otro o con el "
+        "tallo manchado por dentro, no las muevas y avisa al ICA o al técnico de tu "
+        "zona: hay enfermedades que se riegan muy rápido y su control temprano protege "
+        "a toda la vereda.",
+        "Esta semana recorre tu platanal con una libreta. Anota cuántas matas tienen "
+        "más de tres colinos, cuántas tienen hojas secas colgando y si tus herramientas "
+        "se están limpiando entre mata y mata. Escoge la labor más atrasada y ponte al "
+        "día con ella antes de fin de mes.",
+    ),
+    key_points=(
+        "Mantén limpio el plato de cada mata en los primeros meses y deja coberturas entre surcos.",
+        "Deja madre, hijo y nieto, y quita las hojas secas o muy manchadas.",
+        "Quita la bellota a tiempo y desinfecta las herramientas entre mata y mata.",
+        "Si una planta se marchita de repente, no la muevas y avisa al ICA o al técnico.",
+    ),
+    video=VideoSpec(
+        video_id="VZ-55j2kOjE",
+        title="Prácticas culturales en el cultivo de plátano | Modelo Productivo de Plátano",
+        channel="AGROSAVIA TV",
+    ),
+)
+
+_AGUACATE_SUELO = CapsuleSpec(
+    slug="aguacate-suelo-y-agua",
+    topic=TOPIC_ADAPTACION_CLIMA,
+    tags=("aguacate",),
+    relevance=8.0,
+    title="Aguacate: cuida el suelo y el agua para aguantar el clima",
+    summary="El aguacate no tolera el encharcamiento y sufre con la erosión. Aprende a conocer tu terreno y a manejar el agua antes de que llegue el problema.",
+    paragraphs=(
+        "El aguacate es un árbol exigente con el suelo. Sus raíces necesitan aire, así "
+        "que no aguantan quedar encharcadas, y en las laderas un aguacero fuerte puede "
+        "llevarse la capa buena de la tierra en pocas horas. Con lluvias cada vez más "
+        "fuertes y veranos más largos, cuidar el suelo y el agua es la mejor forma de "
+        "proteger tu inversión.",
+        "Empieza por conocer tu finca. Camínala después de un aguacero y mira por dónde "
+        "corre el agua, dónde se queda empozada, dónde se ven piedras que antes no "
+        "estaban y dónde la tierra se está lavando. Esos son tus puntos de riesgo. "
+        "Anótalos en un croquis sencillo: te servirán para decidir dónde sembrar, dónde "
+        "hacer drenajes y dónde no conviene meter árboles.",
+        "Si vas a sembrar o a renovar, hazlo bien desde el principio. Adecúa el terreno, "
+        "siembra siguiendo las curvas del terreno y deja listos los canales para sacar el "
+        "agua sobrante antes de que llegue el invierno. Un árbol sembrado en un sitio que "
+        "se encharca casi siempre termina enfermo de la raíz, y eso no se arregla después "
+        "con abono.",
+        "Protege la tierra que ya tienes. Mantén el suelo cubierto con hojarasca, "
+        "coberturas o la misma poda picada, para que la lluvia no golpee directo y el sol "
+        "no lo reseque. Fíjate en las señales: si ves lombrices y otros bichos en la "
+        "tierra, es buena señal; si aparecen piedras y raíces al aire, el suelo se está "
+        "perdiendo. Cada cierto tiempo vale la pena hacer un análisis de suelo para "
+        "saber qué le falta, con la orientación del técnico.",
+        "Cuida también el agua de la finca. No siembres ni fumigues pegado a las "
+        "quebradas y nacimientos; deja esas orillas con su vegetación, porque frenan la "
+        "erosión y evitan crecientes y derrumbes. En verano, si tienes riego, aplica el "
+        "agua según lo que pide el árbol en cada etapa y no por costumbre.",
+        "Esta semana haz tu croquis: dibuja la finca, marca con una equis dónde se "
+        "empoza el agua y con un círculo dónde se lava la tierra. Escoge un punto y "
+        "piensa qué arreglo puedes hacer antes de las próximas lluvias: un canal, una "
+        "cobertura o dejar de sembrar en ese sitio.",
+    ),
+    key_points=(
+        "El aguacate no aguanta el encharcamiento: saca el agua sobrante con canales.",
+        "Recorre la finca después de llover y marca dónde se empoza el agua y dónde se lava la tierra.",
+        "Mantén el suelo cubierto con hojarasca o coberturas.",
+        "No siembres ni fumigues pegado a quebradas y nacimientos.",
+    ),
+    video=VideoSpec(
+        video_id="Bt1CHdwGqyE",
+        title="Estrategias de Manejo y conservación de suelos para aguacate Hass – AGROSAVIA",
+        channel="AGROSAVIA TV",
+    ),
+)
+
+_CACAO_MONILIA = CapsuleSpec(
+    slug="cacao-monilia-y-mazorca-negra",
+    topic=TOPIC_GESTION_RIESGOS,
+    tags=("cacao",),
+    relevance=8.0,
+    title="Cacao: frena la monilia y la mazorca negra a tiempo",
+    summary="Dos enfermedades pueden llevarse más de la mitad de la cosecha. Con revisiones frecuentes, poda y orden en el lote se controlan sin gastar de más.",
+    paragraphs=(
+        "La monilia y la mazorca negra, también llamada fitóftora, son las enfermedades "
+        "que más daño le hacen al cacao. Si no se manejan, pueden llevarse más de la "
+        "mitad de la cosecha. La buena noticia es que buena parte del control está en "
+        "tus manos y no cuesta mucha plata: consiste en cortarle el paso al hongo antes "
+        "de que se riegue.",
+        "Aprende a reconocerlas. La monilia empieza con manchas o abultamientos en la "
+        "mazorca y, si se deja, la mazorca se cubre de un polvo blanco o crema. Ese polvo "
+        "son millones de esporas que el viento y la lluvia llevan a las mazorcas sanas. "
+        "La mazorca negra se ve como una mancha oscura que avanza rápido, sobre todo en "
+        "épocas de mucha humedad.",
+        "La clave es sacar las mazorcas enfermas antes de que hagan el polvo. Recorre el "
+        "lote cada semana, de preferencia en la mañana, y retira todas las mazorcas "
+        "enfermas que encuentres. No las dejes colgando ni las amontones al aire libre: "
+        "déjalas en el suelo y cúbrelas con hojarasca para que se descompongan. Las "
+        "cáscaras de la cosecha también deben amontonarse y manejarse, o convertirse en "
+        "abono, como te indique el técnico.",
+        "El hongo vive feliz donde hay humedad y poca luz. Por eso la poda es tan "
+        "importante: quita ramas secas, enfermas o cruzadas, y regula el sombrío para que "
+        "entre el sol y circule el aire. Desyerba a tiempo y no dejes que el lote se "
+        "vuelva un monte cerrado. Cosecha las mazorcas maduras con frecuencia, cada "
+        "quince días más o menos, porque las que se quedan en el árbol se enferman y "
+        "contagian.",
+        "Una planta bien nutrida se defiende mejor. Antes de abonar, haz un análisis de "
+        "suelo y pide al técnico o al extensionista de tu zona un plan según lo que le "
+        "falta a tu tierra. Si piensas usar algún producto contra las enfermedades, "
+        "pregunta primero cuál conviene y cómo aplicarlo con seguridad.",
+        "Esta semana escoge veinte árboles de tu lote y cuenta cuántas mazorcas enfermas "
+        "tienen. Retíralas y anota el número. Repite cada semana durante un mes: si el "
+        "número baja, el manejo está funcionando; si no, revisa con el técnico la poda y "
+        "el sombrío.",
+    ),
+    key_points=(
+        "Recorre el lote cada semana y saca las mazorcas enfermas antes de que hagan el polvo blanco.",
+        "Deja las mazorcas enfermas en el suelo cubiertas con hojarasca.",
+        "Poda y regula el sombrío para que entre luz y circule el aire.",
+        "Abona según el análisis de suelo y consulta al técnico antes de aplicar productos.",
+    ),
+    video=VideoSpec(
+        video_id="SbdpLJJLnNU",
+        title="Manejo y control de la Moniliasis y la Phytophthora en cacao",
+        channel="AGROSAVIA TV",
+    ),
+)
+
+_ARROZ_AGUA = CapsuleSpec(
+    slug="arroz-ahorra-agua",
+    topic=TOPIC_ADAPTACION_CLIMA,
+    tags=("arroz",),
+    relevance=8.0,
+    title="Arroz: produce lo mismo gastando menos agua",
+    summary="Nivelar el lote, hacer caballones en curva y medir el agua que entra y sale permite ahorrar agua y plata, sobre todo en los veranos largos.",
+    paragraphs=(
+        "El arroz es de los cultivos que más agua usa, y cada vez hay más veranos largos "
+        "y más competencia por el agua de los distritos de riego y las quebradas. Cuando "
+        "el agua escasea, el que la desperdicia es el primero en quedarse corto. Por eso "
+        "aprender a usarla mejor no es solo cuidar el ambiente: es asegurar la cosecha y "
+        "bajar los costos.",
+        "El primer paso es nivelar bien el lote. En un terreno desparejo el agua se "
+        "acumula en las partes bajas y no llega a las altas, así que toca echar mucha más "
+        "para cubrirlo todo. Con una buena nivelación el agua se reparte pareja, la "
+        "semilla no se ahoga en los charcos y la maleza no se aprovecha de los sitios "
+        "secos. Los técnicos de los programas de los arroceros muestran que, con estas "
+        "prácticas, se puede ahorrar una parte importante del agua.",
+        "El segundo paso es hacer los caballones siguiendo las curvas del terreno. Así el "
+        "agua entra y sale despacio y de forma uniforme, en lugar de correr y llevarse la "
+        "tierra. Mantén los canales de entrada y de drenaje bien trazados y limpios: el "
+        "agua que se queda estancada donde no debe favorece plagas y enfermedades.",
+        "El tercer paso es medir. Lo que no se mide no se puede mejorar. Poner una "
+        "regleta o una canaleta sencilla a la entrada y a la salida del lote te permite "
+        "saber cuánta agua estás usando y cuánta se te va. Con esos datos puedes ajustar "
+        "los riegos y comparar un lote con otro o una cosecha con la siguiente.",
+        "Usar menos agua también trae otros ahorros: menos semilla perdida, menos "
+        "problemas de plagas y, en muchos casos, menos gasto en productos. Antes de hacer "
+        "cambios grandes, como una nivelación, consulta con el técnico de los arroceros "
+        "o de tu asociación cómo hacerlo en tu zona y qué apoyo hay disponible.",
+        "Esta semana recorre tu lote cuando esté con agua y anota dónde se empoza y dónde "
+        "queda seco. Mira por dónde se escapa el agua al drenaje. Con ese recorrido ya "
+        "sabes cuáles son los puntos que más necesitan arreglo antes de la próxima "
+        "siembra.",
+    ),
+    key_points=(
+        "Un lote bien nivelado reparte el agua pareja y necesita menos riego.",
+        "Haz los caballones en curva y mantén limpios los canales de entrada y drenaje.",
+        "Mide el agua que entra y sale para saber cuánta estás gastando.",
+        "Consulta al técnico de los arroceros antes de hacer cambios grandes en el lote.",
+    ),
+    video=VideoSpec(
+        video_id="7VVK1sfUBlw",
+        title="Agricultura al Día - Ahorro de agua en cultivos de arroz",
+        channel="Ministerio de Agricultura y Desarrollo Rural",
+    ),
+)
+
+_MAIZ_SANIDAD = CapsuleSpec(
+    slug="maiz-plagas-y-enfermedades",
+    topic=TOPIC_GESTION_RIESGOS,
+    tags=("maiz",),
+    relevance=8.0,
+    title="Maíz sano: vigila antes de fumigar",
+    summary="Monitorear el lote, sembrar a la distancia correcta, rotar con leguminosas y usar semilla de calidad previene más pérdidas que fumigar a ciegas.",
+    paragraphs=(
+        "En el maíz, las plagas, los hongos y las malezas pueden quitarte buena parte de "
+        "la cosecha. La reacción más común es fumigar por calendario o porque el vecino "
+        "lo hizo, pero eso cuesta plata, mata a los insectos que te ayudan y con el "
+        "tiempo hace que las plagas se vuelvan más resistentes. Funciona mejor un manejo "
+        "integrado: mirar primero y actuar a tiempo, combinando varias prácticas.",
+        "Todo empieza con buena semilla. Usa semilla certificada o de calidad conocida, "
+        "que cumpla lo que pide el ICA, porque una semilla mala trae problemas desde el "
+        "primer día. Siembra a la distancia recomendada para tu variedad: cuando las "
+        "plantas quedan muy juntas, la humedad se encierra y los hongos de la mazorca "
+        "encuentran el ambiente perfecto.",
+        "Monitorea el lote cada semana. Camina en zigzag y revisa plantas en varios "
+        "sitios: busca hojas comidas, huequitos en el tallo, manchas en las hojas y "
+        "mazorcas dañadas. Anota lo que ves. Si encuentras una plaga al comienzo, todavía "
+        "se puede manejar con controladores biológicos o productos de bajo impacto; si "
+        "esperas a verla en todo el lote, ya es tarde y sale caro.",
+        "Rota los cultivos. Sembrar maíz detrás de maíz en el mismo lote deja que las "
+        "plagas y enfermedades se acumulen de una cosecha a la otra. Alternar con una "
+        "leguminosa, como el frijol o la soya, corta ese ciclo y además mejora el suelo. "
+        "En lotes que tuvieron mucha enfermedad, el manejo de los residuos de la cosecha "
+        "también ayuda; pregunta al técnico cuál es la mejor forma en tu zona.",
+        "Cuando sí haga falta aplicar algo, que sea con criterio. Pregunta al técnico o al "
+        "agrónomo qué producto conviene, en qué momento y cómo aplicarlo con protección. "
+        "Los productos mal usados son peligrosos para tu salud, la de tu familia y el "
+        "agua.",
+        "Esta semana arma tu hoja de monitoreo: en una libreta haz una tabla con la fecha, "
+        "el sitio del lote y lo que encontraste. Revisa veinte plantas en cinco puntos "
+        "distintos. Después de un mes tendrás una idea clara de qué problema te visita "
+        "más y cuándo.",
+    ),
+    key_points=(
+        "Usa semilla certificada o de calidad conocida y siembra a la distancia recomendada.",
+        "Revisa el lote cada semana en varios puntos y anota lo que encuentras.",
+        "Rota el maíz con leguminosas para cortar el ciclo de plagas y enfermedades.",
+        "Antes de aplicar un producto, consulta al técnico cuál, cuándo y cómo.",
+    ),
+    video=VideoSpec(
+        video_id="nzkSsLD3O2I",
+        title="Manejo fitosanitario | Modelo Productivo de Maíz y Soya",
+        channel="AGROSAVIA TV",
+    ),
+)
+
+_GANADERIA_SILVOPASTORIL = CapsuleSpec(
+    slug="ganaderia-arboles-en-el-potrero",
+    topic=TOPIC_ADAPTACION_CLIMA,
+    tags=("ganaderia",),
+    relevance=8.0,
+    title="Árboles en el potrero: más sombra, más comida y menos calor",
+    summary="Las cercas vivas y los sistemas silvopastoriles le dan sombra y forraje al ganado y protegen el suelo. Se puede empezar en pequeño.",
+    paragraphs=(
+        "Con días más calientes y veranos más largos, el ganado sufre: come menos, "
+        "produce menos leche y gana menos peso. Los potreros sin un solo árbol se secan "
+        "rápido y el suelo se compacta. Una salida probada en Colombia es la ganadería "
+        "con árboles, conocida como sistema silvopastoril, que combina pasto, arbustos "
+        "forrajeros y árboles en el mismo potrero.",
+        "No tienes que transformar toda la finca de una vez. Lo más sencillo para empezar "
+        "son las cercas vivas: en lugar de postes muertos, sembrar estacas de árboles que "
+        "pegan fácil y que con el tiempo dan sombra, forraje y madera. Escoge estacas de "
+        "árboles sanos, córtalas en bisel y siémbralas en tierra preparada. El técnico de "
+        "tu zona te puede decir qué especies se dan mejor en tu clima.",
+        "Lo más importante es proteger lo sembrado. El ganado se come los rebrotes "
+        "tiernos y tumba las plantas jóvenes, así que aísla las siembras nuevas con una "
+        "cerca eléctrica temporal, separada un buen trecho de las plantas. Ten paciencia: "
+        "los arbustos forrajeros necesitan varios meses, por lo general de seis a ocho, "
+        "antes de que el ganado los pueda ramonear sin acabarlos.",
+        "Cuando ya tengas árboles y forrajeras en el potrero, maneja bien el pastoreo. "
+        "Divide en potreros más pequeños y rota el ganado, dejando que cada potrero "
+        "descanse el tiempo suficiente para que el pasto y los arbustos se recuperen; en "
+        "muchos casos hablamos de mes y medio a dos meses. Así el suelo se cubre mejor, "
+        "guarda más agua y el potrero produce más comida por hectárea.",
+        "Los beneficios se ven en la cuenta: menos plata en suplementos durante el "
+        "verano, animales menos estresados por el calor y un suelo que no se lava con las "
+        "lluvias. Además, los árboles cuidan las quebradas y atraen aves y otros animales "
+        "que ayudan a controlar plagas.",
+        "Esta semana escoge un lindero de tu finca donde haga falta cambiar postes y "
+        "planea sembrar ahí tu primera cerca viva. Pregunta al técnico qué especie te "
+        "conviene, consigue las estacas y aparta el material para aislarla del ganado. "
+        "Empezar con un tramo corto es suficiente para aprender.",
+    ),
+    key_points=(
+        "Los árboles en el potrero dan sombra, forraje y protegen el suelo del calor y la lluvia.",
+        "Empieza con cercas vivas y pregunta al técnico qué especie se da en tu clima.",
+        "Aísla lo sembrado del ganado y espera varios meses antes del primer ramoneo.",
+        "Rota los potreros y deja que cada uno descanse para que se recupere.",
+    ),
+    video=VideoSpec(
+        video_id="4bsW-61E7c4",
+        title="Cap 107 - Sistemas silvopastoriles al alcance de todos  #manualpracticoganadero",
+        channel="FEDEGAN",
+    ),
+)
+
+_HORTALIZAS_HUERTA = CapsuleSpec(
+    slug="hortalizas-huerta-para-comer-y-vender",
+    topic=TOPIC_FINANZAS,
+    tags=("hortalizas",),
+    relevance=8.0,
+    title="Tu huerta para comer y para vender",
+    summary="Diversificar las hortalizas, hacer abono con los residuos y llevar las cuentas de lo que vendes ayuda a ahorrar en comida y a ganar con los excedentes.",
+    paragraphs=(
+        "Una huerta bien llevada da para dos cosas: para la comida de la casa y para "
+        "vender lo que sobra. Cuando todo el lote está sembrado de una sola hortaliza, un "
+        "mal precio o una plaga te deja sin nada. Cuando siembras varias, siempre hay algo "
+        "que comer y algo que vender, y el riesgo se reparte.",
+        "Diversifica con cabeza. Combina hortalizas de ciclo corto, que se cosechan en "
+        "pocas semanas, con otras de ciclo más largo, para tener cosecha casi todo el "
+        "año. Escoge lo que se da bien en tu clima y lo que la gente de tu zona compra. "
+        "Pregunta en la plaza o en la tienda qué se vende fácil y qué escasea en ciertas "
+        "épocas: esa información vale plata.",
+        "Ahorra en abono aprovechando lo que ya tienes. Con los residuos de la cosecha, "
+        "las cáscaras de la cocina y el estiércol de los animales puedes hacer compost o "
+        "lombriabono. Así devuelves a la tierra lo que le sacaste, gastas menos en abonos "
+        "comprados y el suelo guarda mejor el agua. Usa también buena semilla: una semilla "
+        "barata pero mala te hace perder todo el trabajo.",
+        "Cuida el agua y el suelo. Riega temprano o al final de la tarde, cuando se "
+        "evapora menos, y mantén el suelo cubierto entre las plantas. Si tienes plagas, "
+        "revisa primero con el técnico qué opciones hay antes de usar cualquier producto, "
+        "sobre todo en hortalizas que se comen frescas.",
+        "Lleva las cuentas. Anota cuánto gastas en semilla, abono y agua en cada siembra, "
+        "y cuánto vendes. Anota también lo que la familia se come, porque es plata que no "
+        "tuviste que gastar en el mercado. Al final de cada cosecha sabrás qué hortaliza "
+        "te deja más y cuál conviene cambiar.",
+        "Esta semana haz una lista de las hortalizas que más compra tu familia y de las "
+        "que más se venden en tu vereda o en la plaza. Escoge una que no tengas y que se "
+        "dé en tu clima, y planea sembrar un pedacito para probar. Empieza también una "
+        "hoja de cuentas solo para la huerta.",
+    ),
+    key_points=(
+        "Sembrar varias hortalizas reparte el riesgo y da cosecha casi todo el año.",
+        "Pregunta en la plaza qué se vende fácil antes de decidir qué sembrar.",
+        "Haz compost o lombriabono con los residuos para gastar menos en abono.",
+        "Anota lo que gastas, lo que vendes y lo que se come la familia.",
+    ),
+    video=VideoSpec(
+        video_id="u_eytQ0Hwxc",
+        title="Prácticas sostenibles en el modelo agroalimentario de hortalizas en el Caribe seco colombiano",
+        channel="AGROSAVIA TV",
+    ),
+)
+
+_PANADERIA_COSTOS = CapsuleSpec(
+    slug="panaderia-cuanto-cuesta-tu-pan",
+    topic=TOPIC_FINANZAS,
+    tags=("panaderia",),
+    relevance=8.0,
+    title="¿Cuánto te cuesta de verdad cada pan?",
+    summary="Aprende a sacar el costo de cada producto con la receta, el gas, el empaque y lo que se pierde, para ponerle un precio que sí te deje ganancia.",
+    paragraphs=(
+        "Muchas panaderías venden bastante y aun así sienten que la plata no alcanza. "
+        "Casi siempre el problema es el mismo: no saben cuánto les cuesta de verdad cada "
+        "pan. Ponen el precio mirando al vecino y, cuando suben la harina, el azúcar o el "
+        "gas, siguen vendiendo igual sin darse cuenta de que ya están perdiendo.",
+        "Saca el costo con la receta. Escribe todo lo que lleva una tanda: harina, azúcar, "
+        "huevos, mantequilla, levadura y sal, con la cantidad y lo que te costó. Suma "
+        "todo y divide por el número de panes que salen de esa tanda. Eso es lo que te "
+        "cuestan los ingredientes de cada pan. Repite la cuenta cada vez que te suban un "
+        "insumo importante.",
+        "No te olvides de los costos que no se ven. El gas o la energía del horno, las "
+        "bolsas y el papel, el agua, el arriendo y el pago de quien te ayuda también "
+        "salen de la venta del pan. Una forma sencilla es sumar lo que gastas en eso al "
+        "mes y repartirlo entre los panes que vendes en el mes. Incluye también tu propio "
+        "trabajo: si no te pagas, el negocio parece ganar más de lo que gana.",
+        "Cuenta lo que se pierde. El pan que no se vende, el que se quema o se daña "
+        "también es costo. Anota cada día cuánto te sobra de cada producto. Si de un pan "
+        "siempre sobra, haz menos o cambia la hora en que lo horneas; si de otro siempre "
+        "falta, ahí hay una venta que estás dejando ir.",
+        "Con el costo completo ya puedes poner un precio con cabeza. El precio debe cubrir "
+        "el costo y dejar una ganancia. Si no puedes subirlo sin perder clientes, busca "
+        "dónde ahorrar: comprar algunos insumos en mayor cantidad con otros panaderos, "
+        "ajustar el tamaño o hacer menos de lo que no se vende.",
+        "Esta semana escoge tus tres panes que más vendes y saca el costo de cada uno con "
+        "la receta. Compáralo con el precio al que lo vendes. Si la diferencia es muy "
+        "pequeña o no alcanza para los demás gastos, ya sabes por dónde empezar a "
+        "ajustar.",
+    ),
+    key_points=(
+        "Saca el costo de cada pan con la receta y repítelo cuando suban los insumos.",
+        "Suma el gas, el empaque, el arriendo y tu propio trabajo, no solo los ingredientes.",
+        "Anota cada día lo que sobra o se daña: también es costo.",
+        "El precio debe cubrir el costo completo y dejar una ganancia.",
+    ),
+)
+
+_MISCELANEA_FIADO = CapsuleSpec(
+    slug="miscelanea-el-fiado",
+    topic=TOPIC_FINANZAS,
+    tags=("miscelanea",),
+    relevance=8.0,
+    title="El fiado: cómo darlo sin quebrar tu negocio",
+    summary="Fiar ayuda a los clientes y a vender más, pero sin control se vuelve plata que nunca vuelve. Aprende a llevarlo con orden y con límites claros.",
+    paragraphs=(
+        "En muchos negocios de barrio el fiado es parte de la relación con los clientes. "
+        "Ayuda a la gente cuando está corta de plata y hace que vuelvan. Pero cada cosa "
+        "que fías es mercancía que ya pagaste y todavía no te han pagado. Si el fiado "
+        "crece sin control, un día te das cuenta de que tienes el estante vacío, la caja "
+        "sin plata y un cuaderno lleno de deudas.",
+        "Lleva el fiado por escrito, siempre. Ten un cuaderno solo para eso, con una "
+        "página por cliente. Anota la fecha, lo que se llevó, el valor y lo que abona. "
+        "Pídele al cliente que revise y que firme o ponga sus iniciales cuando se lleve "
+        "algo. Así no hay discusiones después y tú sabes en todo momento cuánto te deben.",
+        "Ponle límites. Decide cuánto es lo máximo que le fías a cada cliente y hasta "
+        "cuándo tiene para pagar, por ejemplo hasta la quincena. Díselo con claridad y con "
+        "respeto desde el principio. Si alguien ya llegó a su límite o no ha pagado lo "
+        "anterior, no le fíes más hasta que se ponga al día. No es desconfianza: es "
+        "cuidar el negocio que también le sirve a él.",
+        "Mira el total cada semana. Suma todo lo que te deben y compáralo con lo que "
+        "vendes en una semana. Si el fiado se te está acercando a lo que vendes, estás "
+        "financiando a tus clientes con la plata que necesitas para surtir. En ese caso, "
+        "frena el fiado nuevo y concéntrate en cobrar lo que ya tienes en la calle.",
+        "Cobra con tacto pero cobra. Recuérdale al cliente la fecha acordada, ofrécele "
+        "abonar por partes si le queda difícil y agradécele cuando paga. Separa la plata "
+        "del negocio de la de la casa, para que lo que te pagan del fiado vuelva al "
+        "negocio y no se pierda en otros gastos.",
+        "Esta semana suma todo lo que te deben en el cuaderno del fiado y anota el total. "
+        "Mira quiénes llevan más de un mes sin pagar y define con cada uno una fecha para "
+        "ponerse al día. Decide también cuál va a ser tu límite de fiado por cliente de "
+        "aquí en adelante.",
+    ),
+    key_points=(
+        "Lo que fías es mercancía que ya pagaste y todavía no te han pagado.",
+        "Anota todo en un cuaderno, con una página por cliente y su firma o iniciales.",
+        "Pon un límite y una fecha de pago a cada cliente, y díselo desde el principio.",
+        "Suma el fiado cada semana: si se acerca a lo que vendes, frena y cobra.",
+    ),
+)
+
 CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _GENERAL_CLIMA,
     _GENERAL_AGUA,
@@ -866,6 +1316,15 @@ CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _AGRO_SOSTENIBLE,
     _AGRO_RIESGOS,
     _TIENDA_VIDEOS,
+    _PLATANO_LABORES,
+    _AGUACATE_SUELO,
+    _CACAO_MONILIA,
+    _ARROZ_AGUA,
+    _MAIZ_SANIDAD,
+    _GANADERIA_SILVOPASTORIL,
+    _HORTALIZAS_HUERTA,
+    _PANADERIA_COSTOS,
+    _MISCELANEA_FIADO,
 )
 
 PATHS: Final[tuple[PathSpec, ...]] = (
@@ -1146,6 +1605,322 @@ PATHS: Final[tuple[PathSpec, ...]] = (
                     "Solo el valor de la primera cuota",
                 ),
                 0,
+            ),
+        ),
+    ),
+    # Rutas cortas de ejemplo, una por actividad (pendientes de revisión de la Escuela).
+    PathSpec(
+        slug="ruta-platano-labores",
+        title="Ruta corta: las labores del platanal",
+        summary="Aprende las labores que mantienen sano tu platanal y hacen que el racimo llene bien.",
+        capsule_slugs=(_PLATANO_LABORES.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Qué plantas conviene dejar en cada sitio al deshijar?",
+                (
+                    "Todos los colinos que salgan",
+                    "La madre, un hijo y un nieto",
+                    "Solo la planta madre",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Por qué hay que desinfectar las herramientas entre mata y mata?",
+                (
+                    "Para que no se oxiden",
+                    "Porque así cortan más rápido",
+                    "Para no llevar enfermedades como el moko a otras plantas",
+                ),
+                2,
+            ),
+            QuestionSpec(
+                "Si una planta se marchita de un momento a otro, ¿qué debes hacer?",
+                (
+                    "No moverla y avisar al ICA o al técnico",
+                    "Arrancarla y llevarla a otra finca",
+                    "Echarle el doble de abono",
+                ),
+                0,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-aguacate-suelo",
+        title="Ruta corta: suelo y agua en el aguacate",
+        summary="Conoce tu terreno y maneja el agua para que el aguacate aguante las lluvias fuertes y los veranos largos.",
+        capsule_slugs=(_AGUACATE_SUELO.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Qué le pasa al aguacate en un sitio que se encharca?",
+                (
+                    "Crece más rápido",
+                    "Suele enfermarse de la raíz",
+                    "Da más fruta",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Cuándo conviene recorrer la finca para ver los puntos de riesgo?",
+                (
+                    "Después de un aguacero",
+                    "Solo en verano",
+                    "Nunca, no hace falta",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Qué conviene hacer en las orillas de quebradas y nacimientos?",
+                (
+                    "Sembrar aguacate hasta el borde",
+                    "Fumigar para limpiarlas",
+                    "Dejarlas con su vegetación y no fumigar ahí",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-cacao-monilia",
+        title="Ruta corta: monilia y mazorca negra en el cacao",
+        summary="Reconoce las dos enfermedades que más dañan el cacao y aprende a frenarlas con revisión, poda y orden.",
+        capsule_slugs=(_CACAO_MONILIA.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Cuándo hay que sacar las mazorcas con monilia?",
+                (
+                    "Cuando ya están cubiertas de polvo blanco",
+                    "Antes de que hagan el polvo blanco",
+                    "Solo al final de la cosecha",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Qué se hace con las mazorcas enfermas que se retiran?",
+                (
+                    "Se dejan en el suelo cubiertas con hojarasca",
+                    "Se dejan colgando en el árbol",
+                    "Se llevan a otra finca",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Por qué ayuda la poda contra estas enfermedades?",
+                (
+                    "Porque el árbol queda más bonito",
+                    "Porque así se usa menos abono",
+                    "Porque entra luz y circula el aire, y el hongo prospera con humedad y sombra",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-arroz-agua",
+        title="Ruta corta: ahorra agua en el arroz",
+        summary="Aprende a nivelar, a hacer caballones en curva y a medir el agua para producir gastando menos.",
+        capsule_slugs=(_ARROZ_AGUA.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Para qué sirve nivelar bien el lote de arroz?",
+                (
+                    "Para que el agua se reparta pareja y se necesite menos",
+                    "Para que crezca más maleza",
+                    "Para que el agua se acumule en las partes bajas",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Cómo conviene hacer los caballones?",
+                (
+                    "En línea recta, sin importar el terreno",
+                    "Siguiendo las curvas del terreno",
+                    "No hace falta hacerlos",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Por qué es útil medir el agua que entra y sale del lote?",
+                (
+                    "Porque lo pide el vecino",
+                    "No sirve para nada",
+                    "Para saber cuánta gastas y cuánta se te va",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-maiz-sanidad",
+        title="Ruta corta: maíz sano",
+        summary="Aprende a vigilar tu lote de maíz y a combinar prácticas para tener menos plagas y enfermedades.",
+        capsule_slugs=(_MAIZ_SANIDAD.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Cada cuánto conviene revisar el lote de maíz?",
+                (
+                    "Cada semana, en varios puntos",
+                    "Solo cuando se ve todo dañado",
+                    "Una vez al año",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Qué ayuda a cortar el ciclo de plagas y enfermedades?",
+                (
+                    "Sembrar maíz detrás de maíz",
+                    "Rotar el maíz con una leguminosa",
+                    "Sembrar las plantas muy juntas",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "Antes de aplicar un producto, ¿qué debes hacer?",
+                (
+                    "Usar el que tenga el vecino",
+                    "Mezclar varios para estar seguro",
+                    "Preguntar al técnico cuál, cuándo y cómo aplicarlo",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-ganaderia-arboles",
+        title="Ruta corta: árboles en el potrero",
+        summary="Aprende a empezar con cercas vivas y a manejar el pastoreo para tener más sombra y comida para el ganado.",
+        capsule_slugs=(_GANADERIA_SILVOPASTORIL.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Cuál es una forma sencilla de empezar con árboles en la finca?",
+                (
+                    "Sembrar cercas vivas",
+                    "Tumbar los árboles que quedan",
+                    "Cambiar todo el potrero de una vez",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Qué hay que hacer con lo recién sembrado?",
+                (
+                    "Dejar que el ganado lo ramonee de inmediato",
+                    "Aislarlo del ganado hasta que crezca",
+                    "No regarlo nunca",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Para qué sirve rotar los potreros?",
+                (
+                    "Para que el ganado camine más",
+                    "Para gastar más cerca",
+                    "Para que cada potrero descanse y se recupere",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-hortalizas-huerta",
+        title="Ruta corta: tu huerta para comer y vender",
+        summary="Aprende a diversificar tu huerta, a ahorrar en abono y a llevar las cuentas de lo que vendes.",
+        capsule_slugs=(_HORTALIZAS_HUERTA.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Por qué conviene sembrar varias hortalizas y no una sola?",
+                (
+                    "Porque se reparte el riesgo y hay cosecha casi todo el año",
+                    "Porque así se gasta más semilla",
+                    "No conviene, es mejor una sola",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Cómo se puede ahorrar en abono?",
+                (
+                    "Botando los residuos de la cosecha",
+                    "Haciendo compost o lombriabono con los residuos",
+                    "Comprando el doble de abono",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Qué conviene anotar en las cuentas de la huerta?",
+                (
+                    "Solo lo que se vende",
+                    "Nada, no hace falta",
+                    "Lo que gastas, lo que vendes y lo que se come la familia",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-panaderia-costos",
+        title="Ruta corta: el costo de tu pan",
+        summary="Aprende a sacar el costo real de cada pan para ponerle un precio que sí te deje ganancia.",
+        capsule_slugs=(_PANADERIA_COSTOS.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Cómo se saca el costo de los ingredientes de cada pan?",
+                (
+                    "Sumando lo que lleva una tanda y dividiendo por los panes que salen",
+                    "Mirando el precio del vecino",
+                    "Adivinando",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Qué otros costos debes sumar además de los ingredientes?",
+                (
+                    "Ninguno",
+                    "El gas, el empaque, el arriendo y tu propio trabajo",
+                    "Solo el arriendo",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "¿Qué debe cubrir el precio del pan?",
+                (
+                    "Solo la harina",
+                    "Lo mismo que cobra el vecino",
+                    "El costo completo y una ganancia",
+                ),
+                2,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-miscelanea-fiado",
+        title="Ruta corta: el fiado con orden",
+        summary="Aprende a llevar el fiado por escrito y con límites para que no se coma la plata de tu negocio.",
+        capsule_slugs=(_MISCELANEA_FIADO.slug,),
+        questions=(
+            QuestionSpec(
+                "¿Qué es, en el fondo, lo que fías?",
+                (
+                    "Mercancía que ya pagaste y todavía no te han pagado",
+                    "Un regalo para el cliente",
+                    "Plata que no importa",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "¿Qué conviene acordar con cada cliente al fiarle?",
+                (
+                    "Nada, para no incomodarlo",
+                    "Un límite y una fecha de pago",
+                    "Que pague cuando quiera",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "Si el total del fiado se acerca a lo que vendes en una semana, ¿qué haces?",
+                (
+                    "Fiar más para vender más",
+                    "Cerrar el negocio",
+                    "Frenar el fiado nuevo y cobrar lo que ya te deben",
+                ),
+                2,
             ),
         ),
     ),
