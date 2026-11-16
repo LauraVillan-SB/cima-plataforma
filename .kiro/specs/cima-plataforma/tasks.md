@@ -325,9 +325,10 @@ Convenciones:
     - **Property 16: Invariante de estado de entrega de incentivo**
     - **Validates: Requirements 5.1, 5.2, 5.3**
     - Nota: Property 16 cubierta en `tests/conversion/test_incentivos.py` (reintentos ≤ 3, pendiente definitivo tras 3 fallos, completitud de ruta conservada), con stub de sesión en memoria y canal de entrega inyectable; 7/7 en verde.
-  - [ ]* 16.4 Escribir test de propiedad para opciones de microseguro acotadas
+  - [x]* 16.4 Escribir test de propiedad para opciones de microseguro acotadas
     - **Property 17: Opciones de microseguro acotadas y pertinentes**
     - **Validates: Requirements 5.4**
+    - Nota: cubierta en `tests/conversion/test_service.py` con Hypothesis: catálogos generados con 1 a 10 opciones por tipo (la oferta queda entre 1 y 5, son las primeras de su tipo y ninguna de otro tipo) y el catálogo real para todo tipo permitido. Se comprobó que falla si se quita el límite de 5.
 
 - [ ] 17. Gamification Service — Insignias y puntos (Req 19)
   - [~] 17.1 Implementar otorgamiento idempotente de insignias y puntos
@@ -341,12 +342,14 @@ Convenciones:
     - _Requirements: 19.7, 19.8_
     - _Properties: 42_
     - Nota: implementado en `app/gamification/` (`service.get_recognitions`, `router.py`). El titular sale de la cookie de sesión. Se aceptó un parámetro opcional `perfil_id` solo para cumplir el Req 19.8: si no coincide con el Usuario autenticado se responde 403 antes de consultar la BD (idéntico exista o no ese Perfil) y se registra el intento solo con ids internos. La respuesta (`RecognitionSummary`) no incluye el id del Perfil ni PII. El endpoint no se probó con un cliente HTTP real (solo la lógica del servicio con sesión simulada).
-  - [ ]* 17.3 Escribir test de propiedad para idempotencia del otorgamiento
+  - [x]* 17.3 Escribir test de propiedad para idempotencia del otorgamiento
     - **Property 41: Idempotencia del otorgamiento de insignias**
     - **Validates: Requirements 19.5**
-  - [ ]* 17.4 Escribir test de propiedad para autorización en consulta de reconocimientos
+    - Nota: cubierta en `tests/gamification/test_service.py` con Hypothesis: secuencias de hasta 12 otorgamientos que mezclan reintentos con el mismo evento, eventos reutilizados para otra Insignia y conflictos de concurrencia. Queda a lo sumo un registro por Insignia y los puntos de un solo otorgamiento. Se comprobó que falla si el servicio no detecta la Insignia ya otorgada.
+  - [x]* 17.4 Escribir test de propiedad para autorización en consulta de reconocimientos
     - **Property 42: Autorización por propiedad en consulta de reconocimientos**
     - **Validates: Requirements 19.7, 19.8**
+    - Nota: cubierta en `tests/gamification/test_query.py` con Hypothesis: de 2 a 5 Perfiles con Insignias y puntos generados. Cada titular ve solo lo suyo; pedir un Perfil ajeno, exista o no, da 403 sin consultar la BD, con el mismo mensaje y sin el id pedido. Se comprobó que falla si se quita la verificación de titular.
 
 - [x] 18. Metrics Service + Tablero ODS (Req 8, Req 15)
   - [x] 18.1 Implementar registro de eventos con asignación de zona idempotente

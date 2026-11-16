@@ -11,8 +11,11 @@ No usan BD real: un stub de sesión en memoria simula `get`, `scalar`, `add`,
 from __future__ import annotations
 
 import uuid
+from unittest.mock import patch
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from app.common.errors import NotFoundError, ValidationError
 from app.conversion import service
@@ -22,6 +25,7 @@ from app.conversion.constants import (
 )
 from app.conversion.dto import ConversionIntentCreate
 from app.conversion.models import ConversionIntent
+from app.profile.constants import ALLOWED_ACTIVITY_TYPES
 from app.profile.models import Profile
 
 _PATH_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
@@ -208,3 +212,63 @@ def test_codigos_de_opcion_son_unicos() -> None:
         for opcion in opciones
     ]
     assert len(codigos) == len(set(codigos))
+
+
+# --- Property 17: opciones acotadas y pertinentes (Req 5.4) -----------------
+
+_TIPOS = sorted(ALLOWED_ACTIVITY_TYPES)
+
+
+@st.composite
+def _catalogo_y_tipo(draw: st.DrawFn) -> tuple[dict[str, list[dict[str, str]]], str]:
+    """Genera un catálogo con 1 a 10 opciones por tipo y el tipo del Perfil.
+
+    Se permiten más opciones que el máximo para comprobar que el servicio recorta.
+    Los códigos llevan el tipo como prefijo, así que nunca se repiten entre tipos.
+    """
+    tipos = draw(st.lists(st.sampled_from(_TIPOS), min_size=1, max_size=4, unique=True))
+    catalogo = {
+        tipo: [
+            {"codigo": f"ms_{tipo}_{i}", "nombre": f"Opción {i}", "descripcion": "Ejemplo."}
+            for i in range(draw(st.integers(min_value=1, max_value=10)))
+        ]
+        for tipo in tipos
+    }
+    return catalogo, draw(st.sampled_from(tipos))
+
+
+# Feature: cima-plataforma, Property 17: Opciones de microseguro acotadas y pertinentes.
+# Validates: Requirements 5.4
+@settings(max_examples=100, deadline=None)
+@given(datos=_catalogo_y_tipo())
+@pytest.mark.asyncio
+async def test_property_17_oferta_acotada_y_del_tipo_del_perfil(
+    datos: tuple[dict[str, list[dict[str, str]]], str],
+) -> None:
+    """Con oferta disponible hay entre 1 y 5 opciones y todas son del tipo del Perfil."""
+    catalogo, tipo = datos
+    profile = _profile(tipo)
+    with patch.object(service, "MICROINSURANCE_CATALOG", catalogo):
+        offer = await service.build_offer(_FakeSession(profile), _PATH_ID, profile.id)
+    codigos = [opcion.codigo for opcion in offer.options]
+    disponibles = [opcion["codigo"] for opcion in catalogo[tipo]]
+    assert 1 <= len(codigos) <= MAX_MICROINSURANCE_OPTIONS
+    assert codigos == disponibles[:MAX_MICROINSURANCE_OPTIONS]
+    ajenos = {o["codigo"] for t, ops in catalogo.items() if t != tipo for o in ops}
+    assert not ajenos & set(codigos)
+    assert offer.activity_type == tipo
+
+
+# Feature: cima-plataforma, Property 17 sobre el catálogo real.
+# Validates: Requirements 5.4
+@settings(max_examples=50, deadline=None)
+@given(tipo=st.sampled_from(_TIPOS))
+@pytest.mark.asyncio
+async def test_property_17_catalogo_real_para_todo_tipo_permitido(tipo: str) -> None:
+    """Para todo tipo permitido, la oferta real está acotada y es de ese tipo, o está vacía."""
+    profile = _profile(tipo)
+    offer = await service.build_offer(_FakeSession(profile), _PATH_ID, profile.id)
+    propios = {opcion["codigo"] for opcion in MICROINSURANCE_CATALOG.get(tipo, [])}
+    assert len(offer.options) <= MAX_MICROINSURANCE_OPTIONS
+    assert {opcion.codigo for opcion in offer.options} <= propios
+    assert bool(offer.options) == bool(propios)
