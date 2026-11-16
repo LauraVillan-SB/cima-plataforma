@@ -448,6 +448,7 @@ Convenciones:
     - axe-core/Lighthouse para contraste/roles AA y objetivos táctiles; budgets de bundle (≤ 500 KB / ≤ 50 KB) y TTI ≤ 3 s con throttling 3G
     - _Requirements: 2.2, 2.3, 2.4, 13.2, 13.3_
     - Nota: budgets de bundle cubiertos con `npm run presupuesto` (≤ 500 kB inicial, ≤ 50 kB visita posterior, medido sobre el build real y con pruebas en `scripts/presupuesto-carga.spec.cjs`). **Falta:** axe-core/Lighthouse para contraste, roles y objetivos táctiles, y TTI ≤ 3 s con throttling 3G (Req 2.2), que requieren un navegador.
+    - Nota (rama `fix/accesibilidad-pantallas`, PR #100): se auditaron las 13 pantallas con Chrome a 360 y 320 px (árbol de accesibilidad, contraste calculado, objetivos táctiles, `lang`, `title`, encabezados y desborde) y se corrigió el contraste de los botones principales y del filtro activo; con el código final no quedan hallazgos. **Falta:** una auditoría automática en CI (axe-core o Lighthouse desde JFrog), el foco con teclado, lectores de pantalla reales y el TTI en 3G.
 
 - [ ] 24. Integración y cableado final
   - [~] 24.1 Cablear API Gateway, headers de seguridad y OpenAPI
