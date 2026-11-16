@@ -36,14 +36,14 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
           No pudimos cargar esta lección. Vuelve a las microcápsulas e intenta de nuevo.
         </div>
-        <a routerLink="/aprendizaje" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill enlace">Volver</a>
+        <a routerLink="/aprendizaje" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke enlace">Volver</a>
       } @else if (resultado(); as r) {
         <div class="celebra" role="status" aria-live="polite">
           <h1 class="celebra__titulo">¡Muy bien! Terminaste la lección</h1>
           <p>Llevas {{ r.completed_count }} de {{ r.total_count }} microcápsulas de esta ruta.</p>
           @if (r.path_completed) {
             <p>¡Completaste la ruta! Ya puedes presentar la evaluación.</p>
-            <a [routerLink]="['/evaluacion', r.path_id]" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill enlace">Presentar evaluación</a>
+            <a [routerLink]="['/evaluacion', r.path_id]" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Presentar evaluación</a>
           }
           <a routerLink="/aprendizaje" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Volver a las microcápsulas</a>
         </div>
@@ -73,7 +73,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
             Completa primero la microcápsula anterior de esta ruta.
           </div>
         } @else if (i.status === 'next') {
-          <button type="button" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill enlace"
+          <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke enlace"
                   [disabled]="enviando()" (click)="terminar(i)">
             {{ enviando() ? 'Guardando...' : 'Terminé la lección' }}
           </button>

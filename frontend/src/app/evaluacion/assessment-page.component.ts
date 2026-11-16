@@ -73,7 +73,7 @@ import {
           }
           <button
             type="submit"
-            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large enviar"
+            class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large enviar"
             [disabled]="enviando() || !completa(ev)"
           >
             {{ enviando() ? 'Enviando...' : 'Enviar respuestas' }}

@@ -31,7 +31,7 @@ interface TarjetaCapsula {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
           No pudimos cargar tus microcápsulas. Revisa tu conexión e intenta de nuevo.
         </div>
-        <button type="button" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill" (click)="cargar()">
+        <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke" (click)="cargar()">
           Reintentar
         </button>
       } @else {
@@ -86,7 +86,7 @@ interface TarjetaCapsula {
                     Completa la anterior
                   </button>
                 } @else {
-                  <a class="sb-ui-button sb-ui-button--primary sb-ui-button--fill"
+                  <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke"
                      [routerLink]="['/aprendizaje/leccion', t.pathId, t.capsula.id]">
                     {{ t.estado === 'completed' ? 'Repasar' : 'Empezar' }}
                   </a>
@@ -109,10 +109,12 @@ interface TarjetaCapsula {
       .barra__relleno { background: var(--cima-dorado); height: 100%; transition: width 0.3s; }
       .filtros { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; }
       .filtro { border: 2px solid var(--cima-verde); background: #fff; color: var(--cima-verde-oscuro); border-radius: 999px; padding: 0 1rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
-      .filtro--activo { background: var(--cima-verde); color: #fff; }
+      /* Verde oscuro: el blanco sobre --cima-verde da 4,1:1 y WCAG 1.4.3 pide 4,5:1 (Req 13.2). */
+      .filtro--activo { background: var(--cima-verde-oscuro); border-color: var(--cima-verde-oscuro); color: #fff; }
       .lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
       .tarjeta { background: var(--cima-superficie); border: 1px solid var(--cima-borde); border-radius: var(--cima-radio); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
-      .tarjeta--lista { border-color: var(--cima-verde); background: var(--cima-verde-claro); }
+      /* Sin fondo verde claro: el botón con borde es transparente y su texto quedaba en 4,22:1 (Req 13.2). */
+      .tarjeta--lista { border-color: var(--cima-verde); }
       .tarjeta__tema { font-weight: 700; color: var(--cima-verde-oscuro); font-size: 0.95rem; }
       .tarjeta__titulo { margin: 0; font-size: 1.2rem; }
       .tarjeta__texto, .tarjeta__meta, .tarjeta__estado { margin: 0; color: var(--cima-texto-suave); }
