@@ -40,7 +40,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
         <p role="status" aria-live="polite">Cargando la encuesta...</p>
       } @else if (errorCarga(); as mensaje) {
         <div class="sb-ui-alert sb-ui-alert--info" role="status">{{ mensaje }}</div>
-        <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large enlace">
+        <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large enlace">
           Volver a mi ruta
         </a>
       } @else if (enviada() || encuesta()?.already_answered) {
@@ -48,7 +48,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
           <p class="gracias__titulo">¡Gracias por contarnos!</p>
           <p>Tu opinión nos ayuda a mejorar la Escuela.</p>
         </div>
-        <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large enlace">
+        <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large enlace">
           Volver a mi ruta
         </a>
       } @else if (encuesta()) {
@@ -96,7 +96,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 
           <button
             type="submit"
-            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large enlace"
+            class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large enlace"
             [disabled]="!puedeEnviar()"
           >
             {{ enviando() ? 'Enviando...' : 'Enviar mi opinión' }}
