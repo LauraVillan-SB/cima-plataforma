@@ -84,6 +84,21 @@ def test_existe_tema_general_de_respaldo() -> None:
     assert all(c.topic == FALLBACK_TOPIC for c in general)
 
 
+def test_cada_actividad_del_perfil_tiene_contenido_propio() -> None:
+    """Ninguna actividad permitida queda solo con el tema general (Req 4.3, 4.4)."""
+    for actividad in ALLOWED_ACTIVITY_TYPES:
+        propias = [c for c in CAPSULES if actividad in c.tags]
+        assert propias, actividad
+        con_ruta = {s for p in PATHS for s in p.capsule_slugs}
+        assert any(c.slug in con_ruta for c in propias), actividad
+
+
+@pytest.mark.parametrize("spec", [c for c in CAPSULES if c.video is not None], ids=lambda s: s.slug)
+def test_los_videos_de_youtube_dan_credito_al_canal(spec: CapsuleSpec) -> None:
+    """Cada video de apoyo trae el título y el canal verificados para dar el crédito."""
+    assert spec.video.title.strip() and spec.video.channel.strip()
+
+
 def test_cada_actividad_cubre_los_tres_temas() -> None:
     """Quien tiene contenido propio recibe clima, finanzas y gestión de riesgos."""
     for actividad in ("cafe", "tienda_barrio"):
