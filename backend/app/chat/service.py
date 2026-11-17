@@ -52,11 +52,10 @@ from app.chat.inference import (
     NoopTts,
     SpeechToText,
     TextToSpeech,
-    UnavailableStt,
 )
 from app.chat.errors import RedaccionPiiError
 from app.chat.models import AiInteraction
-from app.chat.proveedores import obtener_modelo
+from app.chat.proveedores import obtener_modelo, obtener_stt
 from app.chat.prompt import ETIQUETAS_ACTIVIDAD, construir_prompt, contexto_del_perfil
 from app.chat.redaction import redactar_pii
 from app.chat.validation import validar_mensaje_texto, validar_nota_de_voz
@@ -151,7 +150,7 @@ async def encolar_nota_de_voz(
         El acuse con el id y el estado ("encolado" o "repetir_voz").
     """
     nota = validar_nota_de_voz(audio, duracion_segundos)
-    stt = stt or UnavailableStt()
+    stt = stt or obtener_stt()
 
     async def _transcribir() -> object:
         return await stt.transcribe(audio, nota.formato)
@@ -200,6 +199,9 @@ async def encolar_nota_de_voz(
         id=interaccion.id,
         status=interaccion.status,
         processing_after_seconds=PROCESSING_INDICATOR_SECONDS,
+        # Lo que se entendió, ya redactado: el cliente lo muestra para que el
+        # Usuario vea si coincide con lo que dijo.
+        input_redacted=interaccion.input_redacted,
     )
 
 
