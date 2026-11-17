@@ -15,6 +15,10 @@ import {
   elegirMimeAudio,
   textoValido,
 } from '../chat/chat';
+import { INTERVALO_MEDICION_MS, hayVozSuficiente, medicionConfiable, nivelRms } from './voz';
+
+/** `AudioContext` con el prefijo que aún usan algunos navegadores de iOS. */
+type ConstructorContexto = new () => AudioContext;
 
 /** Nota de voz grabada, lista para enviarse al servidor (Req 14.2). */
 export interface NotaGrabada {
@@ -148,6 +152,13 @@ export class VozControlComponent {
   private inicioMs = 0;
   private temporizador: ReturnType<typeof setTimeout> | null = null;
 
+  /** Medición del nivel del micrófono para no enviar notas en silencio. */
+  private contextoAudio: AudioContext | null = null;
+  private medidor: ReturnType<typeof setInterval> | null = null;
+  private niveles: number[] = [];
+  /** Si el contexto quedó corriendo; solo así los ceros significan silencio. */
+  private contextoCorriendo = false;
+
   constructor() {
     inject(DestroyRef).onDestroy(() => this.liberar());
   }
@@ -194,6 +205,7 @@ export class VozControlComponent {
     grabadora.onstop = () => this.terminarGrabacion(mime);
     this.grabadora = grabadora;
     this.inicioMs = Date.now();
+    await this.iniciarMedicion(this.flujo);
     grabadora.start();
     this.grabando.set(true);
     this.temporizador = setTimeout(() => grabadora.stop(), CORTE_GRABACION_MS);
@@ -202,12 +214,59 @@ export class VozControlComponent {
   private terminarGrabacion(mime: string): void {
     const duracionSegundos = (Date.now() - this.inicioMs) / 1000;
     const audio = new Blob(this.fragmentos, { type: mime });
+    const niveles = this.niveles;
+    // Si no se pudo medir (sin Web Audio o contexto suspendido) no se bloquea:
+    // el servidor igual pide repetir si no se entendió.
+    const medicionValida = medicionConfiable(this.contextoCorriendo, niveles);
     this.liberar();
     if (!duracionVozValida(duracionSegundos)) {
       this.aviso.set('La nota quedó muy corta. Habla un poco más y vuelve a intentar.');
       return;
     }
+    if (medicionValida && !hayVozSuficiente(niveles)) {
+      this.aviso.set(
+        'No alcanzamos a escuchar tu voz. Habla más cerca del celular y vuelve a intentar.',
+      );
+      return;
+    }
     this.notaGrabada.emit({ audio, mime, duracionSegundos });
+  }
+
+  /**
+   * Mide el nivel del micrófono cada 100 ms mientras se graba. El audio no sale
+   * de aquí: solo se guarda un número por medición, en memoria.
+   */
+  private async iniciarMedicion(flujo: MediaStream): Promise<void> {
+    this.niveles = [];
+    const ventana = window as unknown as {
+      AudioContext?: ConstructorContexto;
+      webkitAudioContext?: ConstructorContexto;
+    };
+    const Contexto = ventana.AudioContext ?? ventana.webkitAudioContext;
+    if (!Contexto) {
+      return;
+    }
+    try {
+      const contexto = new Contexto();
+      if (contexto.state === 'suspended') {
+        await contexto.resume();
+      }
+      const analizador = contexto.createAnalyser();
+      analizador.fftSize = 2048;
+      contexto.createMediaStreamSource(flujo).connect(analizador);
+      const muestras = new Float32Array(analizador.fftSize);
+      this.contextoAudio = contexto;
+      this.contextoCorriendo = contexto.state === 'running';
+      this.medidor = setInterval(() => {
+        analizador.getFloatTimeDomainData(muestras);
+        this.niveles.push(nivelRms(muestras));
+      }, INTERVALO_MEDICION_MS);
+    } catch (error) {
+      // Sin medición se graba igual; solo se pierde esta ayuda.
+      if (!(error instanceof DOMException) && !(error instanceof TypeError)) {
+        throw error;
+      }
+    }
   }
 
   /** Apaga el micrófono, el temporizador y el estado de grabación. */
@@ -216,6 +275,14 @@ export class VozControlComponent {
       clearTimeout(this.temporizador);
       this.temporizador = null;
     }
+    if (this.medidor) {
+      clearInterval(this.medidor);
+      this.medidor = null;
+    }
+    void this.contextoAudio?.close();
+    this.contextoAudio = null;
+    this.contextoCorriendo = false;
+    this.niveles = [];
     this.flujo?.getTracks().forEach((pista) => pista.stop());
     this.flujo = null;
     this.grabadora = null;

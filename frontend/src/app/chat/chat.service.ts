@@ -9,6 +9,8 @@ export interface MensajeAceptado {
   readonly id: string;
   readonly status: string;
   readonly processing_after_seconds: number;
+  /** Solo en notas de voz: lo que se entendió, ya sin datos personales. */
+  readonly input_redacted?: string | null;
 }
 
 /**

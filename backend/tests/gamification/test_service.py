@@ -12,9 +12,13 @@ son ficticios.
 from __future__ import annotations
 
 import uuid
+from contextlib import ExitStack
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from sqlalchemy.exc import IntegrityError
 
 from app.common.errors import NotFoundError, ValidationError
@@ -306,3 +310,70 @@ def test_resultado_expone_solo_campos_permitidos() -> None:
     """El DTO de resultado no incluye identificadores del Perfil ni PII."""
     campos = set(RecognitionGrantResult.__annotations__)
     assert campos == {"badge_code", "badge_name", "total_points", "newly_awarded"}
+
+
+# --- Property 41: idempotencia del otorgamiento (Req 19.5) ------------------
+
+_TRIGGERS = sorted(RECOGNITION_RULES)
+
+# Una solicitud: (logro, índice de evento en un grupo pequeño para forzar repeticiones).
+_solicitud = st.tuples(st.sampled_from(_TRIGGERS), st.integers(min_value=0, max_value=3))
+
+
+def _consultas_en_memoria():
+    """Sustituye las consultas del servicio sin el fixture `monkeypatch`.
+
+    Hypothesis no admite fixtures de alcance función dentro de `@given`, por eso
+    se usa `patch.object` como contexto.
+    """
+    pila = ExitStack()
+    pila.enter_context(patch.object(service, "_find_by_event", _find_by_event))
+    pila.enter_context(patch.object(service, "_find_by_badge", _find_by_badge))
+    pila.enter_context(patch.object(service, "_get_points", _get_points))
+    return pila
+
+
+# Feature: cima-plataforma, Property 41: Idempotencia del otorgamiento de insignias.
+# Validates: Requirements 19.5
+@settings(max_examples=100, deadline=None)
+@given(
+    solicitudes=st.lists(_solicitud, min_size=1, max_size=12),
+    conflictos=st.integers(min_value=0, max_value=MAX_GRANT_ATTEMPTS),
+)
+@pytest.mark.asyncio
+async def test_property_41_secuencia_de_otorgamientos_no_duplica(
+    solicitudes: list[tuple[str, int]], conflictos: int
+) -> None:
+    """Toda secuencia deja a lo sumo una Insignia por código y puntos de un solo otorgamiento.
+
+    La secuencia mezcla reintentos con el mismo evento, eventos reutilizados para
+    otra Insignia (se rechazan) y conflictos de concurrencia (pueden agotar los
+    reintentos). Nada de eso puede duplicar Insignias ni sumar puntos de más.
+    """
+    perfil = uuid.uuid4()
+    eventos = [uuid.uuid4() for _ in range(4)]
+    db = _FakeSession([perfil], conflicts=conflictos)
+    otorgadas_ahora: list[str] = []
+    with _consultas_en_memoria():
+        for trigger, indice in solicitudes:
+            regla = RECOGNITION_RULES[trigger]
+            try:
+                resultado = await service.grant_recognition(db, perfil, trigger, eventos[indice])
+            except (ValidationError, ReconocimientoPendienteError):
+                continue
+            assert resultado.badge_code == regla.code
+            if resultado.newly_awarded:
+                otorgadas_ahora.append(regla.code)
+            codigos = {b.badge_code for b in db.badges}
+            puntos_esperados = sum(r.points for r in RECOGNITION_RULES.values() if r.code in codigos)
+            assert resultado.total_points == puntos_esperados
+
+    codigos_guardados = [b.badge_code for b in db.badges]
+    assert len(codigos_guardados) == len(set(codigos_guardados))
+    assert sorted(otorgadas_ahora) == sorted(codigos_guardados)
+    eventos_guardados = [b.client_event_id for b in db.badges]
+    assert len(eventos_guardados) == len(set(eventos_guardados))
+    puntos_esperados = sum(
+        r.points for r in RECOGNITION_RULES.values() if r.code in set(codigos_guardados)
+    )
+    assert db.points.get(perfil, 0) == puntos_esperados

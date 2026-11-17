@@ -14,6 +14,7 @@ Principios aplicados:
   de la sesión; nunca se confía en un id del cliente (anti-BOLA, Req 9.6).
 - Idempotencia por restricción UNIQUE(profile_id, path_id) (Req 6.4).
 - Errores de dominio específicos; sin `except` genérico en la lógica.
+- La respuesta trae el celular del titular solo enmascarado (Req 9.4).
 - Logs estructurados sin PII (Req 9.4).
 """
 
@@ -28,21 +29,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.assessment.models import AssessmentAttempt
 from app.certification.constants import generate_verification_code
 from app.certification.dto import CertificateResponse
+from app.certification.errors import (
+    EvaluacionNoAprobadaError,
+    RutaNoCompletadaParaCertificadoError,
+)
 from app.certification.models import Certificate
-from app.common.errors import ForbiddenError, NotFoundError, ValidationError
+from app.common.errors import ForbiddenError, NotFoundError
 from app.common.logging import log_event
-from app.learning.models import PathProgress
+from app.common.masking import mask_value
+from app.learning.models import LearningPath, PathProgress
 
 logger = logging.getLogger("cima.certification")
 
 
-def _to_response(certificate: Certificate) -> CertificateResponse:
-    """Construye el DTO de salida con la fecha en ISO-8601 (Req 6.3, 9.5)."""
+async def _to_response(db: AsyncSession, certificate: Certificate) -> CertificateResponse:
+    """Construye el DTO de salida con la fecha en ISO-8601 (Req 6.3, 9.5).
+
+    Agrega el nombre de la ruta y el celular del titular enmascarado para mostrar el
+    Certificado. Solo se llama con un Certificado cuyo titular ya se verificó, así que
+    el Perfil leído es el del Usuario autenticado (anti-BOLA).
+    """
+    # Import diferido: evita acoplar la carga de este módulo a la de `profile`.
+    from app.profile.models import Profile
+
+    path = await db.get(LearningPath, certificate.path_id)
+    profile = await db.get(Profile, certificate.profile_id)
     return CertificateResponse(
         id=certificate.id,
         path_id=certificate.path_id,
         verification_code=certificate.verification_code,
         issued_at=certificate.issued_at.isoformat(),
+        path_title=path.title if path else None,
+        holder_phone_masked=mask_value(profile.phone_e164) if profile else None,
     )
 
 
@@ -81,7 +99,7 @@ async def issue_certificate(
     Idempotente: si ya existe un Certificado para (perfil, ruta) se devuelve el
     existente sin crear otro (Req 6.4, Property 21). La emisión solo procede si la
     ruta está completa y la evaluación fue aprobada (Req 6.1); de lo contrario se
-    rechaza sin emitir (Req 6.2, Property 19).
+    rechaza sin emitir, con un mensaje claro para el Usuario (Req 6.2, Property 19).
     """
     existing = await db.scalar(
         select(Certificate).where(
@@ -91,13 +109,13 @@ async def issue_certificate(
     )
     if existing is not None:
         log_event(logger, "certificate_idempotent_hit", certificate_id=str(existing.id))
-        return _to_response(existing)
+        return await _to_response(db, existing)
 
     if not await _path_completed(db, current_user_id, path_id):
-        raise ValidationError(internal_detail="path not completed")
+        raise RutaNoCompletadaParaCertificadoError(internal_detail="path not completed")
     if not await _assessment_passed(db, current_user_id, path_id):
         # No se alcanzó el puntaje mínimo de aprobación (Req 6.2).
-        raise ValidationError(internal_detail="assessment not passed")
+        raise EvaluacionNoAprobadaError(internal_detail="assessment not passed")
 
     certificate = Certificate(
         profile_id=current_user_id,
@@ -108,7 +126,7 @@ async def issue_certificate(
     await db.commit()
     await db.refresh(certificate)
     log_event(logger, "certificate_issued", certificate_id=str(certificate.id))
-    return _to_response(certificate)
+    return await _to_response(db, certificate)
 
 
 async def get_certificate(
@@ -133,4 +151,4 @@ async def get_certificate(
         )
         raise ForbiddenError(internal_detail="cross-user certificate access blocked")
 
-    return _to_response(certificate)
+    return await _to_response(db, certificate)
