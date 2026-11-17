@@ -34,6 +34,13 @@ export const routes: Routes = [
     title: 'Mi ruta - CIMA',
   },
   {
+    // Sin sesión ni conexión también abre: solo lee los videos guardados en el celular.
+    path: 'descargas',
+    loadComponent: () =>
+      import('./descargas/descargas-page.component').then((m) => m.DescargasPageComponent),
+    title: 'Mis descargas - CIMA',
+  },
+  {
     path: 'perfil',
     loadComponent: () =>
       import('./profile/profile-page.component').then((m) => m.ProfilePageComponent),
