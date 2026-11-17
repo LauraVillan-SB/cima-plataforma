@@ -61,6 +61,14 @@ export const routes: Routes = [
     title: 'Evaluación - CIMA',
   },
   {
+    path: 'certificado/:rutaId',
+    loadComponent: () =>
+      import('./certificado/certificado-page.component').then(
+        (m) => m.CertificadoPageComponent,
+      ),
+    title: 'Mi certificado - CIMA',
+  },
+  {
     path: 'asistente',
     loadComponent: () =>
       import('./chat/chat-page.component').then((m) => m.ChatPageComponent),

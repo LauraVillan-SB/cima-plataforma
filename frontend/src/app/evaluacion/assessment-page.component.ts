@@ -40,6 +40,12 @@ import {
             <p>¡Aprobaste! Tu puntaje fue {{ r.score }} de 100.</p>
             <a
               class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large"
+              [routerLink]="['/certificado', rutaId]"
+            >
+              Ver mi certificado
+            </a>
+            <a
+              class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large"
               [routerLink]="['/conversion', rutaId]"
             >
               Ver opciones de microseguro
