@@ -72,7 +72,6 @@ const RUTAS_SIN_ASISTENTE: readonly string[] = ['/asistente', '/entrar'];
       @if (auth.autenticado()) {
         <nav class="nav" aria-label="Principal">
           <a routerLink="/inicio" routerLinkActive="activo">Inicio</a>
-          <a routerLink="/aprendizaje" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }">Microcápsulas</a>
           <a routerLink="/mi-ruta" routerLinkActive="activo">Mi ruta</a>
           <a routerLink="/reconocimientos" routerLinkActive="activo">Reconocimientos</a>
           <a routerLink="/ranking" routerLinkActive="activo">Ranking</a>

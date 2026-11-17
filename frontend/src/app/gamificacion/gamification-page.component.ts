@@ -38,9 +38,9 @@ import { GamificationService, Reconocimientos } from './gamification.service';
           </p>
           <a
             class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large"
-            routerLink="/aprendizaje"
+            routerLink="/mi-ruta"
           >
-            Ir a mis microcápsulas
+            Ir a mi ruta
           </a>
         } @else {
           <ul class="insignias">
