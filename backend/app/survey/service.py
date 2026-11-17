@@ -15,16 +15,24 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.errors import ForbiddenError, NotFoundError, ValidationError
+from app.chat.errors import RedaccionPiiError
+from app.chat.redaction import redactar_pii
+from app.common.errors import ForbiddenError, NotFoundError
 from app.common.logging import log_event
 from app.survey.constants import K_ANONYMITY_THRESHOLD, UNCLASSIFIED_ZONE
 from app.survey.dto import (
     SatisfactionReport,
+    SurveyAnswers,
     SurveyPresentation,
     SurveyQuestion,
     SurveyResponseCreate,
     SurveyResponseResult,
     ZoneSatisfaction,
+)
+from app.survey.errors import (
+    ComentarioConDatosPersonalesError,
+    EncuestaYaRespondidaError,
+    RutaNoCompletadaParaEncuestaError,
 )
 from app.survey.models import Survey, SurveyResponse
 
@@ -53,20 +61,59 @@ def _parse_questions(raw: dict) -> list[SurveyQuestion]:
     return questions
 
 
-async def present_survey(
-    db: AsyncSession, path_id: uuid.UUID, current_user_id: uuid.UUID
-) -> SurveyPresentation:
-    """Presenta la encuesta de una ruta si está vigente.
-
-    Marca `already_answered=True` si el Usuario ya respondió esa ruta, de modo
-    que el cliente no la vuelva a presentar (idempotencia de presentación,
-    Req 20.6). La consulta de respuesta previa se ancla al `current_user_id`.
-    """
+async def _active_survey(db: AsyncSession, path_id: uuid.UUID) -> Survey:
+    """Encuesta activa de la ruta; si no hay, 404 sin revelar más (Req 20.1)."""
     survey = await db.scalar(
         select(Survey).where(Survey.path_id == path_id, Survey.active.is_(True))
     )
     if survey is None:
         raise NotFoundError(internal_detail=f"no active survey for path {path_id}")
+    return survey
+
+
+async def _require_path_completed(
+    db: AsyncSession, current_user_id: uuid.UUID, path_id: uuid.UUID
+) -> None:
+    """La encuesta es para quien completó la ruta (Req 20.1); anclado al titular."""
+    # Import diferido: Learning no depende de Survey y así no hay ciclo de carga.
+    from app.learning.models import PathProgress
+
+    progress = await db.scalar(
+        select(PathProgress).where(
+            PathProgress.profile_id == current_user_id,
+            PathProgress.path_id == path_id,
+        )
+    )
+    if not (progress and progress.completed):
+        raise RutaNoCompletadaParaEncuestaError(internal_detail="path not completed")
+
+
+def _answers_sin_pii(answers: SurveyAnswers) -> dict[str, str]:
+    """Respuestas abiertas listas para guardar, con la PII redactada (Req 20.5).
+
+    Reutiliza el redactor del asistente (celulares, cédulas, correos, direcciones y
+    nombres tras "me llamo"). Si queda PII detectable, se rechaza el envío.
+    """
+    if answers.comentario is None:
+        return {}
+    try:
+        redactado = redactar_pii(answers.comentario)
+    except RedaccionPiiError:
+        raise ComentarioConDatosPersonalesError(internal_detail="survey_comment_pii") from None
+    return {"comentario": redactado.texto}
+
+
+async def present_survey(
+    db: AsyncSession, path_id: uuid.UUID, current_user_id: uuid.UUID
+) -> SurveyPresentation:
+    """Presenta la encuesta de una ruta completada si está vigente.
+
+    Marca `already_answered=True` si el Usuario ya respondió esa ruta, de modo
+    que el cliente no la vuelva a presentar (idempotencia de presentación,
+    Req 20.7). Las consultas se anclan al `current_user_id` (anti-BOLA).
+    """
+    survey = await _active_survey(db, path_id)
+    await _require_path_completed(db, current_user_id, path_id)
 
     prior = await db.scalar(
         select(SurveyResponse.id).where(
@@ -113,6 +160,10 @@ async def record_response(
         log_event(logger, "survey_response_idempotent_hit", response_id=str(existing.id))
         return _to_result(existing)
 
+    # Solo se registra para una encuesta vigente de una ruta que el Usuario completó.
+    await _active_survey(db, path_id)
+    await _require_path_completed(db, current_user_id, path_id)
+
     already = await db.scalar(
         select(SurveyResponse.id).where(
             SurveyResponse.profile_id == current_user_id,
@@ -120,13 +171,13 @@ async def record_response(
         )
     )
     if already is not None:
-        raise ValidationError(internal_detail="survey already answered for this path")
+        raise EncuestaYaRespondidaError(internal_detail="survey already answered for this path")
 
     response = SurveyResponse(
         profile_id=current_user_id,
         path_id=path_id,
         rating=data.rating,
-        answers=data.answers,
+        answers=_answers_sin_pii(data.answers),
         geo_zone=data.geo_zone if data.geo_zone is not None else UNCLASSIFIED_ZONE,
         client_event_id=data.client_event_id,
     )

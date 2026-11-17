@@ -93,7 +93,7 @@ import { CLAVE_LONGITUD, esClaveValida } from './clave';
 
             <button
               type="submit"
-              class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large guardar"
+              class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large guardar"
               [disabled]="!formularioValido() || guardando()"
             >
               {{ guardando() ? 'Guardando...' : 'Cambiar mi clave' }}

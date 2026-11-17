@@ -104,3 +104,22 @@ iframe {
     transition: none !important;
   }
 }
+
+/*
+ * Impresión (botón "Imprimir o guardar en PDF" del certificado): solo sale el
+ * contenido de la página, sin encabezado, navegación, pie ni botones flotantes.
+ */
+@media print {
+  .saltar,
+  .barra,
+  .pie,
+  cima-connection-status,
+  cima-assistant-fab,
+  cima-lector-pagina,
+  [data-no-leer] {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

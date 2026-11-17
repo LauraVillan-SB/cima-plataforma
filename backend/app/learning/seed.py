@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
+import uuid
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -26,8 +27,10 @@ from app.assessment.models import Assessment
 from app.common.config import get_settings
 from app.common.database import async_session_factory
 from app.common.logging import log_event
-from app.learning.catalog import CAPSULES, PATHS, CapsuleSpec, PathSpec
+from app.learning.catalog import CAPSULES, CATALOG_NAMESPACE, PATHS, CapsuleSpec, PathSpec
 from app.learning.models import LearningPath, Microcapsule
+from app.survey.constants import SURVEY_QUESTIONS
+from app.survey.models import Survey
 
 logger = logging.getLogger("cima.learning.seed")
 
@@ -42,6 +45,7 @@ class SeedResult:
     capsules: int
     paths: int
     assessments: int
+    surveys: int
 
 
 def _capsule_values(spec: CapsuleSpec) -> dict[str, object]:
@@ -106,6 +110,22 @@ async def _upsert_assessment(db: AsyncSession, spec: PathSpec) -> None:
     )
 
 
+def survey_id(spec: PathSpec) -> uuid.UUID:
+    """Identificador estable de la encuesta de una ruta (no duplica al recargar)."""
+    return uuid.uuid5(CATALOG_NAMESPACE, f"survey:{spec.slug}")
+
+
+async def _upsert_survey(db: AsyncSession, spec: PathSpec) -> None:
+    """Inserta la encuesta estándar de la ruta o actualiza sus preguntas (Req 20.1)."""
+    values = {
+        "path_id": spec.id,
+        "questions": {"questions": [dict(q) for q in SURVEY_QUESTIONS]},
+        "active": True,
+    }
+    stmt = pg_insert(Survey).values(id=survey_id(spec), **values)
+    await db.execute(stmt.on_conflict_do_update(index_elements=[Survey.id], set_=values))
+
+
 async def seed_catalog(db: AsyncSession) -> SeedResult:
     """Carga el catálogo completo en una sola transacción.
 
@@ -120,6 +140,7 @@ async def seed_catalog(db: AsyncSession) -> SeedResult:
     for path in PATHS:
         await _upsert_path(db, path)
         await _upsert_assessment(db, path)
+        await _upsert_survey(db, path)
     await db.commit()
     log_event(
         logger,
@@ -127,7 +148,9 @@ async def seed_catalog(db: AsyncSession) -> SeedResult:
         capsules=len(CAPSULES),
         paths=len(PATHS),
     )
-    return SeedResult(capsules=len(CAPSULES), paths=len(PATHS), assessments=len(PATHS))
+    return SeedResult(
+        capsules=len(CAPSULES), paths=len(PATHS), assessments=len(PATHS), surveys=len(PATHS)
+    )
 
 
 async def _run() -> SeedResult:
@@ -145,7 +168,7 @@ def main() -> int:
     result = asyncio.run(_run())
     print(
         f"Catálogo cargado: {result.capsules} microcápsulas, {result.paths} rutas, "
-        f"{result.assessments} evaluaciones."
+        f"{result.assessments} evaluaciones, {result.surveys} encuestas."
     )
     return 0
 

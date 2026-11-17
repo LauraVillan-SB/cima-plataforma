@@ -117,7 +117,7 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
 
             <button
               type="submit"
-              class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large enviar"
+              class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large enviar"
               [disabled]="!formularioValido() || cargando()"
             >
               {{ cargando() ? 'Un momento...' : modoRegistro() ? 'Crear cuenta' : 'Entrar' }}

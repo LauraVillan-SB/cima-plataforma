@@ -84,7 +84,7 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
 
               <button
                 type="submit"
-                class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large guardar"
+                class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large guardar"
                 [disabled]="!formularioValido() || guardando()"
               >
                 {{ guardando() ? 'Guardando...' : 'Guardar' }}

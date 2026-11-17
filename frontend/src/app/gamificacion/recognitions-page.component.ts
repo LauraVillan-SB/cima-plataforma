@@ -20,7 +20,7 @@ import { GamificationService } from './gamification.service';
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
           No pudimos cargar tus reconocimientos. Intenta de nuevo.
         </div>
-        <button type="button" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill" (click)="cargar()">Reintentar</button>
+        <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke" (click)="cargar()">Reintentar</button>
       } @else if (resumen(); as r) {
         <div class="nivel">
           <p class="nivel__nombre">Nivel {{ r.level.number }} · {{ r.level.name }}</p>

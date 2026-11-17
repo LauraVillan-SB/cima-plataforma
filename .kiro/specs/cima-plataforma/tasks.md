@@ -325,9 +325,10 @@ Convenciones:
     - **Property 16: Invariante de estado de entrega de incentivo**
     - **Validates: Requirements 5.1, 5.2, 5.3**
     - Nota: Property 16 cubierta en `tests/conversion/test_incentivos.py` (reintentos ≤ 3, pendiente definitivo tras 3 fallos, completitud de ruta conservada), con stub de sesión en memoria y canal de entrega inyectable; 7/7 en verde.
-  - [ ]* 16.4 Escribir test de propiedad para opciones de microseguro acotadas
+  - [x]* 16.4 Escribir test de propiedad para opciones de microseguro acotadas
     - **Property 17: Opciones de microseguro acotadas y pertinentes**
     - **Validates: Requirements 5.4**
+    - Nota: cubierta en `tests/conversion/test_service.py` con Hypothesis: catálogos generados con 1 a 10 opciones por tipo (la oferta queda entre 1 y 5, son las primeras de su tipo y ninguna de otro tipo) y el catálogo real para todo tipo permitido. Se comprobó que falla si se quita el límite de 5.
 
 - [ ] 17. Gamification Service — Insignias y puntos (Req 19)
   - [~] 17.1 Implementar otorgamiento idempotente de insignias y puntos
@@ -341,12 +342,14 @@ Convenciones:
     - _Requirements: 19.7, 19.8_
     - _Properties: 42_
     - Nota: implementado en `app/gamification/` (`service.get_recognitions`, `router.py`). El titular sale de la cookie de sesión. Se aceptó un parámetro opcional `perfil_id` solo para cumplir el Req 19.8: si no coincide con el Usuario autenticado se responde 403 antes de consultar la BD (idéntico exista o no ese Perfil) y se registra el intento solo con ids internos. La respuesta (`RecognitionSummary`) no incluye el id del Perfil ni PII. El endpoint no se probó con un cliente HTTP real (solo la lógica del servicio con sesión simulada).
-  - [ ]* 17.3 Escribir test de propiedad para idempotencia del otorgamiento
+  - [x]* 17.3 Escribir test de propiedad para idempotencia del otorgamiento
     - **Property 41: Idempotencia del otorgamiento de insignias**
     - **Validates: Requirements 19.5**
-  - [ ]* 17.4 Escribir test de propiedad para autorización en consulta de reconocimientos
+    - Nota: cubierta en `tests/gamification/test_service.py` con Hypothesis: secuencias de hasta 12 otorgamientos que mezclan reintentos con el mismo evento, eventos reutilizados para otra Insignia y conflictos de concurrencia. Queda a lo sumo un registro por Insignia y los puntos de un solo otorgamiento. Se comprobó que falla si el servicio no detecta la Insignia ya otorgada.
+  - [x]* 17.4 Escribir test de propiedad para autorización en consulta de reconocimientos
     - **Property 42: Autorización por propiedad en consulta de reconocimientos**
     - **Validates: Requirements 19.7, 19.8**
+    - Nota: cubierta en `tests/gamification/test_query.py` con Hypothesis: de 2 a 5 Perfiles con Insignias y puntos generados. Cada titular ve solo lo suyo; pedir un Perfil ajeno, exista o no, da 403 sin consultar la BD, con el mismo mensaje y sin el id pedido. Se comprobó que falla si se quita la verificación de titular.
 
 - [x] 18. Metrics Service + Tablero ODS (Req 8, Req 15)
   - [x] 18.1 Implementar registro de eventos con asignación de zona idempotente
@@ -380,6 +383,7 @@ Convenciones:
     - `GET /api/v1/encuestas/{rutaId}`; presenta la encuesta breve y opcional (escala 1–5) solo si no ha sido respondida ni omitida para esa ruta y Usuario; habilitada al completar la Ruta_de_Aprendizaje o hito (enganche con Learning Service); respuesta por texto o voz coherente con voz-first; omitible sin bloquear
     - _Requirements: 20.1, 20.2, 20.6_
     - _Properties: 44_
+    - Nota (rama `feature/pantalla-encuesta`): pantalla `/encuesta/:rutaId` en el frontend, ofrecida en la celebración al completar la ruta y desde "Mi ruta"; las preguntas se siembran por ruta en `app/learning/seed.py`. El backend exige encuesta activa (404) y ruta completada (409) en presentación y registro, y una segunda respuesta devuelve 409. `answers` pasó a allowlist (`SurveyAnswers`, solo `comentario` ≤ 500) con redacción de PII. La voz se resuelve con el dictado del teclado del celular. Pendiente: persistir la omisión (Req 20.7) con la migración 0018 tras integrar la 0017, y proteger `GET /api/v1/encuestas/reportes` con un rol de analista.
   - [x] 19.2 Implementar validación en servidor y registro agregado sin PII
     - `POST /api/v1/encuestas/{rutaId}/respuestas`; valida tipo/formato/rango (calificación 1–5) antes de registrar, rechazo indicando campo inválido; registra asociado al Perfil_de_Usuario y zona sin PII en ≤ 5 s; reintentos ≤ 3 conservando la respuesta sin pérdida (coordinación con Metrics Service)
     - _Requirements: 20.3, 20.4, 20.5_
@@ -439,7 +443,7 @@ Convenciones:
   - [~] 23.3 Implementar flujos de aprendizaje/evaluación/conversión en UI
     - Consumo de endpoints de learning, assessment, certification y conversion; indicador de procesamiento de IA; mínimos pasos de interacción
     - _Requirements: 3.6, 3.7, 13.1_
-    - Nota: implementadas las vistas de aprendizaje y evaluación. Aprendizaje en `frontend/src/app/aprendizaje/` (`LearningService` + `LearningPageComponent`, ruta lazy `aprendizaje`, acceso desde inicio): lista las microcápsulas de `GET /api/v1/aprendizaje/microcapsulas` con el Design System, aviso de contenido general (Req 4.5), estados de carga/error accesibles y sin PII. Evaluación en `frontend/src/app/evaluacion/` (`AssessmentService` + `AssessmentPageComponent`, ruta lazy `evaluacion/:rutaId`): carga el cuestionario de `GET /api/v1/evaluaciones/{ruta_id}`, envía respuestas a `POST .../respuestas` y muestra el resultado (puntaje, aprobado, intentos restantes, cooldown). Todo es solo presentación (la lógica vive en el backend). `ng build` dentro de presupuesto y `jest` en verde. **Pendiente:** flujo de conversión en la UI, indicador de procesamiento de IA del chat, y la finalización de microcápsula con cola offline.
+    - Nota: implementadas las vistas de aprendizaje y evaluación. Aprendizaje en `frontend/src/app/aprendizaje/` (`LearningService` + `LearningPageComponent`, ruta lazy `aprendizaje`, acceso desde inicio): lista las microcápsulas de `GET /api/v1/aprendizaje/microcapsulas` con el Design System, aviso de contenido general (Req 4.5), estados de carga/error accesibles y sin PII. Evaluación en `frontend/src/app/evaluacion/` (`AssessmentService` + `AssessmentPageComponent`, ruta lazy `evaluacion/:rutaId`): carga el cuestionario de `GET /api/v1/evaluaciones/{ruta_id}`, envía respuestas a `POST .../respuestas` y muestra el resultado (puntaje, aprobado, intentos restantes, cooldown). Todo es solo presentación (la lógica vive en el backend). `ng build` dentro de presupuesto y `jest` en verde. **Pendiente:** flujo de conversión en la UI, indicador de procesamiento de IA del chat, y la finalización de microcápsula con cola offline. Actualización (certificado): pantalla `frontend/src/app/certificado/` (ruta lazy `certificado/:rutaId`), con el botón "Ver mi certificado" al aprobar la evaluación y en "Mi ruta". Pide el certificado con `POST /api/v1/certificados` (idempotente) y muestra la ruta, el celular enmascarado (últimos 4 dígitos, Req 9.4), la fecha y el código de verificación. Se puede imprimir o guardar en PDF desde el navegador. Si todavía no se puede emitir, muestra el mensaje 409 del backend (Req 6.2).
   - [~] 23.4 Aplicar conformidad de accesibilidad WCAG 2.1 AA
     - Contraste y tamaños de fuente AA; objetivos táctiles ≥ 44×44 px; operable a 320 px y 3G; textos en español coloquial
     - _Requirements: 13.2, 13.3, 13.5, 13.6_
@@ -448,6 +452,7 @@ Convenciones:
     - axe-core/Lighthouse para contraste/roles AA y objetivos táctiles; budgets de bundle (≤ 500 KB / ≤ 50 KB) y TTI ≤ 3 s con throttling 3G
     - _Requirements: 2.2, 2.3, 2.4, 13.2, 13.3_
     - Nota: budgets de bundle cubiertos con `npm run presupuesto` (≤ 500 kB inicial, ≤ 50 kB visita posterior, medido sobre el build real y con pruebas en `scripts/presupuesto-carga.spec.cjs`). **Falta:** axe-core/Lighthouse para contraste, roles y objetivos táctiles, y TTI ≤ 3 s con throttling 3G (Req 2.2), que requieren un navegador.
+    - Nota (rama `fix/accesibilidad-pantallas`, PR #100): se auditaron las 13 pantallas con Chrome a 360 y 320 px (árbol de accesibilidad, contraste calculado, objetivos táctiles, `lang`, `title`, encabezados y desborde) y se corrigió el contraste de los botones principales y del filtro activo; con el código final no quedan hallazgos. **Falta:** una auditoría automática en CI (axe-core o Lighthouse desde JFrog), el foco con teclado, lectores de pantalla reales y el TTI en 3G.
 
 - [ ] 24. Integración y cableado final
   - [~] 24.1 Cablear API Gateway, headers de seguridad y OpenAPI

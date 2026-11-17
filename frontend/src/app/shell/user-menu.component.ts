@@ -14,7 +14,7 @@ import { UserContextService } from '../core/user-context.service';
 /**
  * Menú de la cuenta, visible en el encabezado de toda pantalla con sesión.
  * Dice quién es la persona (su cultivo o comercio y su celular enmascarado) y
- * da acceso a Inicio, sus microcápsulas, su perfil, el cambio de clave y el
+ * da acceso a Inicio, su ruta de aprendizaje, su perfil, el cambio de clave y el
  * cierre de sesión (Req 1.14, 9.1, 13.1).
  *
  * Accesibilidad (Req 13.2, 13.3): botón de despliegue con `aria-expanded` y
@@ -67,8 +67,8 @@ import { UserContextService } from '../core/user-context.service';
                ariaCurrentWhenActive="page" (click)="cerrar()">Inicio</a>
           </li>
           <li>
-            <a class="opcion" routerLink="/aprendizaje" routerLinkActive="activa"
-               ariaCurrentWhenActive="page" (click)="cerrar()">Mis microcápsulas</a>
+            <a class="opcion" routerLink="/mi-ruta" routerLinkActive="activa"
+               ariaCurrentWhenActive="page" (click)="cerrar()">Mi ruta</a>
           </li>
           <li>
             <a class="opcion" routerLink="/perfil" routerLinkActive="activa"

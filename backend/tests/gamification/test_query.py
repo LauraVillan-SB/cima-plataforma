@@ -12,8 +12,11 @@ from __future__ import annotations
 
 import uuid
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from app.common.errors import ForbiddenError
 from app.gamification import service
@@ -184,3 +187,65 @@ def test_dtos_de_consulta_exponen_solo_campos_permitidos() -> None:
     """Las respuestas no incluyen el identificador del Perfil ni PII."""
     assert set(BadgeOut.__annotations__) == {"badge_code", "badge_name"}
     assert set(RecognitionSummary.__annotations__) == {"badges", "total_points"}
+
+
+# --- Property 42: autorización por propiedad (Req 19.7, 19.8) ---------------
+
+_CODIGOS = sorted({regla.code for regla in RECOGNITION_RULES.values()} | {"insignia_retirada"})
+
+# Por Perfil: un subconjunto de Insignias y, opcionalmente, un total de puntos.
+_datos_de_perfil = st.tuples(
+    st.sets(st.sampled_from(_CODIGOS)),
+    st.one_of(st.none(), st.integers(min_value=0, max_value=10_000)),
+)
+
+
+# Feature: cima-plataforma, Property 42: Autorización por propiedad en consulta de reconocimientos.
+# Validates: Requirements 19.7, 19.8
+@settings(max_examples=100, deadline=None)
+@given(perfiles=st.lists(_datos_de_perfil, min_size=2, max_size=5))
+@pytest.mark.asyncio
+async def test_property_42_cada_titular_ve_solo_lo_suyo(
+    perfiles: list[tuple[set[str], int | None]],
+) -> None:
+    """Para todo conjunto de reconocimientos, cada titular ve solo los suyos.
+
+    Y pedir los de otro Perfil (exista o no) falla con 403 antes de consultar la
+    base de datos, con el mismo mensaje público y sin incluir el id pedido.
+    """
+    ids = [uuid.uuid4() for _ in perfiles]
+    badges = [
+        _insignia(pid, codigo)
+        for pid, (codigos, _) in zip(ids, perfiles)
+        for codigo in sorted(codigos)
+    ]
+    points = {pid: total for pid, (_, total) in zip(ids, perfiles) if total is not None}
+    llamadas = {"badges": 0, "points": 0}
+
+    async def _list_badges(_db: object, profile_id: uuid.UUID):
+        llamadas["badges"] += 1
+        return [b for b in badges if b.profile_id == profile_id]
+
+    async def _get_points(_db: object, profile_id: uuid.UUID, lock: bool = False):
+        llamadas["points"] += 1
+        total = points.get(profile_id)
+        return None if total is None else SimpleNamespace(total_points=total)
+
+    with patch.object(service, "_list_badges", _list_badges), patch.object(
+        service, "_get_points", _get_points
+    ), patch.object(service, "log_event", lambda *_a, **_k: None):
+        for titular, (codigos, total) in zip(ids, perfiles):
+            resumen = await service.get_recognitions(object(), titular)
+            assert sorted(b.badge_code for b in resumen.badges) == sorted(codigos)
+            assert resumen.total_points == (total if total is not None else 0)
+
+        mensajes = set()
+        for titular in ids:
+            for objetivo in [pid for pid in ids if pid != titular] + [uuid.uuid4()]:
+                antes = dict(llamadas)
+                with pytest.raises(ForbiddenError) as error:
+                    await service.get_recognitions(object(), titular, objetivo)
+                assert llamadas == antes
+                assert str(objetivo) not in error.value.public_message
+                mensajes.add(error.value.public_message)
+        assert len(mensajes) == 1

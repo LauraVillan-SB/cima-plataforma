@@ -37,10 +37,10 @@ import { GamificationService, Reconocimientos } from './gamification.service';
             Aún no tienes insignias. Termina tu primera microcápsula y ganas la primera.
           </p>
           <a
-            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large"
-            routerLink="/aprendizaje"
+            class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large"
+            routerLink="/mi-ruta"
           >
-            Ir a mis microcápsulas
+            Ir a mi ruta
           </a>
         } @else {
           <ul class="insignias">
