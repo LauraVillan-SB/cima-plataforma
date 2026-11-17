@@ -38,14 +38,14 @@ import { UserContextService } from '../core/user-context.service';
 
           <button
             type="button"
-            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large accion"
+            class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large accion"
             (click)="ir('/aprendizaje')"
           >
             Ver mis microcápsulas
           </button>
           <button
             type="button"
-            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large accion"
+            class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large accion"
             (click)="ir('/asistente')"
           >
             Hablar con mi asistente

@@ -23,7 +23,7 @@ import { etiquetaTema, minutos } from './temas';
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
           No pudimos cargar tu ruta. Revisa tu conexión e intenta de nuevo.
         </div>
-        <button type="button" class="sb-ui-button sb-ui-button--primary sb-ui-button--fill" (click)="cargar()">Reintentar</button>
+        <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke" (click)="cargar()">Reintentar</button>
       } @else if (rutas().length === 0) {
         <p>Todavía no hay rutas para mostrar.</p>
       } @else {
@@ -60,7 +60,7 @@ import { etiquetaTema, minutos } from './temas';
               <a class="enlace opinion" [routerLink]="['/encuesta', r.path_id]">Cuéntanos qué te pareció esta ruta</a>
             }
             @if (r.completed && !r.assessment_passed) {
-              <a class="sb-ui-button sb-ui-button--primary sb-ui-button--fill accion" [routerLink]="['/evaluacion', r.path_id]">
+              <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke accion" [routerLink]="['/evaluacion', r.path_id]">
                 Presentar evaluación
               </a>
             }

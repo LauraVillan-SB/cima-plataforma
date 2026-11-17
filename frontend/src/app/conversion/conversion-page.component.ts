@@ -80,7 +80,7 @@ import {
 
             <button
               type="submit"
-              class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large"
+              class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large"
               [disabled]="enviando() || !seleccion()"
             >
               {{ enviando() ? 'Registrando...' : 'Me interesa' }}
