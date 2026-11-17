@@ -9,11 +9,35 @@ individual (Req 20.7).
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.survey.constants import GEO_ZONE_MAX_LENGTH, RATING_MAX, RATING_MIN
+from app.survey.constants import (
+    COMMENT_MAX_LENGTH,
+    GEO_ZONE_MAX_LENGTH,
+    RATING_MAX,
+    RATING_MIN,
+)
+
+
+class SurveyAnswers(BaseModel):
+    """Respuestas abiertas de la encuesta: solo un comentario opcional (Req 20.3).
+
+    Allowlist estricta (`extra="forbid"`): antes `answers` aceptaba cualquier
+    diccionario sin validar tipos ni largo. El comentario se redacta en el
+    servicio antes de guardarlo, para no registrar PII (Req 20.5).
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    comentario: Optional[str] = Field(default=None, max_length=COMMENT_MAX_LENGTH)
+
+    @field_validator("comentario")
+    @classmethod
+    def _vacio_es_ninguno(cls, value: Optional[str]) -> Optional[str]:
+        """Un comentario vacío o solo con espacios se trata como no respondido."""
+        return value or None
 
 
 class SurveyResponseCreate(BaseModel):
@@ -28,7 +52,7 @@ class SurveyResponseCreate(BaseModel):
     client_event_id: uuid.UUID
     profile_id: uuid.UUID
     rating: int = Field(ge=RATING_MIN, le=RATING_MAX)
-    answers: dict[str, Any] = Field(default_factory=dict)
+    answers: SurveyAnswers = Field(default_factory=SurveyAnswers)
     geo_zone: str | None = None
 
     @field_validator("geo_zone")

@@ -56,6 +56,9 @@ import { etiquetaTema, minutos } from './temas';
                 </li>
               }
             </ol>
+            @if (r.completed) {
+              <a class="enlace opinion" [routerLink]="['/encuesta', r.path_id]">Cuéntanos qué te pareció esta ruta</a>
+            }
             @if (r.completed && !r.assessment_passed) {
               <a class="sb-ui-button sb-ui-button--primary sb-ui-button--fill accion" [routerLink]="['/evaluacion', r.path_id]">
                 Presentar evaluación
@@ -87,6 +90,7 @@ import { etiquetaTema, minutos } from './temas';
       .estacion__titulo { margin: 0; font-size: 1.1rem; }
       .estacion__meta { margin: 0.15rem 0; color: var(--cima-texto-suave); }
       .enlace { display: inline-flex; align-items: center; color: var(--cima-verde-oscuro); font-weight: 700; }
+      .opinion { min-height: 44px; margin: 0 0 0.75rem; }
       .accion { display: inline-flex; align-items: center; justify-content: center; width: 100%; text-decoration: none; }
       .aprobada { font-weight: 700; color: var(--cima-verde-oscuro); }
     `,

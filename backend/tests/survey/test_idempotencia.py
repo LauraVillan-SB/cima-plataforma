@@ -12,6 +12,7 @@ corresponda desde el estado en memoria. No hay BD real.
 from __future__ import annotations
 
 import uuid
+from types import SimpleNamespace
 
 import pytest
 from hypothesis import given, settings
@@ -36,14 +37,22 @@ class _FakeSession:
     - `select(SurveyResponse.id)...` -> respuesta previa por (usuario, ruta)
     """
 
-    def __init__(self, survey: Survey, responses: list[SurveyResponse]) -> None:
+    def __init__(
+        self, survey: Survey | None, responses: list[SurveyResponse], ruta_completa: bool = True
+    ) -> None:
         self._survey = survey
         self._responses = responses
+        self._ruta_completa = ruta_completa
         self.committed = 0
 
     async def scalar(self, stmt):
         texto = _stmt_text(stmt)
+        if "path_progress" in texto:
+            # Progreso de la ruta del Usuario autenticado (Req 20.1).
+            return SimpleNamespace(completed=self._ruta_completa)
         if "surveys" in texto and "survey_responses" not in texto:
+            if self._survey is None:
+                return None
             return self._survey if self._survey.active else None
         if "client_event_id" in texto:
             # Consulta por client_event_id; extraemos el valor del binding.
