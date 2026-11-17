@@ -16,16 +16,11 @@ export const routes: Routes = [
     path: 'inicio',
     loadComponent: () =>
       import('./home/home-page.component').then((m) => m.HomePageComponent),
-    title: 'CIMA',
+    title: 'Inicio - CIMA',
   },
-  {
-    path: 'aprendizaje',
-    loadComponent: () =>
-      import('./aprendizaje/learning-page.component').then(
-        (m) => m.LearningPageComponent,
-      ),
-    title: 'Aprendizaje - CIMA',
-  },
+  // Las microcápsulas se recorren solo desde la ruta de aprendizaje, en orden.
+  // Se conserva la dirección para que enlaces guardados no queden rotos.
+  { path: 'aprendizaje', redirectTo: 'mi-ruta', pathMatch: 'full' },
   {
     path: 'aprendizaje/leccion/:pathId/:capsuleId',
     loadComponent: () =>
