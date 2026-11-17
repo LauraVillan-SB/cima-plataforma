@@ -17,6 +17,7 @@ from app.learning.constants import (
     ALLOWED_TOPICS,
     MAX_DURATION_SEC,
     MAX_ELAPSED_SEC,
+    MEDIA_URL_PATTERN,
     MIN_DURATION_SEC,
     PACE_STANDARD,
     YOUTUBE_VIDEO_ID_PATTERN,
@@ -37,6 +38,19 @@ class VideoOut(BaseModel):
     title: str
     channel: str
     embed_url: str
+
+
+class VideoFileOut(BaseModel):
+    """Video propio de la microcápsula, servido por el backend solo con sesión.
+
+    `url` siempre es la dirección relativa armada por el backend con el prefijo fijo de
+    medios (se valida el formato); el cliente no arma rutas.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: str = Field(pattern=MEDIA_URL_PATTERN)
+    title: str
 
 
 class MicrocapsuleResponse(BaseModel):
@@ -60,6 +74,7 @@ class MicrocapsuleResponse(BaseModel):
     paragraphs: list[str] = Field(default_factory=list)
     key_points: list[str] = Field(default_factory=list)
     video: Optional[VideoOut] = None
+    video_file: Optional[VideoFileOut] = None
 
     @field_validator("topic")
     @classmethod

@@ -12,11 +12,13 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.database import get_session
+from app.common.errors import NotFoundError
 from app.common.security import get_current_user_id
-from app.learning import service
+from app.learning import media, service
 from app.learning.dto import (
     FinalizeRequest,
     FinalizeResponse,
@@ -75,6 +77,27 @@ async def estado_de_ruta(
     siguiente paso se resuelve en backend (Req 17.3, 17.5).
     """
     return await service.get_path_status(db, current_user_id, path_id)
+
+
+@router.get("/medios/{nombre}", response_class=FileResponse)
+async def obtener_medio(
+    nombre: str,
+    _usuario: uuid.UUID = Depends(get_current_user_id),
+) -> FileResponse:
+    """Entrega el video propio de una microcápsula solo a quien tiene sesión.
+
+    El nombre pasa por la allowlist y la ruta se canonicaliza dentro de la carpeta de
+    medios (anti path traversal); si no es válido o no existe responde 404 genérico.
+    Admite peticiones por rango para adelantar el video sin bajarlo completo.
+    """
+    ruta = media.resolver_medio(nombre, media.carpeta_medios())
+    if ruta is None:
+        raise NotFoundError(internal_detail="medio de microcapsula no encontrado")
+    return FileResponse(
+        ruta,
+        media_type="video/mp4",
+        headers={"Cache-Control": "private, max-age=86400"},
+    )
 
 
 @router.get("/rutas", response_model=RoutesResponse)

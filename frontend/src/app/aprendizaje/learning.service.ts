@@ -18,6 +18,14 @@ export interface Microcapsula {
   readonly paragraphs: readonly string[];
   readonly key_points: readonly string[];
   readonly video: VideoCapsula | null;
+  /** Video propio servido por el backend con sesión; opcional en datos guardados antes. */
+  readonly video_file?: VideoArchivo | null;
+}
+
+/** Video propio de la cápsula; `url` es relativa y la arma el backend. */
+export interface VideoArchivo {
+  readonly url: string;
+  readonly title: string;
 }
 
 /** Video complementario verificado; el texto de la cápsula funciona sin él. */

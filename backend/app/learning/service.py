@@ -50,8 +50,10 @@ from app.learning.dto import (
     RouteCapsuleOut,
     RouteOut,
     RoutesResponse,
+    VideoFileOut,
     VideoOut,
 )
+from app.learning import media
 from app.learning.models import (
     LearningEventOutbox,
     LearningPath,
@@ -114,6 +116,17 @@ def _to_microcapsule_response(capsule: Microcapsule) -> MicrocapsuleResponse:
         paragraphs=list(capsule.paragraphs or []),
         key_points=list(capsule.key_points or []),
         video=_to_video(capsule),
+        video_file=_to_video_file(capsule),
+    )
+
+
+def _to_video_file(capsule: Microcapsule) -> VideoFileOut | None:
+    """Video propio de la cápsula, o None si no tiene o el nombre guardado no es válido."""
+    if not capsule.video_file or not media.nombre_valido(capsule.video_file):
+        return None
+    return VideoFileOut(
+        url=media.url_de(capsule.video_file),
+        title=capsule.title or "Video de la lección",
     )
 
 

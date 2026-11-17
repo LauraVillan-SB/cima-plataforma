@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     # pruebas (gemini-3.8-flash sí) y responde en ~2 s. Se probó sin razonamiento.
     gemini_stt_model: str = Field(default="gemini-3.5-flash-lite", pattern=r"^[a-z0-9][a-z0-9.\-]{0,62}$")
     gemini_stt_thinking_level: Literal["low", "high", "none"] = "none"
+    # Carpeta de los videos propios de las microcápsulas (relativa a `backend/`). Solo
+    # para dev/local: en stage/prod los videos van a almacenamiento de objetos (pendiente TI).
+    learning_media_dir: str = "media"
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
