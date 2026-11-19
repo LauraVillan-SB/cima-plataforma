@@ -29,7 +29,7 @@ import { CLAVE_LONGITUD, esClaveValida } from './clave';
 
           <form (ngSubmit)="guardar()" novalidate aria-labelledby="titulo-clave">
             <div class="sb-ui-input-container campo">
-              <label class="sb-ui-input-label" for="clave-actual">Tu clave de ahora</label>
+              <label class="sb-ui-input-label" for="clave-actual">Su clave de ahora</label>
               <input
                 id="clave-actual"
                 name="claveActual"
@@ -43,12 +43,12 @@ import { CLAVE_LONGITUD, esClaveValida } from './clave';
                 aria-describedby="ayuda-actual"
               />
               <span id="ayuda-actual" class="sb-ui-input-helper">
-                Escribe los {{ longitudClave }} números que usas hoy para entrar.
+                Escriba los {{ longitudClave }} números que usa hoy para entrar.
               </span>
             </div>
 
             <div class="sb-ui-input-container campo">
-              <label class="sb-ui-input-label" for="clave-nueva">Tu clave nueva</label>
+              <label class="sb-ui-input-label" for="clave-nueva">Su clave nueva</label>
               <input
                 id="clave-nueva"
                 name="claveNueva"
@@ -62,13 +62,13 @@ import { CLAVE_LONGITUD, esClaveValida } from './clave';
                 aria-describedby="ayuda-nueva"
               />
               <span id="ayuda-nueva" class="sb-ui-input-helper">
-                Escoge {{ longitudClave }} números que puedas recordar fácil.
+                Escoja {{ longitudClave }} números que pueda recordar fácil.
               </span>
             </div>
 
             <div class="sb-ui-input-container campo">
               <label class="sb-ui-input-label" for="clave-confirmacion">
-                Escribe otra vez tu clave nueva
+                Escriba otra vez su clave nueva
               </label>
               <input
                 id="clave-confirmacion"
@@ -84,7 +84,7 @@ import { CLAVE_LONGITUD, esClaveValida } from './clave';
               />
               <span id="ayuda-confirmacion" class="sb-ui-input-helper" aria-live="polite">
                 @if (noCoinciden()) {
-                  Las dos claves nuevas no son iguales. Revísalas.
+                  Las dos claves nuevas no son iguales. Revíselas.
                 } @else {
                   Tiene que ser igual a la clave nueva.
                 }
@@ -198,7 +198,7 @@ export class ChangePasswordPageComponent {
       this.claveActual.set('');
       this.claveNueva.set('');
       this.confirmacion.set('');
-      this.mensajeOk.set('Listo, cambiamos tu clave. La próxima vez entra con la nueva.');
+      this.mensajeOk.set('Listo, cambiamos su clave. La próxima vez entre con la nueva.');
     } catch (error: unknown) {
       this.mensajeError.set(this.mensajeDeError(error));
     } finally {
@@ -214,12 +214,12 @@ export class ChangePasswordPageComponent {
   private mensajeDeError(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 401) {
-        return 'Tu clave de ahora no es correcta. Revísala e intenta de nuevo.';
+        return 'Su clave de ahora no es correcta. Revísela e intente de nuevo.';
       }
       if (error.status === 422) {
-        return 'Revisa tus claves: deben ser de 4 números y la nueva debe escribirse igual dos veces.';
+        return 'Revise sus claves: deben ser de 4 números y la nueva debe escribirse igual dos veces.';
       }
     }
-    return 'No pudimos cambiar tu clave. Intenta de nuevo en un momento.';
+    return 'No pudimos cambiar su clave. Intente de nuevo en un momento.';
   }
 }

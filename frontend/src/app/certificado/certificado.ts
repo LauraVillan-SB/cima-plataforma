@@ -12,14 +12,14 @@ const TAMANO_GRUPO = 4;
 
 /** Mensaje si el certificado no se encuentra o no es del Usuario (Req 6.6, 6.7). */
 export const MENSAJE_NO_ENCONTRADO =
-  'No encontramos tu certificado. Revisa que hayas aprobado la evaluación de esta ruta.';
+  'No encontramos su certificado. Revise que haya aprobado la evaluación de esta ruta.';
 
 /** Mensaje sin conexión: el certificado no se guarda en el celular a propósito. */
 export const MENSAJE_SIN_CONEXION =
-  'Necesitas conexión a internet para ver tu certificado. Intenta de nuevo cuando tengas señal.';
+  'Necesita conexión a internet para ver su certificado. Intente de nuevo cuando tenga señal.';
 
 /** Mensaje genérico ante cualquier otro error. */
-export const MENSAJE_GENERICO = 'No pudimos cargar tu certificado. Intenta de nuevo en un momento.';
+export const MENSAJE_GENERICO = 'No pudimos cargar su certificado. Intente de nuevo en un momento.';
 
 /**
  * Fecha de emisión legible en español de Colombia ("14 de noviembre de 2026").

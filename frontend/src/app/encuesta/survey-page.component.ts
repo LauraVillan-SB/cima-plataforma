@@ -34,7 +34,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="encuesta">
-      <h1 class="titulo">Tu opinión</h1>
+      <h1 class="titulo">Su opinión</h1>
 
       @if (cargando()) {
         <p role="status" aria-live="polite">Cargando la encuesta...</p>
@@ -46,7 +46,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
       } @else if (enviada() || encuesta()?.already_answered) {
         <div class="gracias" role="status" aria-live="polite">
           <p class="gracias__titulo">¡Gracias por contarnos!</p>
-          <p>Tu opinión nos ayuda a mejorar la Escuela.</p>
+          <p>Su opinión nos ayuda a mejorar la Escuela.</p>
         </div>
         <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large enlace">
           Volver a mi ruta
@@ -85,7 +85,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
               aria-describedby="ayuda-comentario"
             ></textarea>
             <p id="ayuda-comentario" class="ayuda">
-              Puedes dictarlo con el micrófono del teclado de tu celular.
+              Puede dictarlo con el micrófono del teclado de su celular.
               {{ comentario().length }} de {{ comentarioMax }} letras.
             </p>
           }
@@ -171,7 +171,7 @@ export class SurveyPageComponent {
   readonly errorEnvio = signal<string | null>(null);
 
   readonly textoCalificacion = computed(
-    () => preguntaDeTipo(this.encuesta()?.questions ?? [], 'rating')?.text ?? '¿Qué tanto te sirvió esta ruta?',
+    () => preguntaDeTipo(this.encuesta()?.questions ?? [], 'rating')?.text ?? '¿Qué tanto le sirvió esta ruta?',
   );
   readonly textoComentario = computed(
     () => preguntaDeTipo(this.encuesta()?.questions ?? [], 'text')?.text ?? null,

@@ -10,7 +10,7 @@
 export function mensajeDeError(error: unknown, porDefecto: string): string {
   const estado = leerEstado(error);
   if (estado === 403) {
-    return 'Tu sesión venció. Entra de nuevo para seguir.';
+    return 'Su sesión venció. Entre de nuevo para seguir.';
   }
   const detalle = leerDetalle(error);
   return detalle ?? porDefecto;

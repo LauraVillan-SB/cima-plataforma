@@ -31,18 +31,18 @@ export interface OpcionActividad {
  * acepta la allowlist del backend; la `etiqueta` es el texto que ve el Usuario.
  */
 export const TIPOS_ACTIVIDAD: readonly OpcionActividad[] = [
-  { valor: 'cafe', etiqueta: 'Café', frase: 'tu cultivo de café' },
-  { valor: 'platano', etiqueta: 'Plátano', frase: 'tu cultivo de plátano' },
-  { valor: 'aguacate', etiqueta: 'Aguacate', frase: 'tu cultivo de aguacate' },
-  { valor: 'cacao', etiqueta: 'Cacao', frase: 'tu cultivo de cacao' },
-  { valor: 'arroz', etiqueta: 'Arroz', frase: 'tu cultivo de arroz' },
-  { valor: 'maiz', etiqueta: 'Maíz', frase: 'tu cultivo de maíz' },
-  { valor: 'ganaderia', etiqueta: 'Ganadería', frase: 'tu ganadería' },
-  { valor: 'hortalizas', etiqueta: 'Hortalizas', frase: 'tu cultivo de hortalizas' },
-  { valor: 'tienda_barrio', etiqueta: 'Tienda de barrio', frase: 'tu tienda de barrio' },
-  { valor: 'panaderia', etiqueta: 'Panadería', frase: 'tu panadería' },
-  { valor: 'miscelanea', etiqueta: 'Miscelánea', frase: 'tu miscelánea' },
-  { valor: 'fruteria', etiqueta: 'Frutería', frase: 'tu frutería' },
+  { valor: 'cafe', etiqueta: 'Café', frase: 'su cultivo de café' },
+  { valor: 'platano', etiqueta: 'Plátano', frase: 'su cultivo de plátano' },
+  { valor: 'aguacate', etiqueta: 'Aguacate', frase: 'su cultivo de aguacate' },
+  { valor: 'cacao', etiqueta: 'Cacao', frase: 'su cultivo de cacao' },
+  { valor: 'arroz', etiqueta: 'Arroz', frase: 'su cultivo de arroz' },
+  { valor: 'maiz', etiqueta: 'Maíz', frase: 'su cultivo de maíz' },
+  { valor: 'ganaderia', etiqueta: 'Ganadería', frase: 'su ganadería' },
+  { valor: 'hortalizas', etiqueta: 'Hortalizas', frase: 'su cultivo de hortalizas' },
+  { valor: 'tienda_barrio', etiqueta: 'Tienda de barrio', frase: 'su tienda de barrio' },
+  { valor: 'panaderia', etiqueta: 'Panadería', frase: 'su panadería' },
+  { valor: 'miscelanea', etiqueta: 'Miscelánea', frase: 'su miscelánea' },
+  { valor: 'fruteria', etiqueta: 'Frutería', frase: 'su frutería' },
 ];
 
 const VALORES_ACTIVIDAD = new Set(TIPOS_ACTIVIDAD.map((o) => o.valor));
@@ -53,11 +53,11 @@ export function etiquetaActividad(valor: string): string {
 }
 
 /**
- * Frase para nombrar la actividad en un saludo ("tu cultivo de café"). Si el
+ * Frase para nombrar la actividad en un saludo ("su cultivo de café"). Si el
  * valor no está en el catálogo devuelve un texto neutro, nunca el valor crudo.
  */
 export function fraseActividad(valor: string): string {
-  return TIPOS_ACTIVIDAD.find((o) => o.valor === valor)?.frase ?? 'tu actividad';
+  return TIPOS_ACTIVIDAD.find((o) => o.valor === valor)?.frase ?? 'su actividad';
 }
 
 /** `true` si el tipo de actividad pertenece al catálogo permitido. */

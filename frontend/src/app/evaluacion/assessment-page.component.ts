@@ -27,7 +27,7 @@ import {
         <p class="estado" role="status" aria-live="polite">Cargando la evaluación...</p>
       } @else if (errorCarga()) {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-          No pudimos cargar la evaluación. Revisa tu conexión e intenta de nuevo.
+          No pudimos cargar la evaluación. Revise su conexión e intente de nuevo.
         </div>
       } @else if (resultado(); as r) {
         <div
@@ -37,7 +37,7 @@ import {
           role="status"
         >
           @if (r.passed) {
-            <p>¡Aprobaste! Tu puntaje fue {{ r.score }} de 100.</p>
+            <p>¡Aprobó! Su puntaje fue {{ r.score }} de 100.</p>
             <a
               class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large"
               [routerLink]="['/certificado', rutaId]"
@@ -51,11 +51,11 @@ import {
               Ver opciones de microseguro
             </a>
           } @else {
-            <p>Tu puntaje fue {{ r.score }} de 100. Aún no alcanzas el mínimo.</p>
+            <p>Su puntaje fue {{ r.score }} de 100. Aún no alcanza el mínimo.</p>
             @if (r.cooldown_until) {
-              <p>Agotaste tus intentos por ahora. Podrás volver a intentarlo más tarde.</p>
+              <p>Agotó sus intentos por ahora. Podrá volver a intentarlo más tarde.</p>
             } @else {
-              <p>Te quedan {{ r.attempts_remaining }} intento(s).</p>
+              <p>Le quedan {{ r.attempts_remaining }} intento(s).</p>
             }
           }
         </div>
@@ -86,7 +86,7 @@ import {
           </button>
           @if (errorEnvio()) {
             <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-              No pudimos enviar tus respuestas. Intenta de nuevo.
+              No pudimos enviar sus respuestas. Intente de nuevo.
             </div>
           }
         </form>

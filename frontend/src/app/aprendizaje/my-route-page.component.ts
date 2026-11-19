@@ -18,10 +18,10 @@ import { etiquetaTema, minutos } from './temas';
     <section class="mi-ruta">
       <h1 class="titulo">Mi ruta de aprendizaje</h1>
       @if (cargando()) {
-        <p role="status" aria-live="polite">Cargando tu ruta...</p>
+        <p role="status" aria-live="polite">Cargando su ruta...</p>
       } @else if (error()) {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-          No pudimos cargar tu ruta. Revisa tu conexión e intenta de nuevo.
+          No pudimos cargar su ruta. Revise su conexión e intente de nuevo.
         </div>
         <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke" (click)="cargar()">Reintentar</button>
       } @else if (rutas().length === 0) {
@@ -57,7 +57,7 @@ import { etiquetaTema, minutos } from './temas';
               }
             </ol>
             @if (r.completed) {
-              <a class="enlace opinion" [routerLink]="['/encuesta', r.path_id]">Cuéntanos qué te pareció esta ruta</a>
+              <a class="enlace opinion" [routerLink]="['/encuesta', r.path_id]">Cuéntenos qué le pareció esta ruta</a>
             }
             @if (r.completed && !r.assessment_passed) {
               <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke accion" [routerLink]="['/evaluacion', r.path_id]">
@@ -65,7 +65,7 @@ import { etiquetaTema, minutos } from './temas';
               </a>
             }
             @if (r.assessment_passed) {
-              <p class="aprobada" role="status">¡Aprobaste la evaluación de esta ruta!</p>
+              <p class="aprobada" role="status">¡Aprobó la evaluación de esta ruta!</p>
               <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke accion" [routerLink]="['/certificado', r.path_id]">
                 Ver mi certificado
               </a>
@@ -132,6 +132,6 @@ export class MyRoutePageComponent {
     if (estado === 'completed') {
       return 'Completada';
     }
-    return estado === 'next' ? 'Te toca ahora' : 'Pendiente';
+    return estado === 'next' ? 'Le toca ahora' : 'Pendiente';
   }
 }

@@ -18,8 +18,8 @@ class RutaNoCompletadaParaCertificadoError(DomainError):
 
     status_code = 409
     public_message = (
-        "Para recibir tu certificado primero termina todas las lecciones de la ruta "
-        "y aprueba la evaluación."
+        "Para recibir su certificado primero termine todas las lecciones de la ruta "
+        "y apruebe la evaluación."
     )
 
 
@@ -28,6 +28,6 @@ class EvaluacionNoAprobadaError(DomainError):
 
     status_code = 409
     public_message = (
-        "Todavía no alcanzas el puntaje mínimo de la evaluación para recibir el "
-        "certificado. Repasa las lecciones y vuelve a intentarlo."
+        "Todavía no alcanza el puntaje mínimo de la evaluación para recibir el "
+        "certificado. Repase las lecciones y vuelva a intentarlo."
     )

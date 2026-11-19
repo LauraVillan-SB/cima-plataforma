@@ -25,14 +25,14 @@ import {
   imports: [RouterLink],
   template: `
     <section class="conversion">
-      <h1 class="titulo">Protege lo que has construido</h1>
+      <h1 class="titulo">Proteja lo que ha construido</h1>
       <p class="aviso">
-        Esto no es una compra ni una póliza. Solo nos cuentas qué opción te interesa y así
-        sabemos qué te sirve.
+        Esto no es una compra ni una póliza. Solo nos cuenta qué opción le interesa y así
+        sabemos qué le sirve.
       </p>
 
       @if (cargando()) {
-        <p class="estado" role="status" aria-live="polite">Buscando opciones para ti...</p>
+        <p class="estado" role="status" aria-live="polite">Buscando opciones para usted...</p>
       } @else if (errorCarga(); as msg) {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
           {{ msg }}
@@ -42,7 +42,7 @@ import {
         </div>
       } @else if (registrada()) {
         <div class="sb-ui-alert sb-ui-alert--success" role="status">
-          <p>¡Listo! Registramos tu interés. Gracias por contarnos.</p>
+          <p>¡Listo! Registramos su interés. Gracias por contarnos.</p>
         </div>
         <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large" routerLink="/inicio">
           Volver al inicio
@@ -50,13 +50,13 @@ import {
       } @else if (oferta(); as o) {
         @if (o.options.length === 0) {
           <div class="sb-ui-alert sb-ui-alert--info" role="status">
-            Por ahora no tenemos opciones de microseguro para tu actividad. Seguiremos
-            avisándote cuando haya novedades.
+            Por ahora no tenemos opciones de microseguro para su actividad. Seguiremos
+            avisándole cuando haya novedades.
           </div>
         } @else {
           <form (ngSubmit)="registrar()">
             <fieldset class="opciones">
-              <legend class="leyenda">¿Cuál te interesa?</legend>
+              <legend class="leyenda">¿Cuál le interesa?</legend>
               @for (op of o.options; track op.codigo) {
                 <label class="opcion">
                   <input
@@ -156,7 +156,7 @@ export class ConversionPageComponent {
       this.oferta.set(await this.conversion.obtenerOferta(this.rutaId));
     } catch (error) {
       this.errorCarga.set(
-        mensajeDeError(error, 'No pudimos cargar las opciones. Revisa tu conexión e intenta de nuevo.'),
+        mensajeDeError(error, 'No pudimos cargar las opciones. Revise su conexión e intente de nuevo.'),
       );
     } finally {
       this.cargando.set(false);
@@ -187,7 +187,7 @@ export class ConversionPageComponent {
       );
     } catch (error) {
       this.errorEnvio.set(
-        mensajeDeError(error, 'No pudimos registrar tu interés. Intenta de nuevo.'),
+        mensajeDeError(error, 'No pudimos registrar su interés. Intente de nuevo.'),
       );
     } finally {
       this.enviando.set(false);

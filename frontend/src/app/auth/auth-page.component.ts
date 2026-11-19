@@ -7,10 +7,10 @@ import { AuthService } from './auth.service';
 import { esClaveValida, normalizarTelefono, CLAVE_LONGITUD } from './clave';
 
 /** Mensaje generico: el backend no revela si el telefono existe (Req 1.8). */
-const MENSAJE_GENERICO = 'No pudimos entrar. Revisa tu celular y tu clave e intenta de nuevo.';
+const MENSAJE_GENERICO = 'No pudimos entrar. Revise su celular y su clave e intente de nuevo.';
 /** Mensaje generico del registro: tampoco revela si el celular ya tiene cuenta. */
-const MENSAJE_REGISTRO = 'No pudimos crear tu cuenta. Revisa tus datos e intenta de nuevo.';
-const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nuevo en unos minutos.';
+const MENSAJE_REGISTRO = 'No pudimos crear su cuenta. Revise sus datos e intente de nuevo.';
+const MENSAJE_BLOQUEO = 'Su cuenta está bloqueada por seguridad. Intente de nuevo en unos minutos.';
 
 /**
  * Pantalla de autenticación sin fricción (Tarea 23.1).
@@ -46,12 +46,12 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
           </header>
 
           <h1 class="titulo" id="titulo-auth">
-            {{ modoRegistro() ? 'Crea tu cuenta' : 'Entra a CIMA' }}
+            {{ modoRegistro() ? 'Cree su cuenta' : 'Entre a CIMA' }}
           </h1>
 
           <form (ngSubmit)="enviar()" novalidate aria-labelledby="titulo-auth">
             <div class="sb-ui-input-container campo">
-              <label class="sb-ui-input-label" for="telefono">Tu celular</label>
+              <label class="sb-ui-input-label" for="telefono">Su celular</label>
               <input
                 id="telefono"
                 name="telefono"
@@ -64,11 +64,11 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
                 placeholder="Ej: 3001234567"
                 aria-describedby="ayuda-telefono"
               />
-              <span id="ayuda-telefono" class="sb-ui-input-helper">Escribe tu número de celular.</span>
+              <span id="ayuda-telefono" class="sb-ui-input-helper">Escriba su número de celular.</span>
             </div>
 
             <div class="sb-ui-input-container campo">
-              <label class="sb-ui-input-label" for="clave">Tu clave de {{ longitudClave }} números</label>
+              <label class="sb-ui-input-label" for="clave">Su clave de {{ longitudClave }} números</label>
               <input
                 id="clave"
                 name="clave"
@@ -83,16 +83,16 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
               />
               @if (modoRegistro()) {
                 <span id="ayuda-clave" class="sb-ui-input-helper">
-                  Para acordarte fácil, puedes usar los últimos 4 números de tu cédula.
+                  Para recordarla fácil, puede usar los últimos 4 números de su cédula.
                 </span>
               } @else {
-                <span id="ayuda-clave" class="sb-ui-input-helper">Escribe tu clave de 4 números.</span>
+                <span id="ayuda-clave" class="sb-ui-input-helper">Escriba su clave de 4 números.</span>
               }
             </div>
 
             @if (modoRegistro()) {
               <div class="sb-ui-input-container campo">
-                <label class="sb-ui-input-label" for="confirmacion">Escribe otra vez tu clave</label>
+                <label class="sb-ui-input-label" for="confirmacion">Escriba otra vez su clave</label>
                 <input
                   id="confirmacion"
                   name="confirmacion"
@@ -107,7 +107,7 @@ const MENSAJE_BLOQUEO = 'Tu cuenta está bloqueada por seguridad. Intenta de nue
                 />
                 <span id="ayuda-confirmacion" class="sb-ui-input-helper" aria-live="polite">
                   @if (noCoinciden()) {
-                    Las dos claves no son iguales. Revísalas.
+                    Las dos claves no son iguales. Revíselas.
                   } @else {
                     Tiene que ser igual a la clave de arriba.
                   }

@@ -44,11 +44,11 @@ import { UserContextService } from '../core/user-context.service';
     </button>
 
     @if (abierto()) {
-      <nav id="menu-cuenta" class="panel" aria-label="Opciones de tu cuenta">
+      <nav id="menu-cuenta" class="panel" aria-label="Opciones de su cuenta">
         <div class="quien">
-          <p class="quien__titulo">Tu cuenta</p>
+          <p class="quien__titulo">Su cuenta</p>
           @if (contexto.cargando()) {
-            <p class="quien__dato" role="status">Cargando tus datos...</p>
+            <p class="quien__dato" role="status">Cargando sus datos...</p>
           } @else if (contexto.perfil(); as perfil) {
             <p class="quien__dato">
               Cultivo o comercio: <strong>{{ contexto.actividadEtiqueta() }}</strong>
@@ -57,7 +57,7 @@ import { UserContextService } from '../core/user-context.service';
               Celular: <strong>{{ perfil.phone }}</strong>
             </p>
           } @else {
-            <p class="quien__dato">Todavía no has completado tu perfil.</p>
+            <p class="quien__dato">Todavía no ha completado su perfil.</p>
           }
         </div>
 
@@ -92,7 +92,7 @@ import { UserContextService } from '../core/user-context.service';
 
         @if (errorAlSalir()) {
           <p class="error" role="alert">
-            No pudimos cerrar tu sesión. Revisa tu conexión e intenta de nuevo.
+            No pudimos cerrar su sesión. Revise su conexión e intente de nuevo.
           </p>
         }
       </nav>
