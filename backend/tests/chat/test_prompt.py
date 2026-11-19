@@ -90,6 +90,20 @@ def test_las_instrucciones_fijan_el_alcance_de_cima() -> None:
         assert frase in instrucciones
 
 
+def test_las_instrucciones_piden_trato_de_usted_sin_genero() -> None:
+    """El asistente trata de "usted" y no asume nombre ni género (Req 9, Req 13)."""
+    instrucciones = f"{SYSTEM_PROMPT} {DEVELOPER_PROMPT}".lower()
+    for frase in [
+        'trata siempre a la persona de "usted"',
+        'nunca uses "tú", "vos" ni "sumercé"',
+        "no sabes su nombre ni si es hombre o mujer",
+        "no la llames don, doña, señor, señora, amigo ni amiga",
+        '"recuerde:"',
+    ]:
+        assert frase in instrucciones
+    assert PROMPT_VERSION == "cima-prompt-v3"
+
+
 @pytest.mark.parametrize(
     "texto",
     [
