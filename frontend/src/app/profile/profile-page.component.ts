@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { UserContextService } from '../core/user-context.service';
 import { ProfileService, type Perfil } from './profile.service';
 import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
+import { TratoFormComponent } from './trato-form.component';
 
 /**
  * Pantalla de Perfil del Usuario (Tarea 23, Req 9.1, 9.4, 9.5). Muestra y edita
@@ -20,7 +21,7 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
  */
 @Component({
   selector: 'cima-profile-page',
-  imports: [FormsModule],
+  imports: [FormsModule, TratoFormComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="pantalla">
@@ -101,6 +102,9 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
                 {{ mensajeError() }}
               </div>
             }
+
+            <hr class="separador" />
+            <cima-trato-form />
           }
 
           <div class="volver">
@@ -157,6 +161,11 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
       .volver {
         text-align: center;
         margin-top: 1.25rem;
+      }
+      .separador {
+        border: 0;
+        border-top: 1px solid var(--cima-borde);
+        margin: 2rem 0 1.5rem;
       }
     `,
   ],
