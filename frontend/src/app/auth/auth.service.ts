@@ -3,12 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { almacenDelNavegador, vaciarCachesDeDatos } from '../core/limpieza-local';
+import { almacenLocal, borrarTrato } from '../core/trato';
 
 /**
  * Vacía los datos de la API que el Service Worker dejó en el dispositivo cuando
  * la sesión cambia de manos (celular compartido). Ver `core/limpieza-local.ts`.
+ * También borra cómo quiere la persona que le digan ("doña Rosa"), que solo
+ * vive en el celular (`core/trato.ts`): el siguiente que entre no debe verlo.
  */
 export function limpiarDatosLocales(): Promise<number> {
+  borrarTrato(almacenLocal());
   return vaciarCachesDeDatos(almacenDelNavegador());
 }
 

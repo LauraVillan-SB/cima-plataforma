@@ -3,6 +3,14 @@ import { Injectable, computed, effect, inject, signal, untracked } from '@angula
 import { AuthService } from '../auth/auth.service';
 import { etiquetaActividad, fraseActividad } from '../profile/perfil';
 import { ProfileService, type Perfil } from '../profile/profile.service';
+import {
+  almacenLocal,
+  borrarTrato,
+  comoLlamar,
+  guardarTrato,
+  leerTrato,
+  type PreferenciaTrato,
+} from './trato';
 
 /**
  * Contexto de la persona con sesión iniciada: guarda su Perfil para que el
@@ -11,8 +19,12 @@ import { ProfileService, type Perfil } from '../profile/profile.service';
  *
  * Solo presentación. El Perfil llega del backend con el teléfono ya enmascarado
  * (solo los últimos 4 dígitos, Req 9.4): aquí nunca se maneja el número
- * completo y nada se guarda en el navegador (ni `localStorage` ni
- * `sessionStorage`); vive solo en memoria mientras dura la pestaña.
+ * completo y el Perfil no se guarda en el navegador; vive solo en memoria
+ * mientras dura la pestaña.
+ *
+ * La única excepción es cómo quiere la persona que le digan ("doña Rosa"), que
+ * ella misma escribe y se guarda solo en este celular (`core/trato.ts`): nunca
+ * se envía al backend ni al asistente, y se borra al cambiar la sesión.
  */
 @Injectable({ providedIn: 'root' })
 export class UserContextService {
@@ -37,19 +49,45 @@ export class UserContextService {
     return p ? fraseActividad(p.activity_type) : '';
   });
 
+  /** Cómo quiere que le digan, guardado solo en este celular; `null` si no lo ha dicho. */
+  readonly trato = signal<PreferenciaTrato | null>(null);
+
+  /** "doña Rosa", "don Carlos", "Rosa" o vacío: la app sigue hablando de "usted". */
+  readonly comoLlamar = computed(() => comoLlamar(this.trato()));
+
   constructor() {
-    // Al iniciar sesión se trae el Perfil; al salir se olvida. El efecto solo
-    // depende de `autenticado`: el resto se ejecuta sin rastrearse.
+    // Al iniciar sesión se trae el Perfil y se lee el trato del celular; al
+    // salir se olvidan. El efecto solo depende de `autenticado`: el resto se
+    // ejecuta sin rastrearse.
     effect(() => {
       const hayDatosDeSesion = this.auth.autenticado();
       untracked(() => {
         if (hayDatosDeSesion) {
+          this.trato.set(leerTrato(almacenLocal()));
           void this.cargar();
         } else {
           this.perfil.set(null);
+          this.trato.set(null);
         }
       });
     });
+  }
+
+  /**
+   * Guarda en el celular cómo quiere que le digan.
+   *
+   * @returns `false` si el navegador no permitió guardarlo; en ese caso el
+   *   saludo se usa solo mientras la app esté abierta.
+   */
+  guardarTrato(preferencia: PreferenciaTrato): boolean {
+    this.trato.set(preferencia);
+    return guardarTrato(almacenLocal(), preferencia);
+  }
+
+  /** Borra del celular cómo quiere que le digan; la app vuelve a decir solo "usted". */
+  borrarTrato(): void {
+    borrarTrato(almacenLocal());
+    this.trato.set(null);
   }
 
   /** Reemplaza el Perfil en memoria (p. ej. tras guardarlo en la pantalla de Perfil). */
