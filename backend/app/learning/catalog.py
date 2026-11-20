@@ -143,10 +143,6 @@ _GENERAL_CLIMA = CapsuleSpec(
         "apuntes va a ver patrones propios de su terreno que ningún pronóstico general le "
         "da. Un tarro recto puesto al aire libre le sirve de pluviómetro casero: con una "
         "regla mide cuántos centímetros de agua se juntaron.",
-        "Don Pepito lo cuenta así: \"En mi finca del Huila llevo años anotando en una "
-        "libreta cómo estuvo el tiempo. Cuando el café va a florecer, esos apuntes me "
-        "ayudan a decidir qué hacer a tiempo y no a la carrera. Anote aunque sea una "
-        "línea por semana, que eso rinde mucho.\"",
         "Después, mire el pronóstico oficial. En Colombia el IDEAM publica pronósticos y "
         "avisos del tiempo, y también informa cuando se espera un fenómeno de El Niño o de "
         "La Niña. El Niño suele traer menos lluvia y más calor; La Niña, más lluvia y más "
@@ -157,9 +153,6 @@ _GENERAL_CLIMA = CapsuleSpec(
         "qué viene puede decidir con calma: si adelanta o atrasa una siembra, si guarda "
         "agua, si repara un techo o un canal antes de las lluvias, o si separa un dinero "
         "para la temporada difícil.",
-        "Doña Pepita, la tendera, también lo hace: \"En mi cuaderno de cuentas apunto "
-        "además si fue un mes de lluvias o de calor. Así entiendo por qué se vendió más "
-        "o menos y me preparo para el siguiente. Llevar apuntes le ahorra sorpresas.\"",
         "Piense en su última temporada difícil. ¿Qué señales hubo antes y no las anotó? "
         "Si hubiera tenido una libreta, ¿qué habría hecho distinto? Empiece hoy con la "
         "primera hoja: la fecha y cómo estuvo el tiempo.",
@@ -196,9 +189,6 @@ _GENERAL_AGUA = CapsuleSpec(
         "el aseo, para los animales o para regar. Antes de usarla para tomar necesita un "
         "tratamiento, así que consulte en el puesto de salud o en la oficina de asistencia "
         "técnica agropecuaria de su municipio cómo hacerlo de forma segura.",
-        "Don Pepito cuenta: \"En mi finca dejé las canecas con tapa junto al techo del "
-        "beneficio. Cuando llueve se llenan, y en las semanas secas esa agua me salva. Yo "
-        "he visto en fincas vecinas que quien guarda agua sufre menos en el verano.\"",
         "Riegue con cabeza. Regar muy temprano en la mañana o al final de la tarde reduce "
         "la evaporación. Si puede, use riego por goteo o mangueras con pocos huecos en "
         "lugar de dejar correr el agua; así llega a la raíz y no se pierde. Cubrir el suelo "
@@ -208,8 +198,6 @@ _GENERAL_AGUA = CapsuleSpec(
         "nacimientos, quebradas y reservorios protege la fuente y evita que el suelo se "
         "lave con las lluvias fuertes. Evite tirar basura, envases de agroquímicos o "
         "residuos de la finca cerca del agua: contaminarla hoy es quedarse sin ella mañana.",
-        "Doña Pepita agrega: \"En la tienda revisé las llaves y arreglé una que goteaba. "
-        "Parecía poca cosa, pero se notó en el recibo. Mire usted las suyas.\"",
         "En su casa o negocio revise las llaves y las mangueras: una gotera pequeña "
         "desperdicia muchos litros al mes, arreglarla casi no cuesta y se nota en la "
         "cuenta. Piense de dónde sale el agua que usa y cuántos días aguantaría si "
@@ -247,9 +235,6 @@ _GENERAL_PLAN_B = CapsuleSpec(
         "llamar? Escriba las respuestas en una hoja. Incluya teléfonos útiles: familiares, "
         "vecinos, la alcaldía, la oficina de gestión del riesgo de su municipio y los "
         "organismos de socorro de su zona.",
-        "Don Pepito lo dice así: \"En mi finca tengo anotados los teléfonos en una hoja "
-        "pegada en la cocina. Un año las lluvias nos pillaron y en una finca vecina no "
-        "sabían ni a quién llamar. Escríbalo hoy, que mañana puede ser tarde.\"",
         "Guarde lo importante en un lugar seguro: copias de sus documentos, de escrituras "
         "o contratos y de los papeles del negocio o de la finca, de preferencia en una "
         "bolsa plástica sellada y también fotografiados en su celular. Si hay una "
@@ -259,9 +244,6 @@ _GENERAL_PLAN_B = CapsuleSpec(
         "hábito. Ese dinero no es para los gastos del mes: es para cuando el clima o el "
         "mercado lo saquen del camino. Con el tiempo lo ideal es que alcance para cubrir "
         "varias semanas de gastos básicos.",
-        "Doña Pepita lo practica: \"En mi cuaderno separo una platica de cada venta, "
-        "siempre el mismo día. Es poquito, pero cuando se dañó la nevera no tuve que "
-        "pedirle prestado a nadie.\"",
         "Practique el plan con su familia o su equipo: que todos sepan dónde están los "
         "papeles, a quién llamar y qué hacer primero. Un plan que solo conoce una persona "
         "no sirve si esa persona no está. Y pregúntese: ¿qué sería lo primero que perdería "
@@ -300,7 +282,7 @@ _CAFE_CLIMA = CapsuleSpec(
     title="Proteger el cafetal: sombrío, suelo cubierto y lluvias fuertes",
     summary=(
         "Cómo el sombrío y el cuidado del suelo ayudan a su cafetal frente a más calor y "
-        "aguaceros, con la experiencia de don Pepito."
+        "aguaceros."
     ),
     paragraphs=(
         "¿Sabe usted por qué el café sufre tanto con el calor y los aguaceros? El café es "
@@ -309,10 +291,6 @@ _CAFE_CLIMA = CapsuleSpec(
         "está cambiando, cuidar el cafetal ya no es solo fertilizar y cosechar a tiempo: "
         "también es protegerlo del sol, del agua que arrastra el suelo y de los cambios "
         "bruscos entre temporadas.",
-        "Don Pepito, campesino del Huila con muchos años en el café, lo cuenta así: \"En "
-        "mi finca, los lotes con buena sombra y el suelo cubierto aguantan mejor el verano "
-        "y los aguaceros. Con el tiempo aprendí a mirar el cafetal después de cada "
-        "temporada.\"",
         "El sombrío es una de las ayudas más sencillas. Los árboles bien ubicados, como el "
         "plátano, el guamo u otras especies que recomiende el técnico de su zona, bajan la "
         "temperatura del cultivo, conservan la humedad del suelo y protegen del golpe "
@@ -358,7 +336,7 @@ _CAFE_FINANZAS = CapsuleSpec(
     title="Las cuentas del café: qué entra y qué sale en cada cosecha",
     summary=(
         "Un registro sencillo para saber cuánto cuesta producir y cuánto le queda "
-        "realmente, con la experiencia de don Pepito."
+        "realmente."
     ),
     paragraphs=(
         "¿Sabe usted cuánto le costó producir su última cosecha? Muchos caficultores saben "
@@ -366,9 +344,6 @@ _CAFE_FINANZAS = CapsuleSpec(
         "difícil saber si se está ganando, empatando o perdiendo. Llevar las cuentas no es "
         "cosa de contadores: con un cuaderno y unos pocos hábitos puede entender su "
         "negocio y tomar mejores decisiones.",
-        "Don Pepito, campesino del Huila con muchos años en el café, lo cuenta así: \"En "
-        "mi finca yo anoto todo en un cuaderno, lo de la finca en una hoja y lo de la casa "
-        "en otra. Cuando empecé a hacerlo, entendí para dónde se me iba la plata.\"",
         "Divida sus gastos en dos grupos. Los costos de producción son los de la finca: "
         "abonos, jornales de recolección, control de plagas, transporte, beneficio y "
         "mantenimiento. Los gastos del hogar son los de su familia: comida, estudio, salud "
@@ -410,10 +385,7 @@ _CAFE_RIESGOS = CapsuleSpec(
     tags=("cafe",),
     relevance=7.5,
     title="Riesgos del cafetal: prevenir, reducir o trasladar",
-    summary=(
-        "Cómo identificar lo que puede afectar su cosecha y qué hacer con cada riesgo, "
-        "con la experiencia de don Pepito."
-    ),
+    summary="Cómo identificar lo que puede afectar su cosecha y qué hacer con cada riesgo.",
     paragraphs=(
         "¿Ha pensado qué pasaría con su finca si mañana llega una sequía o una plaga? "
         "Todo cultivo tiene riesgos. En el café pueden ser el clima, como la sequía, las "
@@ -421,9 +393,6 @@ _CAFE_RIESGOS = CapsuleSpec(
         "roya; los cambios en el precio; los problemas de salud de quien trabaja la finca; "
         "o incluso el robo. Pensar en ellos antes no los elimina, pero lo prepara para que "
         "no lo tomen por sorpresa.",
-        "Don Pepito, campesino del Huila con muchos años en el café, lo cuenta así: \"En "
-        "mi finca me acostumbré a pensar qué me podía pasar antes de que pasara. Así, "
-        "cuando llegó un mal año, no me agarró desprevenido.\"",
         "Una forma ordenada de verlo es hacerse tres preguntas por cada riesgo: ¿qué tan "
         "probable es que pase?, ¿qué tanto daño me haría?, ¿qué puedo hacer al respecto? "
         "Con eso puede decidir cuáles atender primero. Un riesgo poco probable pero muy "
@@ -482,9 +451,6 @@ _TIENDA_CLIMA = CapsuleSpec(
         "cuando las rejillas. No la llene de más ni abra la puerta sin necesidad. Revise "
         "que el empaque de la puerta cierre bien; si no, pierde frío, gasta más energía "
         "y se dañan los productos.",
-        "Doña Pepita lo cuenta así: \"En mi tienda, antes de que lleguen las lluvias, "
-        "subo del piso lo que se moja fácil y me asomo al techo. Es un ratico de trabajo, "
-        "pero me ahorra muchos disgustos.\"",
         "Con las lluvias, suba del piso lo que se moje fácil: paquetes de arroz, azúcar, "
         "harinas, papel higiénico y cajas de cartón. Use estibas o estantes bajos de "
         "plástico o metal. Mire cada cierto tiempo el techo, los canales y los bajantes: "
@@ -533,9 +499,6 @@ _TIENDA_FINANZAS = CapsuleSpec(
         "anotándolo. Todo lo demás se queda en el negocio para reponer mercancía, pagar "
         "arriendo y servicios y cubrir imprevistos. Así sabe con claridad qué es del "
         "negocio y qué es suyo.",
-        "Doña Pepita lo cuenta así: \"Yo llevo mi cuaderno de cuentas y cada semana me "
-        "saco lo mío el mismo día, anotado. Lo que queda en la caja es de la tienda, y "
-        "así no se me mezclan los dos bolsillos.\"",
         "Conozca la diferencia entre vender y ganar. Lo que entra por ventas no es "
         "ganancia: de ahí hay que descontar lo que le costó la mercancía, el arriendo, "
         "la energía, el transporte y otros gastos. Calcule el margen de sus productos "
@@ -585,9 +548,6 @@ _TIENDA_RIESGOS = CapsuleSpec(
         "techo con goteras, mercancía en el piso. Al lado de cada punto escriba qué tan "
         "probable es y qué tanto daño haría. Empiece arreglando lo más grave y fácil de "
         "resolver, como pedir que alguien calificado revise las conexiones eléctricas.",
-        "Doña Pepita lo cuenta así: \"En mi tienda hago el recorrido con calma, con mi "
-        "cuaderno en la mano. Lo que anoto lo voy arreglando de a poquito, empezando por "
-        "lo más peligroso.\"",
         "Para el robo, evite acumular mucho efectivo en la caja: consigne o transfiera "
         "con regularidad. Mejore la iluminación, mantenga la mercancía valiosa a la "
         "vista y no deje el local solo. Para el incendio, tenga cerca un extintor "
@@ -633,7 +593,7 @@ _CAFE_BROCA = CapsuleSpec(
     title="La broca: cómo cuidar su cosecha de la plaga que más daña el café",
     summary=(
         "Aprenda cómo vive la broca, dónde se esconde y qué hacer antes y después de la "
-        "cosecha, con la experiencia de don Pepito."
+        "cosecha."
     ),
     paragraphs=(
         "¿Sabe usted dónde se esconde la broca después de la cosecha? La broca del café es "
@@ -641,9 +601,6 @@ _CAFE_BROCA = CapsuleSpec(
         "más daño le hace al café en el mundo. La hembra perfora el grano, entra y pone "
         "sus huevos adentro. Por eso el daño casi no se ve por fuera, pero por dentro el "
         "grano se pica, pesa menos y se vende peor.",
-        "Don Pepito, campesino del Huila con muchos años en el café, lo cuenta así: \"En "
-        "mi finca aprendí que la broca se combate con el repase. Cuando no recogí bien los "
-        "frutos que quedaron en la rama y en el suelo, la plaga volvió.\"",
         "Para defenderse conviene conocerla. Desde el huevo hasta que es adulta pasan "
         "más o menos de veinticuatro a cuarenta y cinco días, según el clima. Le "
         "gustan los lugares sombríos y húmedos, y suele salir después de la lluvia a "
@@ -700,9 +657,6 @@ _TIENDA_INVENTARIO = CapsuleSpec(
         "necesario, porque tener mucho también cuesta. Hay que encontrar el equilibrio: "
         "si pide poco se le acaba y pierde la venta; si pide mucho se le empoza la "
         "plata.",
-        "Doña Pepita lo cuenta así: \"En mi tienda, una vez por semana miro mi cuaderno "
-        "y veo qué se acabó y qué lleva días quieto. Así compro lo que de verdad "
-        "vendo.\"",
         "Para empezar basta un cuaderno. Una vez por semana anote qué productos se "
         "acabaron, cuáles se vendieron más y cuáles llevan semanas sin moverse. Así "
         "descubre sus productos estrella, que debe tener siempre, y sus productos "
@@ -751,9 +705,6 @@ _FINANZAS_GOTA_A_GOTA = CapsuleSpec(
         "negocio o de su finca. Y lo más grave: si se atrasa, empiezan las "
         "presiones, las amenazas y las visitas. Por eso muchas veces no se pierde solo "
         "plata, también la tranquilidad.",
-        "Don Pepito lo cuenta así: \"En fincas vecinas he visto gente que cayó en el gota "
-        "a gota por una urgencia, y la deuda se les volvió una bola de nieve. Mi consejo: "
-        "antes de aceptar, pregunte cuánto va a pagar en total.\"",
         "Ojo con las fachadas. A veces quien presta se hace pasar por una entidad "
         "seria, con carteles, mensajes o llamadas muy amables. Antes de aceptar, "
         "pregunte el nombre completo de la entidad y si está vigilada por la "
@@ -765,9 +716,6 @@ _FINANZAS_GOTA_A_GOTA = CapsuleSpec(
         "final. Si cultiva café, pregunte en su comité de cafeteros por las líneas "
         "para el sector. Si tiene tienda, llevar bien sus cuentas le sirve de "
         "respaldo cuando pida un crédito.",
-        "Doña Pepita agrega: \"Yo llevo mis cuentas día a día en el cuaderno. Cuando "
-        "necesité plata, con esas cuentas claras pude hablar con una entidad formal y no "
-        "tuve que buscar al prestamista de la esquina.\"",
         "Y la mejor defensa es tener un colchón. Aunque sea poquito, aparte una parte "
         "de cada venta o de cada cosecha en un fondo para imprevistos, así cuando algo "
         "falle no tiene que correr donde un prestamista. Si ya está en un gota a "
@@ -817,10 +765,6 @@ _AGRO_SOSTENIBLE = CapsuleSpec(
         "Cuando el suelo está pobre y sin cobertura, cada aguacero se lleva la capa buena "
         "de la tierra y cada verano seca más rápido el cultivo. Una finca bien cuidada "
         "aguanta mejor esos golpes.",
-        "Don Pepito lo cuenta así: \"En mi finca del Huila, con tantos años en el café, "
-        "aprendí que la tierra se cuida o se acaba. Donde dejé cobertura entre los "
-        "surcos, el suelo aguanta los aguaceros. Mire usted las fincas vecinas con la "
-        "tierra pelada y verá la diferencia.\"",
         "El primer cuidado es el suelo, porque de él depende todo. Deje coberturas o "
         "arvenses nobles entre los surcos para que la tierra no quede pelada, devuelva al "
         "lote la pulpa y los residuos bien compostados y siembre en curvas de nivel si su "
@@ -871,9 +815,6 @@ _AGRO_RIESGOS = CapsuleSpec(
         "también los deslizamientos que se forman cuando el exceso de lluvia satura la "
         "tierra. Para prepararse, siga los avisos del IDEAM, mantenga limpios los canales y "
         "desagües y no deje la tierra pelada en las pendientes.",
-        "Don Pepito lo cuenta así: \"En mi finca he visto de todo: aguaceros que se "
-        "llevan el suelo y plagas que aparecen cuando uno menos las espera. Lo que me ha "
-        "funcionado es no confiarme y estar atento. Revise su cultivo seguido.\"",
         "El segundo es el riesgo biológico: las plagas y enfermedades que atacan los "
         "cultivos o los animales y bajan la cantidad y la calidad de lo que produce. En el "
         "café, por ejemplo, la broca y la roya. La mejor defensa es revisar seguido, "
@@ -928,9 +869,6 @@ _TIENDA_VIDEOS = CapsuleSpec(
         "Cuando ponga el celular al frente, imagine que es su compadre o su clienta de "
         "toda la vida que vino a preguntarle algo. Háblele con la misma confianza con "
         "que la atiende en la tienda, y el video sale natural.",
-        "Doña Pepita lo cuenta así: \"Yo les hablo a mis clientes con el mismo cariño "
-        "con que atiendo en el mostrador. Cuando uno se acuerda de que le habla a su "
-        "gente, se le quita el susto.\"",
         "No necesita equipos caros. Limpie el lente del celular, párese de frente a la "
         "luz de la puerta o de una ventana y apóyelo en algo firme para que no tiemble. "
         "Grabe en un lugar sin mucho ruido y hable un poco más despacio de lo normal. "
@@ -987,10 +925,6 @@ _PLATANO_LABORES = CapsuleSpec(
         "enfermas riegan la sigatoka y las herramientas sucias llevan enfermedades como "
         "el moko de una mata a otra. Con un poco de orden se pierde menos y el racimo "
         "sale más pesado.",
-        "Don Pepito, campesino del Huila con muchos años en el café, lo cuenta así: \"El "
-        "plátano no es lo mío, pero en las fincas vecinas y en mi lote de pancoger he "
-        "visto que las matas bien limpias y con las herramientas desinfectadas se "
-        "enferman menos.\"",
         "Los primeros cinco a siete meses son los más delicados, porque las malezas "
         "compiten fuerte con la planta joven. Mantenga limpio el plato alrededor de cada "
         "mata y, entre los surcos, deje coberturas nobles que protejan el suelo sin "
@@ -1049,10 +983,6 @@ _AGUACATE_SUELO = CapsuleSpec(
         "quedar encharcadas, y en las laderas un aguacero fuerte puede llevarse la capa "
         "buena de la tierra en pocas horas. Con lluvias cada vez más fuertes y veranos más "
         "largos, cuidar el suelo y el agua es la mejor forma de proteger su inversión.",
-        "Don Pepito, campesino del Huila con muchos años en el café, lo cuenta así: \"El "
-        "aguacate no es mi fuerte, pero en fincas vecinas he visto que donde el agua se "
-        "empoza los árboles sufren. Por eso yo, después de un aguacero, camino la finca "
-        "para ver por dónde corre el agua.\"",
         "Empiece por conocer su finca. Camínela después de un aguacero y mire por dónde "
         "corre el agua, dónde se queda empozada, dónde se ven piedras que antes no "
         "estaban y dónde la tierra se está lavando. Esos son sus puntos de riesgo. "
@@ -1114,9 +1044,6 @@ _CACAO_MONILIA = CapsuleSpec(
         "son millones de esporas que el viento y la lluvia llevan a las mazorcas sanas. "
         "La mazorca negra se ve como una mancha oscura que avanza rápido, sobre todo en "
         "épocas de mucha humedad.",
-        "Don Pepito lo cuenta así: \"Yo no soy de cacao, pero en fincas de vecinos he "
-        "visto que al que se le pasan los días sin mirar el lote, la enfermedad se le "
-        "riega. Y al que recorre y saca lo enfermo a tiempo, le va mejor.\"",
         "La clave es sacar las mazorcas enfermas antes de que hagan el polvo. Recorra el "
         "lote cada semana, de preferencia en la mañana, y retire todas las mazorcas "
         "enfermas que encuentre. No las deje colgando ni las amontone al aire libre: "
@@ -1169,9 +1096,6 @@ _ARROZ_AGUA = CapsuleSpec(
         "por el agua de los distritos de riego y las quebradas. Cuando el agua escasea, "
         "el que la desperdicia es el primero en quedarse corto. Por eso aprender a usarla "
         "mejor no es solo cuidar el ambiente: es asegurar la cosecha y bajar los costos.",
-        "Don Pepito lo cuenta así: \"Yo de arroz no sé mucho, pero cuando converso con "
-        "productores veo que todos se quejan del agua. Los que mejor la cuidan son los "
-        "que se sientan a mirar por dónde corre.\"",
         "El primer paso es nivelar bien el lote. En un terreno desparejo el agua se "
         "acumula en las partes bajas y no llega a las altas, así que toca echar mucha más "
         "para cubrirlo todo. Con una buena nivelación el agua se reparte pareja, la "
@@ -1224,9 +1148,6 @@ _MAIZ_SANIDAD = CapsuleSpec(
         "Fumigar así cuesta plata, mata a los insectos que le ayudan y con el tiempo hace "
         "que las plagas se vuelvan más resistentes. Funciona mejor un manejo integrado: "
         "mirar primero y actuar a tiempo, combinando varias prácticas.",
-        "Don Pepito lo cuenta así: \"En mi lote de pancoger he sembrado maíz, y "
-        "aprendí que mirar las matas con calma sirve más que correr a echarles algo. Un "
-        "vecino mío se acostumbró a revisar y se ahorró muchos dolores de cabeza.\"",
         "Todo empieza con buena semilla. Use semilla certificada o de calidad conocida, "
         "que cumpla lo que pide el ICA, porque una semilla mala trae problemas desde el "
         "primer día. Siembre a la distancia recomendada para su variedad: cuando las "
@@ -1283,9 +1204,6 @@ _GANADERIA_SILVOPASTORIL = CapsuleSpec(
         "probada en Colombia es la ganadería con árboles, conocida como sistema "
         "silvopastoril, que combina pasto, arbustos forrajeros y árboles en el mismo "
         "potrero.",
-        "Don Pepito lo cuenta así: \"Yo no soy ganadero, pero en fincas vecinas he visto "
-        "que el ganado busca la sombra apenas calienta el sol. Donde hay árboles, se "
-        "nota que los animales están más a gusto.\"",
         "No tiene que transformar toda la finca de una vez. Lo más sencillo para empezar "
         "son las cercas vivas: en lugar de postes muertos, sembrar estacas de árboles que "
         "pegan fácil y que con el tiempo dan sombra, forraje y madera. Escoja estacas de "
@@ -1340,9 +1258,6 @@ _HORTALIZAS_HUERTA = CapsuleSpec(
         "la casa y para vender lo que sobra. Cuando todo el lote está sembrado de una "
         "sola hortaliza, un mal precio o una plaga lo deja sin nada. Cuando usted siembra "
         "varias, siempre hay algo que comer y algo que vender, y el riesgo se reparte.",
-        "Don Pepito lo cuenta así: \"En mi lote de pancoger siempre dejo varias cosas "
-        "sembradas. Un vecino mío puso una sola y, cuando le fue mal, se quedó sin nada "
-        "para la olla ni para vender.\"",
         "Diversifique con cabeza. Combine hortalizas de ciclo corto, que se cosechan en "
         "pocas semanas, con otras de ciclo más largo, para tener cosecha casi todo el "
         "año. Escoja lo que se da bien en su clima y lo que la gente de su zona compra. "
@@ -1402,9 +1317,6 @@ _PANADERIA_COSTOS = CapsuleSpec(
         "Sume todo y divida por el número de panes que salen de esa tanda. Eso es lo que "
         "le cuestan los ingredientes de cada pan. Repita la cuenta cada vez que le suban "
         "un insumo importante.",
-        "Doña Pepita lo cuenta así: \"Yo no soy panadera, pero en mi barrio vi a una "
-        "vecina panadera sentarse con su cuaderno a anotar lo que le costaba cada tanda. "
-        "Desde ahí supo con claridad cuánto ganaba y cuánto no.\"",
         "No se olvide de los costos que no se ven. El gas o la energía del horno, las "
         "bolsas y el papel, el agua, el arriendo y el pago de quien le ayuda también "
         "salen de la venta del pan. Una forma sencilla es sumar lo que gasta en eso al "
@@ -1453,9 +1365,6 @@ _MISCELANEA_FIADO = CapsuleSpec(
         "Pídale al cliente que revise y que firme o ponga sus iniciales cuando se lleve "
         "algo. Así no hay discusiones después y usted sabe en todo momento cuánto le "
         "deben.",
-        "Doña Pepita lo cuenta así: \"Yo no tengo miscelánea, pero en la de la esquina "
-        "vi que el fiado sin cuaderno termina en discusiones. Con una página por "
-        "cliente, todo queda claro y se cobra con respeto.\"",
         "Póngale límites. Decida cuánto es lo máximo que le fía a cada cliente y hasta "
         "cuándo tiene para pagar, por ejemplo hasta la quincena. Dígaselo con claridad y "
         "con respeto desde el principio. Si alguien ya llegó a su límite o no ha pagado "
