@@ -1,6 +1,6 @@
 import * as fc from 'fast-check';
 
-import { RUTA_REFRESCO, debeIntentarRefresco } from './sesion';
+import { RUTA_REFRESCO, debeIntentarRefresco, debeLlevarAEntrar } from './sesion';
 
 /**
  * Pruebas de la regla de renovación de sesión (Req 1.14, 2.6).
@@ -46,5 +46,20 @@ describe('debeIntentarRefresco', () => {
       ),
       { numRuns: 100 },
     );
+  });
+});
+
+describe('Pantallas que se usan sin sesión (Req 18.1)', () => {
+  it.each([
+    ['/descargas', false],
+    ['/descargas/', false],
+    ['/descargas?x=1', false],
+    ['/entrar', false],
+    ['/inicio', true],
+    ['/mi-ruta', true],
+    ['/', true],
+    ['/descargas-falsas', true],
+  ])('al vencer la sesión en %s, ¿lleva a la entrada? %s', (camino, esperado) => {
+    expect(debeLlevarAEntrar(camino)).toBe(esperado);
   });
 });

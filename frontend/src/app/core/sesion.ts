@@ -23,6 +23,22 @@ const RUTAS_SIN_REFRESCO: readonly string[] = [
   '/api/v1/auth/salir',
 ];
 
+/**
+ * Pantallas que se usan sin sesión. Si la sesión vence estando en una de ellas, no
+ * se lleva a la entrada: "Mis descargas" solo lee los videos guardados en el
+ * celular y debe abrir sin internet ni sesión (Req 18.1).
+ */
+const PANTALLAS_SIN_SESION: readonly string[] = ['/entrar', '/descargas'];
+
+/**
+ * Verdadero si, al vencer la sesión, hay que llevar a la persona a la entrada.
+ * @param camino ruta actual de la app (puede traer `?` o `#`)
+ */
+export function debeLlevarAEntrar(camino: string): boolean {
+  const limpio = camino.split(/[?#]/, 1)[0].replace(/\/+$/, '') || '/';
+  return !PANTALLAS_SIN_SESION.includes(limpio);
+}
+
 /** Estado HTTP con el que el backend rechaza una sesión ausente o vencida. */
 const SESION_RECHAZADA = 403;
 
