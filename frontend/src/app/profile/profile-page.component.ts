@@ -27,25 +27,25 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
       <div class="sb-ui-card tarjeta">
         <div class="sb-ui-card__body">
           <h1 class="titulo" id="titulo-perfil">
-            {{ perfilExiste() ? 'Tu perfil' : 'Completa tu perfil' }}
+            {{ perfilExiste() ? 'Su perfil' : 'Complete su perfil' }}
           </h1>
 
           @if (cargandoInicial()) {
-            <p class="texto" role="status">Cargando tu perfil...</p>
+            <p class="texto" role="status">Cargando su perfil...</p>
           } @else {
             <form (ngSubmit)="guardar()" novalidate aria-labelledby="titulo-perfil">
               @if (perfilExiste()) {
                 <div class="sb-ui-input-container campo">
-                  <span class="sb-ui-input-label">Tu celular</span>
+                  <span class="sb-ui-input-label">Su celular</span>
                   <p class="dato" aria-live="polite">{{ telefonoEnmascarado() }}</p>
                   <span class="sb-ui-input-helper">
-                    Por tu seguridad solo mostramos los últimos números.
+                    Por su seguridad solo mostramos los últimos números.
                   </span>
                 </div>
               }
 
               <div class="sb-ui-input-container campo">
-                <label class="sb-ui-input-label" for="actividad">Tu cultivo o comercio</label>
+                <label class="sb-ui-input-label" for="actividad">Su cultivo o comercio</label>
                 <select
                   id="actividad"
                   name="actividad"
@@ -54,18 +54,18 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
                   (ngModelChange)="actividad.set($event)"
                   aria-describedby="ayuda-actividad"
                 >
-                  <option value="" disabled>Elige una opción</option>
+                  <option value="" disabled>Elija una opción</option>
                   @for (opcion of tiposActividad; track opcion.valor) {
                     <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
                   }
                 </select>
                 <span id="ayuda-actividad" class="sb-ui-input-helper">
-                  Escoge a qué te dedicas.
+                  Escoja a qué se dedica.
                 </span>
               </div>
 
               <div class="sb-ui-input-container campo">
-                <label class="sb-ui-input-label" for="zona">Tu zona</label>
+                <label class="sb-ui-input-label" for="zona">Su zona</label>
                 <input
                   id="zona"
                   name="zona"
@@ -78,7 +78,7 @@ import { TIPOS_ACTIVIDAD, esActividadValida, esZonaValida } from './perfil';
                   aria-describedby="ayuda-zona"
                 />
                 <span id="ayuda-zona" class="sb-ui-input-helper">
-                  Escribe el nombre de tu vereda, municipio o barrio.
+                  Escriba el nombre de su vereda, municipio o barrio.
                 </span>
               </div>
 
@@ -200,7 +200,7 @@ export class ProfilePageComponent {
       if (error instanceof HttpErrorResponse && error.status === 404) {
         this.perfil.set(null);
       } else {
-        this.mensajeError.set('No pudimos cargar tu perfil. Intenta de nuevo.');
+        this.mensajeError.set('No pudimos cargar su perfil. Intente de nuevo.');
       }
     } finally {
       this.cargandoInicial.set(false);
@@ -220,7 +220,7 @@ export class ProfilePageComponent {
     if (!actual) {
       // El Perfil se crea al registrarse; si no llegó, la sesión no corresponde a
       // una cuenta completa. No hay creación aparte (se quitó por seguridad).
-      this.mensajeError.set('No encontramos tu perfil. Sal de tu cuenta y vuelve a entrar.');
+      this.mensajeError.set('No encontramos su perfil. Salga de su cuenta y vuelva a entrar.');
       this.guardando.set(false);
       return;
     }
@@ -232,7 +232,7 @@ export class ProfilePageComponent {
       this.contexto.establecer(guardado);
       this.actividad.set(guardado.activity_type);
       this.zona.set(guardado.geo_zone);
-      this.mensajeOk.set('Guardamos tus cambios.');
+      this.mensajeOk.set('Guardamos sus cambios.');
     } catch (error: unknown) {
       this.mensajeError.set(this.mensajeDeError(error));
     } finally {
@@ -247,8 +247,8 @@ export class ProfilePageComponent {
   /** Traduce el error del backend a un mensaje para el Usuario, sin filtrar detalles. */
   private mensajeDeError(error: unknown): string {
     if (error instanceof HttpErrorResponse && error.status === 422) {
-      return 'Revisa los datos: el cultivo/comercio y la zona son obligatorios.';
+      return 'Revise los datos: el cultivo/comercio y la zona son obligatorios.';
     }
-    return 'No pudimos guardar tus cambios. Intenta de nuevo.';
+    return 'No pudimos guardar sus cambios. Intente de nuevo.';
   }
 }

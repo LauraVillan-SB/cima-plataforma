@@ -78,8 +78,8 @@ AI_DISCLOSURE_PREFIX = "🤖 Asistente de CIMA (IA): "
 
 # Respuesta segura de respaldo cuando se deriva o se degrada el agente (Req 16.3, 16.6).
 SAFE_FALLBACK_RESPONSE = (
-    "Para darte una respuesta segura, voy a conectarte con una persona del "
-    "equipo de CIMA. También puedes intentarlo de nuevo más tarde."
+    "Para darle una respuesta segura, voy a pasar su consulta a una persona del "
+    "equipo de CIMA. También puede intentarlo de nuevo más tarde."
 )
 
 # Patrones de temas fuera de dominio o inseguros que se bloquean en la entrada

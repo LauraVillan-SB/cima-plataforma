@@ -25,7 +25,7 @@ class DomainError(Exception):
 
     status_code: int = 400
     # Mensaje genérico en español coloquial, apto para mostrar al usuario.
-    public_message: str = "No pudimos procesar tu solicitud. Intenta de nuevo."
+    public_message: str = "No pudimos procesar su solicitud. Intente de nuevo."
 
     def __init__(self, internal_detail: str | None = None) -> None:
         super().__init__(internal_detail or self.public_message)
@@ -36,28 +36,28 @@ class ValidationError(DomainError):
     """Datos de entrada inválidos."""
 
     status_code = 422
-    public_message = "Revisa los datos ingresados, hay algo que no está bien."
+    public_message = "Revise los datos ingresados, hay algo que no está bien."
 
 
 class NotFoundError(DomainError):
     """Recurso no encontrado (sin revelar si existe para otro titular)."""
 
     status_code = 404
-    public_message = "No encontramos lo que buscas."
+    public_message = "No encontramos lo que busca."
 
 
 class ForbiddenError(DomainError):
     """Acceso no autorizado a un recurso ajeno (anti-BOLA)."""
 
     status_code = 403
-    public_message = "No tienes permiso para ver esto."
+    public_message = "No tiene permiso para ver esto."
 
 
 class RateLimitedError(DomainError):
     """Se superó el límite de solicitudes permitido."""
 
     status_code = 429
-    public_message = "Vas muy rápido. Espera un momento y vuelve a intentar."
+    public_message = "Va muy rápido. Espere un momento y vuelva a intentar."
 
 
 class CredencialesInvalidasError(DomainError):
@@ -69,7 +69,7 @@ class CredencialesInvalidasError(DomainError):
     """
 
     status_code = 401
-    public_message = "El teléfono o la Clave no coinciden. Verifica e intenta de nuevo."
+    public_message = "El teléfono o la Clave no coinciden. Verifique e intente de nuevo."
 
 
 class CuentaBloqueadaError(DomainError):
@@ -80,7 +80,7 @@ class CuentaBloqueadaError(DomainError):
     """
 
     status_code = 429
-    public_message = "Por seguridad bloqueamos el ingreso un rato. Espera unos minutos y vuelve a intentar."
+    public_message = "Por seguridad bloqueamos el ingreso un rato. Espere unos minutos y vuelva a intentar."
 
     def __init__(self, minutos: int | None = None, internal_detail: str | None = None) -> None:
         super().__init__(internal_detail)
@@ -90,8 +90,8 @@ class CuentaBloqueadaError(DomainError):
             minutos = max(1, int(minutos))
             unidad = "minuto" if minutos == 1 else "minutos"
             self.public_message = (
-                "Tu cuenta está bloqueada por seguridad. "
-                f"Intenta de nuevo en {minutos} {unidad}."
+                "Su cuenta está bloqueada por seguridad. "
+                f"Intente de nuevo en {minutos} {unidad}."
             )
 
 
@@ -130,7 +130,7 @@ def register_error_handlers(app: FastAPI) -> None:
         )
         respuesta = JSONResponse(
             status_code=500,
-            content=_error_body("Tuvimos un problema de nuestro lado. Intenta más tarde."),
+            content=_error_body("Tuvimos un problema de nuestro lado. Intente más tarde."),
         )
         # Este manejador corre fuera de los middlewares de la app (en Starlette
         # el error 500 lo resuelve el middleware de errores más externo), así que

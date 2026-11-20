@@ -20,5 +20,5 @@ class ReconocimientoPendienteError(DomainError):
 
     status_code = 503
     public_message = (
-        "Estamos registrando tu logro. Te lo mostraremos en unos momentos."
+        "Estamos registrando su logro. Se lo mostraremos en unos momentos."
     )

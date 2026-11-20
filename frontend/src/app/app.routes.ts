@@ -81,7 +81,7 @@ export const routes: Routes = [
     path: 'encuesta/:rutaId',
     loadComponent: () =>
       import('./encuesta/survey-page.component').then((m) => m.SurveyPageComponent),
-    title: 'Tu opinión - CIMA',
+    title: 'Su opinión - CIMA',
   },
   {
     path: 'logros',
@@ -89,7 +89,7 @@ export const routes: Routes = [
       import('./gamificacion/gamification-page.component').then(
         (m) => m.GamificationPageComponent,
       ),
-    title: 'Tus logros - CIMA',
+    title: 'Sus logros - CIMA',
   },
   {
     path: 'reconocimientos',

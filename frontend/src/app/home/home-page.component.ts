@@ -9,9 +9,9 @@ import { elegirSiguientePaso, sumarAvance } from './siguiente-paso';
 
 /** Temas que enseña CIMA, presentados como los ejes de la página de sostenibilidad. */
 const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
-  { codigo: 'finanzas', texto: 'Organiza tu plata, ahorra para lo que viene y evita las deudas caras.' },
-  { codigo: 'gestion_riesgos', texto: 'Prepárate ante lo inesperado y protege lo que has construido.' },
-  { codigo: 'adaptacion_clima', texto: 'Cuida tu cultivo o tu negocio ante lluvias, sequías y calor.' },
+  { codigo: 'finanzas', texto: 'Organice su plata, ahorre para lo que viene y evite las deudas caras.' },
+  { codigo: 'gestion_riesgos', texto: 'Prepárese ante lo inesperado y proteja lo que ha construido.' },
+  { codigo: 'adaptacion_clima', texto: 'Cuide su cultivo o su negocio ante lluvias, sequías y calor.' },
 ];
 
 /**
@@ -34,20 +34,20 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
         <p class="portada__escuela">Escuela de Sostenibilidad e Inclusión</p>
         <h1 class="portada__titulo">
           @if (contexto.actividadFrase(); as frase) {
-            Aprende a proteger {{ frase }}
+            Aprenda a proteger {{ frase }}
           } @else {
-            Aprende a proteger lo que has construido
+            Aprenda a proteger lo que ha construido
           }
         </h1>
         <p class="portada__texto">
-          Lecciones cortas para cuidar tu plata, prevenir riesgos y adaptarte al clima.
-          Porque cuando estás tranquilo, también progresas.
+          Lecciones cortas para cuidar su plata, prevenir riesgos y adaptarse al clima.
+          Porque cuando está en calma, también progresa.
         </p>
       </header>
 
       @if (!contexto.cargando() && !contexto.perfil()) {
         <div class="sb-ui-alert sb-ui-alert--info aviso" role="status">
-          <p>Cuéntanos a qué te dedicas y te mostramos la ruta que más te sirve.</p>
+          <p>Cuéntenos a qué se dedica y le mostramos la ruta que más le sirve.</p>
           <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke boton" routerLink="/perfil">
             Completar mi perfil
           </a>
@@ -55,12 +55,12 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
       }
 
       <section class="bloque" aria-labelledby="titulo-paso">
-        <h2 id="titulo-paso" class="bloque__titulo">Tu siguiente paso</h2>
+        <h2 id="titulo-paso" class="bloque__titulo">Su siguiente paso</h2>
         @if (cargando()) {
-          <p role="status" aria-live="polite">Buscando tu siguiente lección...</p>
+          <p role="status" aria-live="polite">Buscando su siguiente lección...</p>
         } @else if (error()) {
           <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-            No pudimos cargar tu ruta. Revisa tu conexión e intenta de nuevo.
+            No pudimos cargar su ruta. Revise su conexión e intente de nuevo.
           </div>
           <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke boton" (click)="cargar()">
             Reintentar
@@ -68,13 +68,13 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
         } @else {
           @let p = paso();
           @if (p.tipo === 'leccion') {
-            <p class="paso__ruta">{{ p.ruta.title ?? 'Tu ruta de aprendizaje' }}</p>
+            <p class="paso__ruta">{{ p.ruta.title ?? 'Su ruta de aprendizaje' }}</p>
             <p class="paso__leccion">{{ p.item.capsule.title ?? etiqueta(p.item.capsule.topic) }}</p>
             <p class="paso__meta">
               {{ etiqueta(p.item.capsule.topic) }} · {{ mins(p.item.capsule.duration_sec) }} min ·
               lección {{ p.item.position }} de {{ p.ruta.total_count }}
             </p>
-            <div class="barra" role="progressbar" [attr.aria-label]="'Avance en ' + (p.ruta.title ?? 'tu ruta')"
+            <div class="barra" role="progressbar" [attr.aria-label]="'Avance en ' + (p.ruta.title ?? 'su ruta')"
                  [attr.aria-valuenow]="pct(p.ruta)" aria-valuemin="0" aria-valuemax="100">
               <div class="barra__relleno" [style.width.%]="pct(p.ruta)"></div>
             </div>
@@ -83,17 +83,17 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
               {{ p.ruta.completed_count === 0 ? 'Empezar la lección' : 'Continuar la lección' }}
             </a>
           } @else if (p.tipo === 'evaluacion') {
-            <p class="paso__leccion">Terminaste las lecciones de {{ p.ruta.title ?? 'tu ruta' }}</p>
-            <p class="paso__meta">Presenta la evaluación para obtener tu certificado.</p>
+            <p class="paso__leccion">Terminó las lecciones de {{ p.ruta.title ?? 'su ruta' }}</p>
+            <p class="paso__meta">Presente la evaluación para obtener su certificado.</p>
             <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large boton"
                [routerLink]="['/evaluacion', p.ruta.path_id]">
               Presentar la evaluación
             </a>
           } @else if (p.tipo === 'completo') {
-            <p class="paso__leccion">¡Completaste todas tus rutas!</p>
-            <p class="paso__meta">Puedes repasar las lecciones cuando quieras.</p>
+            <p class="paso__leccion">¡Completó todas sus rutas!</p>
+            <p class="paso__meta">Puede repasar las lecciones cuando quiera.</p>
           } @else {
-            <p class="paso__meta">Pronto tendrás una ruta de aprendizaje para ti.</p>
+            <p class="paso__meta">Pronto tendrá una ruta de aprendizaje para usted.</p>
           }
           <a class="enlace" routerLink="/mi-ruta">Ver toda mi ruta</a>
         }
@@ -101,7 +101,7 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
 
       @if (!cargando() && !error() && avance().total > 0) {
         <section class="bloque" aria-labelledby="titulo-avance">
-          <h2 id="titulo-avance" class="bloque__titulo">Tu avance</h2>
+          <h2 id="titulo-avance" class="bloque__titulo">Su avance</h2>
           <ul class="cifras">
             <li class="cifra">
               <span class="cifra__numero">{{ avance().terminadas }}</span>
@@ -113,7 +113,7 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
                 <span class="cifra__texto">
                   puntos · nivel {{ r.level.name }}
                   @if (r.next_level; as n) {
-                    <br />Te faltan {{ n.points_needed }} para el nivel {{ n.name }}.
+                    <br />Le faltan {{ n.points_needed }} para el nivel {{ n.name }}.
                   }
                 </span>
               </li>
@@ -131,18 +131,18 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
         <ol class="pasos">
           <li class="pasos__item">
             <span class="pasos__numero pasos__numero--1" aria-hidden="true">1.</span>
-            <h3 class="pasos__titulo">Aprende en lecciones cortas</h3>
-            <p>De 3 a 5 minutos cada una, en el orden de tu ruta y a tu ritmo.</p>
+            <h3 class="pasos__titulo">Aprenda en lecciones cortas</h3>
+            <p>De 3 a 5 minutos cada una, en el orden de su ruta y a su ritmo.</p>
           </li>
           <li class="pasos__item">
             <span class="pasos__numero pasos__numero--2" aria-hidden="true">2.</span>
-            <h3 class="pasos__titulo">Presenta la evaluación</h3>
-            <p>Al terminar la ruta respondes unas preguntas sencillas.</p>
+            <h3 class="pasos__titulo">Presente la evaluación</h3>
+            <p>Al terminar la ruta responde unas preguntas sencillas.</p>
           </li>
           <li class="pasos__item">
             <span class="pasos__numero pasos__numero--3" aria-hidden="true">3.</span>
-            <h3 class="pasos__titulo">Recibe tu certificado</h3>
-            <p>Y en el camino ganas puntos e insignias por lo que aprendes.</p>
+            <h3 class="pasos__titulo">Reciba su certificado</h3>
+            <p>Y en el camino gana puntos e insignias por lo que aprende.</p>
           </li>
         </ol>
       </section>
@@ -162,7 +162,7 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
       <!-- En un bloque blanco: los botones con borde son transparentes y sobre el
            fondo gris de la página su texto quedaba en 4,42:1 (Req 13.2). -->
       <section class="bloque" aria-labelledby="titulo-atajos">
-        <h2 id="titulo-atajos" class="bloque__titulo">¿Qué más quieres hacer?</h2>
+        <h2 id="titulo-atajos" class="bloque__titulo">¿Qué más quiere hacer?</h2>
         <div class="atajos">
           <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large boton" routerLink="/asistente">
             Hablar con mi asistente

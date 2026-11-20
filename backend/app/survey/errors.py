@@ -16,8 +16,8 @@ class RutaNoCompletadaParaEncuestaError(DomainError):
 
     status_code = 409
     public_message = (
-        "La encuesta se abre cuando termines todas las lecciones de la ruta. "
-        "Sigue aprendiendo y luego nos cuentas qué te pareció."
+        "La encuesta se abre cuando termine todas las lecciones de la ruta. "
+        "Siga aprendiendo y luego nos cuenta qué le pareció."
     )
 
 
@@ -25,7 +25,7 @@ class EncuestaYaRespondidaError(DomainError):
     """Una sola respuesta por Usuario y ruta (Req 20.7)."""
 
     status_code = 409
-    public_message = "Ya nos diste tu opinión sobre esta ruta. ¡Gracias!"
+    public_message = "Ya nos dio su opinión sobre esta ruta. ¡Gracias!"
 
 
 class ComentarioConDatosPersonalesError(DomainError):
@@ -33,6 +33,6 @@ class ComentarioConDatosPersonalesError(DomainError):
 
     status_code = 422
     public_message = (
-        "Tu comentario parece tener datos personales, como un número o un correo. "
-        "Quítalos y vuelve a enviar."
+        "Su comentario parece tener datos personales, como un número o un correo. "
+        "Quítelos y vuelva a enviar."
     )

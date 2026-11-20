@@ -213,7 +213,7 @@ def test_get_sin_ruta_completa_responde_409_con_mensaje_claro() -> None:
     )
 
     assert respuesta.status_code == 409
-    assert "termines todas las lecciones" in respuesta.json()["detail"]
+    assert "termine todas las lecciones" in respuesta.json()["detail"]
 
 
 def test_post_con_un_campo_extra_en_answers_responde_422_sin_registrar() -> None:

@@ -50,8 +50,8 @@ let saludoYaCerrado = false;
         <div class="saludo">
           <span class="saludo__barra" aria-hidden="true"></span>
           <p class="saludo__texto">
-            <strong>Cuéntame, ¿qué necesitas?</strong>
-            Soy tu asistente virtual CIMA
+            <strong>Cuénteme, ¿qué necesita?</strong>
+            Soy su asistente virtual CIMA
           </p>
           <button
             type="button"
@@ -104,7 +104,7 @@ let saludoYaCerrado = false;
           @defer (on immediate) {
             <cima-chat-page />
           } @placeholder {
-            <p class="panel__estado" role="status">Abriendo tu asistente...</p>
+            <p class="panel__estado" role="status">Abriendo su asistente...</p>
           }
         </div>
       </div>

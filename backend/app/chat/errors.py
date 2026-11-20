@@ -21,8 +21,8 @@ class MensajeInvalidoError(ValidationError):
     """
 
     public_message = (
-        f"Tu mensaje debe tener entre 1 y {TEXT_MAX_LENGTH} caracteres. "
-        "Revísalo y vuelve a enviarlo."
+        f"Su mensaje debe tener entre 1 y {TEXT_MAX_LENGTH} caracteres. "
+        "Revíselo y vuelva a enviarlo."
     )
 
 
@@ -34,7 +34,7 @@ class NotaDeVozInvalidaError(ValidationError):
     """
 
     public_message = (
-        "No pudimos recibir tu nota de voz. Grábala otra vez: debe durar entre "
+        "No pudimos recibir su nota de voz. Grábela otra vez: debe durar entre "
         f"{int(VOICE_MIN_SECONDS)} y {int(VOICE_MAX_SECONDS)} segundos y estar "
         "en formato m4a, aac, ogg o mp3."
     )
@@ -48,6 +48,6 @@ class RedaccionPiiError(ValidationError):
     """
 
     public_message = (
-        "Por tu seguridad no pudimos enviar tu mensaje. Escríbelo otra vez sin "
-        "datos personales como tu teléfono, cédula, correo o dirección."
+        "Por su seguridad no pudimos enviar su mensaje. Escríbalo otra vez sin "
+        "datos personales como su teléfono, cédula, correo o dirección."
     )

@@ -21,10 +21,10 @@ export const MENSAJE_SIN_ENCUESTA = 'Esta ruta todavía no tiene encuesta. ¡Gra
 
 /** Mensaje sin conexión. */
 export const MENSAJE_SIN_CONEXION =
-  'Necesitas conexión a internet para enviar tu opinión. Intenta de nuevo cuando tengas señal.';
+  'Necesita conexión a internet para enviar su opinión. Intente de nuevo cuando tenga señal.';
 
 /** Mensaje genérico ante cualquier otro error. */
-export const MENSAJE_GENERICO = 'No pudimos enviar tu opinión. Intenta de nuevo en un momento.';
+export const MENSAJE_GENERICO = 'No pudimos enviar su opinión. Intente de nuevo en un momento.';
 
 /** Pregunta tal como la entrega el backend. */
 export interface PreguntaEncuesta {

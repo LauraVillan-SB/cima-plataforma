@@ -82,8 +82,8 @@ def _microcapsule_event_id(profile_id: uuid.UUID, microcapsule_id: uuid.UUID) ->
 
 # Notificación en español coloquial cuando no hay contenido para la actividad (Req 4.5).
 _NOTICE_SIN_CONTENIDO = (
-    "Todavía no tenemos contenido para tu actividad, así que te mostramos temas "
-    "de adaptación al clima que te pueden servir."
+    "Todavía no tenemos contenido para su actividad, así que le mostramos temas "
+    "de adaptación al clima que le pueden servir."
 )
 
 

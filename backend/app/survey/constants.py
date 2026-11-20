@@ -37,14 +37,14 @@ QUESTION_TYPE_TEXT = "text"
 SURVEY_QUESTIONS: tuple[dict[str, str], ...] = (
     {
         "id": "calificacion",
-        "text": "¿Qué tanto te sirvió esta ruta? Elige de 1 a 5: 1 es nada y 5 es mucho.",
+        "text": "¿Qué tanto le sirvió esta ruta? Elija de 1 a 5: 1 es nada y 5 es mucho.",
         "type": QUESTION_TYPE_RATING,
     },
     {
         "id": "comentario",
         "text": (
-            "Si quieres, cuéntanos qué te gustó o qué podemos mejorar. "
-            "No escribas tu nombre, tu celular ni otros datos personales."
+            "Si quiere, cuéntenos qué le gustó o qué podemos mejorar. "
+            "No escriba su nombre, su celular ni otros datos personales."
         ),
         "type": QUESTION_TYPE_TEXT,
     },

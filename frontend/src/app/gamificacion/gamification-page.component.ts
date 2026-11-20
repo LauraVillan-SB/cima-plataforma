@@ -16,10 +16,10 @@ import { GamificationService, Reconocimientos } from './gamification.service';
   imports: [RouterLink],
   template: `
     <section class="reconocimientos">
-      <h1 class="titulo">Tus logros</h1>
+      <h1 class="titulo">Sus logros</h1>
 
       @if (cargando()) {
-        <p class="estado" role="status" aria-live="polite">Cargando tus logros...</p>
+        <p class="estado" role="status" aria-live="polite">Cargando sus logros...</p>
       } @else if (mensajeError(); as msg) {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
           {{ msg }}
@@ -29,12 +29,12 @@ import { GamificationService, Reconocimientos } from './gamification.service';
         </div>
       } @else if (datos(); as d) {
         <p class="puntos">
-          Llevas <strong>{{ d.total_points }}</strong> {{ d.total_points === 1 ? 'punto' : 'puntos' }}.
+          Lleva <strong>{{ d.total_points }}</strong> {{ d.total_points === 1 ? 'punto' : 'puntos' }}.
         </p>
 
         @if (d.badges.length === 0) {
           <p class="estado">
-            Aún no tienes insignias. Termina tu primera microcápsula y ganas la primera.
+            Aún no tiene insignias. Termine su primera microcápsula y gana la primera.
           </p>
           <a
             class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large"
@@ -101,7 +101,7 @@ export class GamificationPageComponent {
       this.datos.set(await this.gamificacion.obtenerReconocimientos());
     } catch (fallo) {
       this.mensajeError.set(
-        mensajeDeError(fallo, 'No pudimos cargar tus logros. Revisa tu conexión e intenta de nuevo.'),
+        mensajeDeError(fallo, 'No pudimos cargar sus logros. Revise su conexión e intente de nuevo.'),
       );
     } finally {
       this.cargando.set(false);

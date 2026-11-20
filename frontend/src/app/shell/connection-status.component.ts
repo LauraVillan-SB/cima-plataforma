@@ -48,12 +48,12 @@ export class ConnectionStatusComponent {
     switch (this.cola.estado()) {
       case 'sin_conexion':
         return pendientes > 0
-          ? `Sin conexion. Guardamos tus avances y los subimos cuando vuelva el internet.`
-          : `Sin conexion. Puedes seguir, guardamos todo en tu telefono.`;
+          ? `Sin conexión. Guardamos sus avances y los subimos cuando vuelva el internet.`
+          : `Sin conexión. Puede seguir, guardamos todo en su celular.`;
       case 'sincronizando':
-        return `Subiendo tus avances...`;
+        return `Subiendo sus avances...`;
       case 'pendiente':
-        return `Tienes ${pendientes} avance(s) por subir.`;
+        return `Tiene ${pendientes} avance(s) por subir.`;
       case 'al_dia':
       default:
         return `Todo al dia.`;
