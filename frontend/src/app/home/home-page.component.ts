@@ -32,6 +32,11 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
     <div class="inicio">
       <header class="portada">
         <p class="portada__escuela">Escuela de Sostenibilidad e Inclusión</p>
+        @if (contexto.comoLlamar(); as nombre) {
+          <p class="portada__saludo">Hola, {{ nombre }}</p>
+        } @else {
+          <a class="portada__enlace" routerLink="/perfil">¿Cómo quiere que le digamos?</a>
+        }
         <h1 class="portada__titulo">
           @if (contexto.actividadFrase(); as frase) {
             Aprenda a proteger {{ frase }}
@@ -187,6 +192,11 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
         background-image: linear-gradient(160deg, #0b613e 0%, var(--cima-verde-oscuro) 55%, #00432a 100%);
       }
       .portada__escuela { margin: 0 0 0.5rem; font-weight: 700; font-size: 0.95rem; }
+      .portada__saludo { margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 700; }
+      .portada__enlace {
+        display: inline-flex; align-items: center; min-height: 44px; margin-bottom: 0.25rem;
+        color: #fff; font-weight: 700; text-decoration: underline;
+      }
       .portada__titulo { margin: 0 0 0.75rem; color: var(--cima-dorado); font-size: 1.6rem; line-height: 1.25; }
       .portada__texto { margin: 0; font-size: 1.1rem; line-height: 1.5; }
       .aviso p { margin: 0 0 0.75rem; }
