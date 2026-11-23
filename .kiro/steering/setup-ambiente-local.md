@@ -103,6 +103,29 @@ poetry run uvicorn app.main:app --reload
 - Documentación interactiva: http://localhost:8000/docs
 - Pruebas: `poetry run pytest`
 
+### Catálogo y usuarios de prueba (siempre en local)
+
+Con la base migrada, carga el catálogo y deja listos los dos usuarios de prueba.
+Ambos comandos se pueden repetir sin duplicar nada:
+
+```powershell
+poetry run python -m app.learning.seed
+$env:CIMA_CLAVE_DEMO = "<4 dígitos que tú escojas>"   # nunca la escribas en un archivo
+poetry run python -m app.dev.usuarios_locales
+```
+
+| Usuario | Celular | Actividad | Zona | Qué ve |
+|---|---|---|---|---|
+| Patricia | 3000000001 | Agricultora de café | Huila | Rutas del café y del campo |
+| Rosa Ruiz | 3000000002 | Tendera de barrio (pyme) | Bogotá D.C. | Rutas de la tienda y "La plata digital de su negocio" |
+
+- Los dos entran con la Clave que pusiste en `CIMA_CLAVE_DEMO`. Si ya existían,
+  el script les vuelve a poner esa Clave y les quita cualquier bloqueo.
+- El nombre no se guarda en el servidor (Req 9.1). Para ver "Hola, doña Rosa",
+  escríbelo en "Mi perfil" → "¿Cómo quiere que le digamos?"; queda solo en el
+  navegador y se borra al cerrar sesión.
+- El script se niega a correr fuera de `dev`, `local` o `test`.
+
 ## 6. Frontend (Angular PWA)
 
 ```bash
@@ -119,6 +142,7 @@ npm start                # equivale a: ng serve
 - [ ] `git branch` muestra que estás en tu rama creada desde `develop`.
 - [ ] `GET /api/v1/health` responde `ok`.
 - [ ] `poetry run pytest` pasa en verde.
+- [ ] Patricia (3000000001) y Rosa Ruiz (3000000002) entran con la Clave de prueba.
 - [ ] El frontend abre en `http://localhost:4200`.
 - [ ] `npm test` pasa en verde.
 
