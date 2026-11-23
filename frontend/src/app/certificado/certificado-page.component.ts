@@ -31,7 +31,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
   template: `
     <section class="pagina">
       @if (cargando()) {
-        <p role="status" aria-live="polite">Preparando tu certificado...</p>
+        <p role="status" aria-live="polite">Preparando su certificado...</p>
       } @else if (error(); as mensaje) {
         <div class="sb-ui-alert sb-ui-alert--warning" role="alert">{{ mensaje }}</div>
         <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large enlace">
@@ -54,7 +54,7 @@ const PATRON_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
             <span class="certificado__codigo-valor" [attr.aria-label]="'Código ' + c.verification_code">{{ codigo() }}</span>
           </div>
           <p class="certificado__nota">
-            Este certificado acredita lo que aprendiste en CIMA. No es una póliza ni un
+            Este certificado acredita lo que aprendió en CIMA. No es una póliza ni un
             producto de seguros.
           </p>
         </article>

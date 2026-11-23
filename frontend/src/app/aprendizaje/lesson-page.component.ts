@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { NetworkStatusService } from '../core/network-status.service';
+import { VideoPropioComponent } from '../descargas/video-propio.component';
 import { GamificationService } from '../gamificacion/gamification.service';
 import {
   ItemRuta,
@@ -30,7 +32,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
 @Component({
   selector: 'cima-lesson-page',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, VideoPropioComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="leccion">
@@ -38,17 +40,17 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
         <p role="status" aria-live="polite">Cargando la lección...</p>
       } @else if (error() || !item()) {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-          No pudimos cargar esta lección. Vuelve a tu ruta e intenta de nuevo.
+          No pudimos cargar esta lección. Vuelva a su ruta e intente de nuevo.
         </div>
         <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke enlace">Volver a mi ruta</a>
       } @else if (resultado(); as r) {
         <div class="celebra" role="status" aria-live="polite">
-          <h1 class="celebra__titulo">¡Muy bien! Terminaste la lección</h1>
-          <p>Llevas {{ r.completed_count }} de {{ r.total_count }} microcápsulas de esta ruta.</p>
+          <h1 class="celebra__titulo">¡Muy bien! Terminó la lección</h1>
+          <p>Lleva {{ r.completed_count }} de {{ r.total_count }} microcápsulas de esta ruta.</p>
           @if (r.path_completed) {
-            <p>¡Completaste la ruta! Ya puedes presentar la evaluación.</p>
+            <p>¡Completó la ruta! Ya puede presentar la evaluación.</p>
             <a [routerLink]="['/evaluacion', r.path_id]" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Presentar evaluación</a>
-            <a [routerLink]="['/encuesta', r.path_id]" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Cuéntanos qué te pareció (opcional)</a>
+            <a [routerLink]="['/encuesta', r.path_id]" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Cuéntenos qué le pareció (opcional)</a>
           }
           <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Volver a mi ruta</a>
         </div>
@@ -59,13 +61,21 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
           <p class="parrafo">{{ p }}</p>
         }
         @if (videoArchivo(); as v) {
-          <video class="video video--archivo" [src]="v.url" controls preload="none" playsinline
-                 [attr.aria-label]="'Video: ' + v.title"></video>
+          <cima-video-propio [url]="v.url" [titulo]="v.title"
+                             [leccion]="i.capsule.title ?? etiqueta(i.capsule.topic)"
+                             [rutaId]="ruta()?.path_id ?? ''" [capsulaId]="i.capsule.id" />
         }
         @if (videoUrl(); as url) {
-          <iframe class="video" [src]="url" title="Video complementario"
-                  loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
-                  allowfullscreen></iframe>
+          @if (red.online()) {
+            <iframe class="video" [src]="url" title="Video complementario"
+                    loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+          } @else {
+            <!-- YouTube no permite guardar sus videos; sin conexión se avisa y la lección se lee igual. -->
+            <div class="sb-ui-alert sb-ui-alert--info" role="status">
+              Este video es de YouTube y necesita internet. Puedes leer la lección sin conexión.
+            </div>
+          }
         }
         @if (i.capsule.key_points.length > 0) {
           <section class="puntos" aria-labelledby="puntos-titulo">
@@ -79,7 +89,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
         }
         @if (i.status === 'pending') {
           <div class="sb-ui-alert sb-ui-alert--info" role="status">
-            Completa primero la microcápsula anterior de esta ruta.
+            Complete primero la microcápsula anterior de esta ruta.
           </div>
         } @else if (i.status === 'next') {
           <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke enlace"
@@ -88,7 +98,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
           </button>
           @if (errorEnvio()) {
             <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-              No pudimos guardar tu avance. Intenta de nuevo.
+              No pudimos guardar su avance. Intente de nuevo.
             </div>
           }
         }
@@ -117,6 +127,7 @@ export class LessonPageComponent {
   private readonly gamificacion = inject(GamificationService);
   private readonly route = inject(ActivatedRoute);
   private readonly sanitizer = inject(DomSanitizer);
+  protected readonly red = inject(NetworkStatusService);
 
   private readonly pathId = this.route.snapshot.paramMap.get('pathId') ?? '';
   private readonly capsuleId = this.route.snapshot.paramMap.get('capsuleId') ?? '';

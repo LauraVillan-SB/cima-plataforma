@@ -426,6 +426,7 @@ Convenciones:
   - [~] 22.2 Implementar detección de red, cola local idempotente y precarga
     - Indicador de estado ≤ 2 s tras interrupción ≥ 3 s conservando último paso; cola local con `client_event_id` sincronizada vía Offline Sync; precarga de siguiente microcápsula; estado de sincronización en lenguaje simple
     - _Requirements: 2.8, 2.9, 18.2, 18.3, 18.5_
+    - Nota (rama `feature/descargas-sin-conexion`): descarga de videos propios a una caché propia (`cima-descargas-v1`) y pantalla "Mis descargas" (`/descargas`), que abre sin conexión y sin sesión; las descargas no se borran al cerrar sesión, se borran desde "Mis descargas" o al terminar de verlas si la persona lo pide. Se corrigió que `ngsw-config.json` no guardaba la lista `/api/v1/aprendizaje/rutas`. `npm run sin-conexion` sirve la app compilada para probar el Service Worker en local. **Falta:** la precarga automática de la siguiente microcápsula y versiones más livianas de los videos.
     - Nota: detección de red (umbral 3 s), indicador de conexión y cola local con `client_event_id` listos. Falta la precarga de la siguiente microcápsula (depende de la Tarea 13).
   - [x]* 22.3 Escribir test de propiedad (fast-check) para generación de clave de idempotencia de la cola
     - **Property 36: Idempotencia de la sincronización offline** (lógica cliente de la cola)

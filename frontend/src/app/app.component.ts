@@ -56,16 +56,16 @@ const RUTAS_SIN_ASISTENTE: readonly string[] = ['/asistente', '/entrar'];
         </a>
         @if (auth.autenticado()) {
           @if (resumen(); as r) {
-            <ul class="chips" aria-label="Tu avance">
+            <ul class="chips" aria-label="Su avance">
               <li class="chip" title="Días seguidos aprendiendo">
                 <span aria-hidden="true">🔥</span> {{ r.streak_days }}
                 <span class="solo-lector">días seguidos</span>
               </li>
-              <li class="chip" title="Tus puntos">
+              <li class="chip" title="Sus puntos">
                 <span aria-hidden="true">★</span> {{ r.total_points }}
                 <span class="solo-lector">puntos</span>
               </li>
-              <li class="chip chip--nivel" title="Tu nivel">{{ r.level.name }}</li>
+              <li class="chip chip--nivel" title="Su nivel">{{ r.level.name }}</li>
             </ul>
           }
           <cima-user-menu />
@@ -88,7 +88,7 @@ const RUTAS_SIN_ASISTENTE: readonly string[] = ['/asistente', '/entrar'];
       <img src="logos/sb-logo-horizontal-white.svg" alt="Seguros Bolívar" width="120" height="32" />
       <p>
         CIMA es la plataforma educativa de la Escuela de Sostenibilidad e Inclusión de
-        Seguros Bolívar. Aquí aprendes; no se hacen pagos ni se expiden pólizas.
+        Seguros Bolívar. Aquí aprende; no se hacen pagos ni se expiden pólizas.
       </p>
     </footer>
     @if (mostrarAsistente()) {

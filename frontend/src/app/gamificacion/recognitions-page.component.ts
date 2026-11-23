@@ -15,10 +15,10 @@ import { GamificationService } from './gamification.service';
     <section class="reconocimientos">
       <h1 class="titulo">Mis reconocimientos</h1>
       @if (cargando()) {
-        <p role="status" aria-live="polite">Cargando tus reconocimientos...</p>
+        <p role="status" aria-live="polite">Cargando sus reconocimientos...</p>
       } @else if (error()) {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-          No pudimos cargar tus reconocimientos. Intenta de nuevo.
+          No pudimos cargar sus reconocimientos. Intente de nuevo.
         </div>
         <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke" (click)="cargar()">Reintentar</button>
       } @else if (resumen(); as r) {
@@ -30,7 +30,7 @@ import { GamificationService } from './gamification.service';
             <div class="barra__relleno" [style.width.%]="r.level_progress_pct"></div>
           </div>
           @if (r.next_level; as n) {
-            <p class="nivel__falta">Te faltan {{ n.points_needed }} puntos para el nivel {{ n.name }}.</p>
+            <p class="nivel__falta">Le faltan {{ n.points_needed }} puntos para el nivel {{ n.name }}.</p>
           }
         </div>
         <ul class="insignias">

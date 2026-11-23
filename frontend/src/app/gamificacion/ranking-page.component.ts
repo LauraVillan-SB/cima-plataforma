@@ -18,11 +18,11 @@ import { GamificationService, Ranking } from './gamification.service';
         <p role="status" aria-live="polite">Cargando el ranking...</p>
       } @else if (error()) {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-          No pudimos cargar el ranking. Intenta de nuevo.
+          No pudimos cargar el ranking. Intente de nuevo.
         </div>
         <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke" (click)="cargar()">Reintentar</button>
       } @else if (ranking(); as r) {
-        <p class="resumen">{{ r.participants }} participantes aprendiendo contigo.</p>
+        <p class="resumen">{{ r.participants }} participantes aprendiendo con usted.</p>
         @if (r.entries.length === 0) {
           <p>Aún no hay posiciones para mostrar.</p>
         } @else {
@@ -41,7 +41,7 @@ import { GamificationService, Ranking } from './gamification.service';
                 <tr [class.yo]="f.is_me">
                   <td>{{ f.rank }}</td>
                   <td>
-                    {{ f.alias }}@if (f.is_me) { (tú) }
+                    {{ f.alias }}@if (f.is_me) { (usted) }
                     <span class="nivel-movil">{{ f.level_name }}</span>
                   </td>
                   <td class="col-nivel">{{ f.level_name }}</td>
@@ -54,7 +54,7 @@ import { GamificationService, Ranking } from './gamification.service';
         @if (r.me; as yo) {
           @if (!estaEnTop(r)) {
             <p class="mi-puesto" role="status">
-              Tu puesto: {{ yo.rank }} · {{ yo.total_points }} puntos
+              Su puesto: {{ yo.rank }} · {{ yo.total_points }} puntos
             </p>
           }
         }

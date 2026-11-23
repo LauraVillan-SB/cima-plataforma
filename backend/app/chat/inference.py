@@ -70,8 +70,8 @@ class SafeFallbackModel:
         """Devuelve una respuesta de respaldo segura e identificable como IA."""
         return ModelResult(
             text=(
-                "Soy el asistente de CIMA. Por ahora no puedo darte una respuesta "
-                "completa; intenta de nuevo en un momento o reformula tu pregunta."
+                "Soy el asistente de CIMA. Por ahora no puedo darle una respuesta "
+                "completa; intente de nuevo en un momento o reformule su pregunta."
             ),
             model_version=self.MODEL_VERSION,
         )
