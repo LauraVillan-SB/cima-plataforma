@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { NetworkStatusService } from '../core/network-status.service';
+import { VideoPropioComponent } from '../descargas/video-propio.component';
 import { GamificationService } from '../gamificacion/gamification.service';
 import {
   ItemRuta,
@@ -30,7 +32,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
 @Component({
   selector: 'cima-lesson-page',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, VideoPropioComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="leccion">
@@ -59,13 +61,21 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
           <p class="parrafo">{{ p }}</p>
         }
         @if (videoArchivo(); as v) {
-          <video class="video video--archivo" [src]="v.url" controls preload="none" playsinline
-                 [attr.aria-label]="'Video: ' + v.title"></video>
+          <cima-video-propio [url]="v.url" [titulo]="v.title"
+                             [leccion]="i.capsule.title ?? etiqueta(i.capsule.topic)"
+                             [rutaId]="ruta()?.path_id ?? ''" [capsulaId]="i.capsule.id" />
         }
         @if (videoUrl(); as url) {
-          <iframe class="video" [src]="url" title="Video complementario"
-                  loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
-                  allowfullscreen></iframe>
+          @if (red.online()) {
+            <iframe class="video" [src]="url" title="Video complementario"
+                    loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+          } @else {
+            <!-- YouTube no permite guardar sus videos; sin conexión se avisa y la lección se lee igual. -->
+            <div class="sb-ui-alert sb-ui-alert--info" role="status">
+              Este video es de YouTube y necesita internet. Puedes leer la lección sin conexión.
+            </div>
+          }
         }
         @if (i.capsule.key_points.length > 0) {
           <section class="puntos" aria-labelledby="puntos-titulo">
@@ -117,6 +127,7 @@ export class LessonPageComponent {
   private readonly gamificacion = inject(GamificationService);
   private readonly route = inject(ActivatedRoute);
   private readonly sanitizer = inject(DomSanitizer);
+  protected readonly red = inject(NetworkStatusService);
 
   private readonly pathId = this.route.snapshot.paramMap.get('pathId') ?? '';
   private readonly capsuleId = this.route.snapshot.paramMap.get('capsuleId') ?? '';

@@ -8,7 +8,8 @@
     "build": "ng build",
     "test": "jest",
     "lint": "ng lint",
-    "presupuesto": "node scripts/presupuesto-carga.cjs"
+    "presupuesto": "node scripts/presupuesto-carga.cjs",
+    "sin-conexion": "ng build && node scripts/servir-sin-conexion.cjs"
   },
   "dependencies": {
     "@angular/animations": "22.2.2",

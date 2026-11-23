@@ -71,6 +71,10 @@ import { UserContextService } from '../core/user-context.service';
                ariaCurrentWhenActive="page" (click)="cerrar()">Mi ruta</a>
           </li>
           <li>
+            <a class="opcion" routerLink="/descargas" routerLinkActive="activa"
+               ariaCurrentWhenActive="page" (click)="cerrar()">Mis descargas</a>
+          </li>
+          <li>
             <a class="opcion" routerLink="/perfil" routerLinkActive="activa"
                ariaCurrentWhenActive="page" (click)="cerrar()">Mi perfil</a>
           </li>

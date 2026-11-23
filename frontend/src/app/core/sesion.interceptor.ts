@@ -22,7 +22,7 @@ import {
 } from 'rxjs';
 
 import { AuthService, limpiarDatosLocales } from '../auth/auth.service';
-import { RUTA_REFRESCO, debeIntentarRefresco } from './sesion';
+import { RUTA_REFRESCO, debeIntentarRefresco, debeLlevarAEntrar } from './sesion';
 
 /** Marca una petición que ya se repitió tras renovar, para no repetirla otra vez. */
 const REINTENTADA = new HttpContextToken<boolean>(() => false);
@@ -82,7 +82,10 @@ export const sesionInterceptor: HttpInterceptorFn = (req, next) => {
             // La sesión expiró: los datos que dejó en caché no deben quedar a la
             // vista del siguiente que use el celular (ver core/limpieza-local.ts).
             void limpiarDatosLocales();
-            void router.navigate(['/entrar']);
+            // Al abrir la app, `router.url` aún es "/": se usa la dirección real del navegador.
+            if (debeLlevarAEntrar(location.pathname)) {
+              void router.navigate(['/entrar']);
+            }
             return throwError(() => error);
           }
           return next(req.clone({ context: req.context.set(REINTENTADA, true) }));
