@@ -56,14 +56,14 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
   imports: [VozControlComponent],
   template: `
     <section class="chat">
-      <h1 class="titulo">Tu asistente</h1>
+      <h1 class="titulo">Su asistente</h1>
       <p class="intro">
-        Pregúntame sobre cultivo, tienda, clima o seguros. Te responde una inteligencia
-        artificial; no pongas tu cédula ni datos de tu cuenta.
+        Pregúnteme sobre cultivo, tienda, clima o seguros. Le responde una inteligencia
+        artificial; no ponga su cédula ni datos de su cuenta.
       </p>
 
       @if (cargandoHistorial()) {
-        <p class="estado" role="status" aria-live="polite">Cargando tu conversación...</p>
+        <p class="estado" role="status" aria-live="polite">Cargando su conversación...</p>
       } @else if (errorHistorial(); as msg) {
         <div class="sb-ui-alert sb-ui-alert--error" role="alert">
           {{ msg }}
@@ -76,7 +76,7 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
       <div class="mensajes" role="log" aria-live="polite" aria-label="Conversación">
         @for (m of mensajes(); track m.id) {
           <article class="mensaje">
-            <p class="burbuja burbuja--tu"><span class="quien">Tú:</span> {{ m.entrada }}</p>
+            <p class="burbuja burbuja--tu"><span class="quien">Usted:</span> {{ m.entrada }}</p>
 
             @switch (fase(m)) {
               @case ('esperando') {
@@ -84,7 +84,7 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
               }
               @case ('procesando_lento') {
                 <p class="burbuja burbuja--estado" role="status">
-                  Estamos pensando tu respuesta. Gracias por esperar, ya casi.
+                  Estamos pensando su respuesta. Gracias por esperar, ya casi.
                 </p>
               }
               @case ('listo') {
@@ -104,13 +104,13 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
               }
               @case ('repetir_voz') {
                 <div class="sb-ui-alert sb-ui-alert--info" role="status">
-                  No alcanzamos a entender la nota de voz. Grábala otra vez, un poco más cerca y
-                  despacio, o escribe tu mensaje.
+                  No alcanzamos a entender la nota de voz. Grábela otra vez, un poco más cerca y
+                  despacio, o escriba su mensaje.
                 </div>
               }
               @case ('error') {
                 <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-                  No pudimos darte una respuesta esta vez. Intenta de nuevo en un rato.
+                  No pudimos darle una respuesta esta vez. Intente de nuevo en un rato.
                   @if (m.textoParaReintento) {
                     <button
                       type="button"
@@ -124,7 +124,7 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
               }
               @case ('tiempo_agotado') {
                 <div class="sb-ui-alert sb-ui-alert--warning" role="alert">
-                  Esto está tardando más de lo normal y no pudimos responderte. Puedes intentarlo
+                  Esto está tardando más de lo normal y no pudimos responderle. Puede intentarlo
                   de nuevo.
                   @if (m.textoParaReintento) {
                     <button
@@ -141,7 +141,7 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
           </article>
         } @empty {
           @if (!cargandoHistorial() && !errorHistorial()) {
-            <p class="estado">Aún no hay mensajes. Cuéntame qué quieres saber.</p>
+            <p class="estado">Aún no hay mensajes. Cuénteme qué quiere saber.</p>
           }
         }
       </div>
@@ -261,7 +261,7 @@ export class ChatPageComponent {
       cargados.filter((m) => !esEstadoFinal(m.estado)).forEach((m) => this.vigilar(m.id));
     } catch (error) {
       this.errorHistorial.set(
-        mensajeDeError(error, 'No pudimos cargar tu conversación. Revisa tu conexión.'),
+        mensajeDeError(error, 'No pudimos cargar su conversación. Revise su conexión.'),
       );
     } finally {
       this.cargandoHistorial.set(false);
@@ -316,7 +316,7 @@ export class ChatPageComponent {
       }
     } catch (error) {
       this.errorEnvio.set(
-        mensajeDeError(error, 'No pudimos enviar tu mensaje. Intenta de nuevo.'),
+        mensajeDeError(error, 'No pudimos enviar su mensaje. Intente de nuevo.'),
       );
     } finally {
       this.enviando.set(false);

@@ -22,7 +22,7 @@
       "name": "aprendizaje-offline",
       "urls": [
         "/api/v1/aprendizaje/microcapsulas",
-        "/api/v1/aprendizaje/rutas/",
+        "/api/v1/aprendizaje/rutas",
         "/api/v1/evaluaciones/"
       ],
       "cacheConfig": {

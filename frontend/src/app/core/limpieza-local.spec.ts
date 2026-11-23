@@ -133,12 +133,16 @@ describe('Allowlist de datos del Service Worker (ngsw-config.json)', () => {
     '/api/v1/chat/mensajes/0b6f2a52-0000-4000-8000-000000000000',
     '/api/v1/gamificacion/reconocimientos',
     '/api/v1/conversion/microseguros/0b6f2a52-0000-4000-8000-000000000000',
+    // Los videos los guarda la caché de descargas, que maneja rangos; no el Service Worker.
+    '/api/v1/aprendizaje/medios/agro-riesgos.mp4',
   ])('nunca cachea %s', (url) => {
     expect(cubierta(url)).toBe(false);
   });
 
   it.each([
     '/api/v1/aprendizaje/microcapsulas',
+    // La lista de rutas la usan la lección, "Mi ruta" y el inicio; sin ella no abren sin conexión.
+    '/api/v1/aprendizaje/rutas',
     '/api/v1/aprendizaje/rutas/0b6f2a52-0000-4000-8000-000000000000',
     '/api/v1/evaluaciones/0b6f2a52-0000-4000-8000-000000000000',
     '/api/v1/chat/historial',

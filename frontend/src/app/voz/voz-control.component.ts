@@ -54,11 +54,11 @@ const CORTE_GRABACION_MS = (VOZ_MAX_SEGUNDOS - 2) * 1000;
           [disabled]="deshabilitado()"
           (click)="alternarGrabacion()"
         >
-          {{ grabando() ? '● Grabando... toca para enviar' : '🎤 Hablar' }}
+          {{ grabando() ? '● Grabando... toque para enviar' : '🎤 Hablar' }}
         </button>
       } @else {
         <p class="aviso" role="status">
-          Aquí no podemos grabar notas de voz. Escribe tu mensaje y te respondemos igual.
+          Aquí no podemos grabar notas de voz. Escriba su mensaje y le respondemos igual.
         </p>
       }
 
@@ -66,7 +66,7 @@ const CORTE_GRABACION_MS = (VOZ_MAX_SEGUNDOS - 2) * 1000;
         <p class="aviso" role="status">{{ aviso() }}</p>
       }
 
-      <label for="texto-alt" class="texto-alt-label">O escribe tu mensaje</label>
+      <label for="texto-alt" class="texto-alt-label">O escriba su mensaje</label>
       <textarea
         id="texto-alt"
         class="texto-alt"
@@ -74,7 +74,7 @@ const CORTE_GRABACION_MS = (VOZ_MAX_SEGUNDOS - 2) * 1000;
         [maxLength]="textoMax"
         [value]="texto()"
         (input)="texto.set($any($event.target).value)"
-        placeholder="Escribe aquí si prefieres"
+        placeholder="Escriba aquí si prefiere"
       ></textarea>
       <button
         type="button"
@@ -192,7 +192,7 @@ export class VozControlComponent {
     try {
       this.flujo = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      this.aviso.set('No pudimos usar el micrófono. Revisa el permiso o escribe tu mensaje.');
+      this.aviso.set('No pudimos usar el micrófono. Revise el permiso o escriba su mensaje.');
       return;
     }
     this.fragmentos = [];
@@ -220,12 +220,12 @@ export class VozControlComponent {
     const medicionValida = medicionConfiable(this.contextoCorriendo, niveles);
     this.liberar();
     if (!duracionVozValida(duracionSegundos)) {
-      this.aviso.set('La nota quedó muy corta. Habla un poco más y vuelve a intentar.');
+      this.aviso.set('La nota quedó muy corta. Hable un poco más y vuelva a intentar.');
       return;
     }
     if (medicionValida && !hayVozSuficiente(niveles)) {
       this.aviso.set(
-        'No alcanzamos a escuchar tu voz. Habla más cerca del celular y vuelve a intentar.',
+        'No alcanzamos a escuchar su voz. Hable más cerca del celular y vuelva a intentar.',
       );
       return;
     }

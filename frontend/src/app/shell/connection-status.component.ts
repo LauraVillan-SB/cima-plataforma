@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
+import { RouterLink } from '@angular/router';
 import { OfflineQueueService } from '../core/offline-queue.service';
 
 /**
@@ -10,6 +11,7 @@ import { OfflineQueueService } from '../core/offline-queue.service';
 @Component({
   selector: 'cima-connection-status',
   standalone: true,
+  imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- La region viva existe siempre para que el lector de pantalla anuncie
@@ -22,6 +24,10 @@ import { OfflineQueueService } from '../core/offline-queue.service';
           [class.sb-ui-alert--info]="!esSinConexion()"
         >
           {{ mensaje() }}
+          @if (esSinConexion()) {
+            <!-- Sin conexión el menú no aparece; este enlace lleva a los videos guardados. -->
+            <a class="descargas" routerLink="/descargas">Ver mis descargas</a>
+          }
         </div>
       }
     </div>
@@ -30,6 +36,17 @@ import { OfflineQueueService } from '../core/offline-queue.service';
     `
       .estado {
         margin: 0.75rem 1rem 0;
+        /* El enlace va en su propia línea para que no se corte en pantallas angostas. */
+        flex-wrap: wrap;
+      }
+      .descargas {
+        display: inline-flex;
+        align-items: center;
+        flex-basis: 100%;
+        min-height: 44px;
+        color: inherit;
+        font-weight: 700;
+        text-decoration: underline;
       }
     `,
   ],
@@ -48,12 +65,12 @@ export class ConnectionStatusComponent {
     switch (this.cola.estado()) {
       case 'sin_conexion':
         return pendientes > 0
-          ? `Sin conexion. Guardamos tus avances y los subimos cuando vuelva el internet.`
-          : `Sin conexion. Puedes seguir, guardamos todo en tu telefono.`;
+          ? `Sin conexión. Guardamos sus avances y los subimos cuando vuelva el internet.`
+          : `Sin conexión. Puede seguir, guardamos todo en su celular.`;
       case 'sincronizando':
-        return `Subiendo tus avances...`;
+        return `Subiendo sus avances...`;
       case 'pendiente':
-        return `Tienes ${pendientes} avance(s) por subir.`;
+        return `Tiene ${pendientes} avance(s) por subir.`;
       case 'al_dia':
       default:
         return `Todo al dia.`;

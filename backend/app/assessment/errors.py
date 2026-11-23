@@ -18,7 +18,7 @@ class RutaNoCompletadaError(DomainError):
 
     status_code = 409
     public_message = (
-        "Primero termina todas las lecciones de la ruta y luego presentas la evaluación."
+        "Primero termine todas las lecciones de la ruta y luego presente la evaluación."
     )
 
 
@@ -26,4 +26,4 @@ class EvaluacionYaAprobadaError(DomainError):
     """La evaluación ya fue aprobada; no se vuelve a calificar (Req 7.3)."""
 
     status_code = 409
-    public_message = "Ya aprobaste esta evaluación. No necesitas presentarla otra vez."
+    public_message = "Ya aprobó esta evaluación. No necesita presentarla otra vez."

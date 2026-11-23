@@ -313,7 +313,7 @@ def _post(user: uuid.UUID, session: object, cuerpo: dict) -> object:
 
 @pytest.mark.parametrize(
     ("completa", "fragmento"),
-    [(False, "termina todas las lecciones"), (True, "puntaje mínimo")],
+    [(False, "termine todas las lecciones"), (True, "puntaje mínimo")],
 )
 def test_el_endpoint_responde_409_con_un_mensaje_claro(completa: bool, fragmento: str) -> None:
     user, path = uuid.uuid4(), uuid.uuid4()
