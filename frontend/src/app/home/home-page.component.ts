@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { LearningService, Ruta } from '../aprendizaje/learning.service';
-import { etiquetaTema, minutos } from '../aprendizaje/temas';
+import { etiquetaTema, iconoTema, minutos } from '../aprendizaje/temas';
 import { UserContextService } from '../core/user-context.service';
 import { GamificationService } from '../gamificacion/gamification.service';
 import { elegirSiguientePaso, sumarAvance } from './siguiente-paso';
@@ -85,6 +85,7 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
             </div>
             <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large boton"
                [routerLink]="['/aprendizaje/leccion', p.ruta.path_id, p.item.capsule.id]">
+              <i class="fa-solid fa-play icono-boton" aria-hidden="true"></i>
               {{ p.ruta.completed_count === 0 ? 'Empezar la lección' : 'Continuar la lección' }}
             </a>
           } @else if (p.tipo === 'evaluacion') {
@@ -92,6 +93,7 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
             <p class="paso__meta">Presente la evaluación para obtener su certificado.</p>
             <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large boton"
                [routerLink]="['/evaluacion', p.ruta.path_id]">
+              <i class="fa-solid fa-clipboard-check icono-boton" aria-hidden="true"></i>
               Presentar la evaluación
             </a>
           } @else if (p.tipo === 'completo') {
@@ -100,7 +102,10 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
           } @else {
             <p class="paso__meta">Pronto tendrá una ruta de aprendizaje para usted.</p>
           }
-          <a class="enlace" routerLink="/mi-ruta">Ver toda mi ruta</a>
+          <a class="enlace" routerLink="/mi-ruta">
+            <i class="fa-solid fa-route icono-boton" aria-hidden="true"></i>
+            Ver toda mi ruta
+          </a>
         }
       </section>
 
@@ -153,11 +158,14 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
       </section>
 
       <section class="bloque" aria-labelledby="titulo-temas">
-        <h2 id="titulo-temas" class="bloque__titulo">Lo que aprendes</h2>
+        <h2 id="titulo-temas" class="bloque__titulo">Lo que aprende</h2>
         <ul class="temas">
           @for (t of temas; track t.codigo) {
             <li class="tema">
-              <h3 class="tema__titulo">{{ etiqueta(t.codigo) }}</h3>
+              <h3 class="tema__titulo">
+                <i class="fa-solid {{ icono(t.codigo) }} tema__icono" aria-hidden="true"></i>
+                {{ etiqueta(t.codigo) }}
+              </h3>
               <p>{{ t.texto }}</p>
             </li>
           }
@@ -170,12 +178,15 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
         <h2 id="titulo-atajos" class="bloque__titulo">¿Qué más quiere hacer?</h2>
         <div class="atajos">
           <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill sb-ui-button--large boton" routerLink="/asistente">
+            <i class="fa-solid fa-comments icono-boton" aria-hidden="true"></i>
             Hablar con mi asistente
           </a>
           <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large boton" routerLink="/logros">
+            <i class="fa-solid fa-trophy icono-boton" aria-hidden="true"></i>
             Ver mis logros
           </a>
           <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke sb-ui-button--large boton" routerLink="/ranking">
+            <i class="fa-solid fa-ranking-star icono-boton" aria-hidden="true"></i>
             Ver el ranking
           </a>
         </div>
@@ -221,7 +232,9 @@ const TEMAS: readonly { readonly codigo: string; readonly texto: string }[] = [
       .pasos__titulo, .tema__titulo { margin: 0.25rem 0; font-size: 1.15rem; }
       .pasos__item p, .tema p { margin: 0; color: var(--cima-texto-suave); }
       .tema { background: var(--cima-fondo); border-radius: var(--cima-radio); padding: 1rem; }
-      .tema__titulo { color: var(--cima-verde-oscuro); }
+      .tema__titulo { color: var(--cima-verde-oscuro); display: flex; align-items: center; gap: 0.5rem; }
+      .tema__icono { font-size: 1.4rem; }
+      .icono-boton { margin-right: 0.5rem; }
       .atajos { display: grid; }
       @media (min-width: 720px) {
         .portada { padding: 2.5rem; }
@@ -272,6 +285,10 @@ export class HomePageComponent {
 
   protected mins(segundos: number): number {
     return minutos(segundos);
+  }
+
+  protected icono(topic: string): string {
+    return iconoTema(topic);
   }
 
   protected pct(ruta: Ruta): number {

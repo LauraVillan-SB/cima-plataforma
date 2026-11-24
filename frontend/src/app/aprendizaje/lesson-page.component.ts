@@ -12,7 +12,8 @@ import {
   Ruta,
   VideoArchivo,
 } from './learning.service';
-import { etiquetaTema, minutos } from './temas';
+import { abrirTextoDeEntrada } from './leccion';
+import { etiquetaTema, iconoTema, minutos } from './temas';
 
 /** Tope de tiempo reportado, igual al del backend (24 h). */
 const MAX_ELAPSED_SEC = 86400;
@@ -55,11 +56,24 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
           <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Volver a mi ruta</a>
         </div>
       } @else if (item(); as i) {
-        <span class="tema">{{ etiqueta(i.capsule.topic) }} · {{ mins(i.capsule.duration_sec) }} min</span>
+        <p class="meta">
+          <span class="meta__dato">
+            <i class="fa-solid {{ icono(i.capsule.topic) }}" aria-hidden="true"></i>
+            {{ etiqueta(i.capsule.topic) }}
+          </span>
+          <span class="meta__dato">
+            <i class="fa-solid fa-clock" aria-hidden="true"></i>
+            {{ mins(i.capsule.duration_sec) }} min
+          </span>
+          @if (videoArchivo() || videoUrl()) {
+            <span class="meta__dato">
+              <i class="fa-solid fa-circle-play" aria-hidden="true"></i>
+              Con video
+            </span>
+          }
+        </p>
         <h1 class="titulo">{{ i.capsule.title ?? etiqueta(i.capsule.topic) }}</h1>
-        @for (p of i.capsule.paragraphs; track $index) {
-          <p class="parrafo">{{ p }}</p>
-        }
+        <!-- El video va primero: es lo más fácil de seguir; el texto completo queda en el acordeón. -->
         @if (videoArchivo(); as v) {
           <cima-video-propio [url]="v.url" [titulo]="v.title"
                              [leccion]="i.capsule.title ?? etiqueta(i.capsule.topic)"
@@ -77,15 +91,41 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
             </div>
           }
         }
+        @if (i.capsule.summary) {
+          <p class="resumen">{{ i.capsule.summary }}</p>
+        }
         @if (i.capsule.key_points.length > 0) {
           <section class="puntos" aria-labelledby="puntos-titulo">
-            <h2 id="puntos-titulo">Lo más importante</h2>
-            <ul>
+            <h2 id="puntos-titulo" class="puntos__titulo">
+              <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+              Lo más importante
+            </h2>
+            <ul class="puntos__lista">
               @for (k of i.capsule.key_points; track $index) {
-                <li>{{ k }}</li>
+                <li class="puntos__item">
+                  <i class="fa-solid fa-circle-check puntos__icono" aria-hidden="true"></i>
+                  <span>{{ k }}</span>
+                </li>
               }
             </ul>
           </section>
+        }
+        @if (i.capsule.paragraphs.length > 0) {
+          <!-- Acordeón del sistema de diseño (details/summary nativo: accesible y sin JS).
+               Arranca cerrado; se abre de entrada solo si no hay nada más que leer arriba. -->
+          <details class="sb-ui-accordion sb-ui-accordion--primary sb-ui-accordion--no-action mas"
+                   [open]="textoAbierto()">
+            <summary class="sb-ui-accordion__header">
+              <span class="sb-ui-accordion__icon-start"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
+              <span class="sb-ui-accordion__label">¿Quiere conocer más?</span>
+              <span class="sb-ui-accordion__icon-end"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+            </summary>
+            <div class="sb-ui-accordion__content">
+              @for (p of i.capsule.paragraphs; track $index) {
+                <p class="parrafo">{{ p }}</p>
+              }
+            </div>
+          </details>
         }
         @if (i.status === 'pending') {
           <div class="sb-ui-alert sb-ui-alert--info" role="status">
@@ -94,6 +134,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
         } @else if (i.status === 'next') {
           <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke enlace"
                   [disabled]="enviando()" (click)="terminar(i)">
+            <i class="fa-solid fa-check icono-boton" aria-hidden="true"></i>
             {{ enviando() ? 'Guardando...' : 'Terminé la lección' }}
           </button>
           @if (errorEnvio()) {
@@ -102,19 +143,31 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
             </div>
           }
         }
-        <a routerLink="/mi-ruta" class="volver">Volver a mi ruta</a>
+        <a routerLink="/mi-ruta" class="volver">
+          <i class="fa-solid fa-arrow-left icono-boton" aria-hidden="true"></i>
+          Volver a mi ruta
+        </a>
       }
     </article>
   `,
   styles: [
     `
       .leccion { padding: 1rem; max-width: 680px; margin: 0 auto; font-size: 1.125rem; line-height: 1.6; }
-      .tema { font-weight: 700; color: var(--cima-verde-oscuro); }
-      .titulo { margin: 0.25rem 0 1rem; font-size: 1.6rem; }
-      .parrafo { margin: 0 0 1rem; }
+      .meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 0; font-weight: 700; color: var(--cima-verde-oscuro); }
+      .meta__dato { display: inline-flex; align-items: center; gap: 0.4rem; }
+      .titulo { margin: 0.25rem 0 1rem; font-size: 1.6rem; line-height: 1.25; }
+      /* Texto menos denso: línea más corta, más interlineado y más espacio entre párrafos. */
+      .resumen { margin: 0 0 1.25rem; font-size: 1.2rem; max-width: 60ch; }
+      .parrafo { margin: 0 0 1.25rem; max-width: 60ch; line-height: 1.75; }
+      .mas { display: block; margin-bottom: 1.5rem; }
+      .icono-boton { margin-right: 0.5rem; }
       .video { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: var(--cima-radio); margin-bottom: 1rem; }
       .video--archivo { aspect-ratio: auto; max-height: 70vh; background: #000; display: block; }
-      .puntos { background: var(--cima-verde-claro); border-left: 6px solid var(--cima-verde); border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 1.5rem; }
+      .puntos { background: var(--cima-verde-claro); border-left: 6px solid var(--cima-verde); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; }
+      .puntos__titulo { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; font-size: 1.25rem; color: var(--cima-verde-oscuro); }
+      .puntos__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+      .puntos__item { display: flex; align-items: flex-start; gap: 0.6rem; }
+      .puntos__icono { flex: none; margin-top: 0.3rem; color: var(--cima-verde-oscuro); }
       .enlace { display: inline-flex; align-items: center; justify-content: center; width: 100%; margin: 0.5rem 0; text-decoration: none; }
       .volver { display: inline-flex; align-items: center; color: var(--cima-verde-oscuro); font-weight: 600; }
       .celebra { text-align: center; background: var(--cima-verde-oscuro); color: #fff; border-radius: var(--cima-radio); padding: 1.5rem; }
@@ -151,6 +204,16 @@ export class LessonPageComponent {
   readonly videoUrl = computed<SafeResourceUrl | null>(() => {
     const url = this.item()?.capsule.video?.embed_url ?? '';
     return PATRON_EMBED.test(url) ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+  });
+
+  /** Si el texto completo arranca abierto: solo cuando no hay nada más que leer arriba. */
+  readonly textoAbierto = computed<boolean>(() => {
+    const capsula = this.item()?.capsule;
+    return abrirTextoDeEntrada({
+      tieneVideo: this.videoArchivo() !== null || this.videoUrl() !== null,
+      resumen: capsula?.summary,
+      puntosClave: capsula?.key_points ?? [],
+    });
   });
 
   constructor() {
@@ -201,5 +264,9 @@ export class LessonPageComponent {
 
   mins(segundos: number): number {
     return minutos(segundos);
+  }
+
+  icono(topic: string): string {
+    return iconoTema(topic);
   }
 }
