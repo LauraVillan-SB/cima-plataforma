@@ -92,6 +92,8 @@ El alcance de este documento son los requisitos de negocio y comportamiento del 
 9. CUANDO el Agente_Conversacional procesa una entrada o genera una salida, EL Agente_Conversacional DEBERÁ registrar cada entrada y salida de la interacción en el servicio de registro centralizado con un identificador de correlación, excluyendo cualquier PII del contenido registrado.
 10. DONDE la entrada del Usuario contiene PII, EL Agente_Conversacional DEBERÁ redactar la totalidad de la PII detectada antes de enviar el contenido al modelo de IA generativa.
 11. SI la redacción de PII no puede completarse con éxito, ENTONCES EL Agente_Conversacional DEBERÁ no enviar el contenido al modelo de IA generativa y solicitar al Usuario reformular el mensaje sin datos personales.
+12. CUANDO el Usuario pregunta qué Rutas_de_Aprendizaje le faltan, pide continuar una de ellas, pide cambiar su tipo de cultivo, comercio o zona, o pide ir a una pantalla de CIMA, EL Agente_Conversacional DEBERÁ ofrecer como máximo una acción en la respuesta —continuar una Ruta_de_Aprendizaje pendiente del propio Usuario, ir a una pantalla permitida o proponer un cambio de actividad o zona del Perfil_de_Usuario— que solo se realice cuando el Usuario la active de forma explícita.
+13. SI el Usuario pregunta cómo cambiar su Clave, ENTONCES EL Agente_Conversacional DEBERÁ explicar los pasos en español coloquial colombiano y ofrecer ir a la pantalla de cambio de Clave, sin solicitar, repetir ni recibir la Clave del Usuario.
 
 ### Requirement 4: Micro-aprendizaje personalizado
 
@@ -233,6 +235,9 @@ El alcance de este documento son los requisitos de negocio y comportamiento del 
 4. EL CIMA DEBERÁ ofrecer, para cada contenido textual destinado al Usuario, una alternativa de lectura por voz y una alternativa de entrada por voz.
 5. EL CIMA DEBERÁ presentar los textos destinados al Usuario en español coloquial colombiano, claro y sin tecnicismos.
 6. MIENTRAS el Usuario opera CIMA en una conexión 3G de 1.6 Mbps y en una pantalla con ancho de 320 píxeles CSS o superior, EL CIMA DEBERÁ mantener operables todos los flujos críticos de autenticación, aprendizaje y conversión.
+7. EL CIMA DEBERÁ dirigirse al Usuario de "usted", sin tuteo y sin asumir su género, en los textos de la interfaz, en el contenido de las Microcápsulas y en las respuestas del Agente_Conversacional.
+8. DONDE el Usuario indica cómo quiere que se le llame (don, doña o solo su nombre), EL CIMA DEBERÁ conservar esa preferencia únicamente en el dispositivo del Usuario, sin enviarla al backend, a los registros ni al modelo de IA generativa; DEBERÁ mantenerla cuando vuelva a ingresar el mismo Usuario en ese dispositivo y eliminarla, antes de mostrar cualquier contenido con sesión, cuando ingrese un Usuario distinto.
+9. CUANDO el Usuario abre una Microcápsula, EL CIMA DEBERÁ presentar primero el video de apoyo si existe, después el resumen y los puntos clave, y el texto completo en una sección desplegable que el Usuario pueda escuchar en voz alta por separado.
 
 ### Requirement 14: Experiencia voz-first
 
@@ -273,6 +278,7 @@ El alcance de este documento son los requisitos de negocio y comportamiento del 
 4. CUANDO el Agente_Conversacional procesa una entrada o genera una salida, EL CIMA DEBERÁ registrar de forma auditable la entrada redactada, la salida, la versión del modelo utilizada y la decisión del guardrail aplicada, excluyendo cualquier PII del contenido registrado.
 5. CUANDO el Usuario interactúa con el Agente_Conversacional, EL CIMA DEBERÁ indicar de forma reconocible al Usuario que está interactuando con un asistente de inteligencia artificial.
 6. DONDE se declara un incidente operativo con el Agente_Conversacional, EL CIMA DEBERÁ permitir desactivar o degradar el Agente_Conversacional de forma controlada, presentando al Usuario una respuesta de respaldo segura.
+7. CUANDO el Agente_Conversacional propone una acción dentro de CIMA, EL CIMA DEBERÁ validarla en el backend contra una lista permitida de acciones y contra los datos del propio Usuario autenticado, descartar cualquier acción que no cumpla, retirar del texto visible toda instrucción interna de acción y no aplicar ningún cambio al Perfil_de_Usuario sin la confirmación explícita del Usuario.
 
 ### Requirement 17: Aprendizaje adaptativo
 
@@ -312,6 +318,7 @@ El alcance de este documento son los requisitos de negocio y comportamiento del 
 6. SI el otorgamiento o el registro de un reconocimiento falla, ENTONCES EL CIMA DEBERÁ reintentar la operación hasta 3 veces y, de persistir el fallo, conservar el evento de reconocimiento para otorgamiento posterior sin pérdida de datos.
 7. CUANDO el Usuario autenticado consulta sus reconocimientos, EL CIMA DEBERÁ presentar las Insignias y el total de puntos asociados a su Perfil_de_Usuario, verificando la titularidad del Perfil_de_Usuario en el backend antes de entregar la información.
 8. SI el Usuario que consulta reconocimientos no es el titular del Perfil_de_Usuario solicitado, ENTONCES EL CIMA DEBERÁ rechazar la solicitud con un error de autorización, no revelar las Insignias ni los puntos de otro Perfil_de_Usuario y registrar el intento sin exponer PII.
+9. CUANDO el Usuario consulta el ranking de participantes, EL CIMA DEBERÁ identificar a los demás participantes solo con un alias seudónimo, sin teléfono, nombre ni zona, y DONDE el Usuario guardó en su dispositivo cómo quiere que se le llame, DEBERÁ mostrar ese nombre únicamente en la fila propia del Usuario y en su propio dispositivo.
 
 ### Requirement 20: Encuesta de satisfacción
 
