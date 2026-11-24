@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
@@ -12,8 +19,13 @@ import {
   Ruta,
   VideoArchivo,
 } from './learning.service';
+import { LectorVozService } from '../voz/lector-voz.service';
+import { abrirTextoDeEntrada } from './leccion';
 import { RUTA_TECNOLOGIA_ID, SigaAprendiendoComponent } from './siga-aprendiendo.component';
-import { etiquetaTema, minutos } from './temas';
+import { etiquetaTema, iconoTema, minutos } from './temas';
+
+/** Identificador de la lectura en voz alta del texto del acordeón. */
+const ID_LECTURA_TEXTO = 'leccion-texto';
 
 /** Tope de tiempo reportado, igual al del backend (24 h). */
 const MAX_ELAPSED_SEC = 86400;
@@ -56,8 +68,24 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
           <a routerLink="/mi-ruta" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill enlace">Volver a mi ruta</a>
         </div>
       } @else if (item(); as i) {
-        <span class="tema">{{ etiqueta(i.capsule.topic) }} · {{ mins(i.capsule.duration_sec) }} min</span>
+        <p class="meta">
+          <span class="meta__dato">
+            <i class="fa-solid {{ icono(i.capsule.topic) }}" aria-hidden="true"></i>
+            {{ etiqueta(i.capsule.topic) }}
+          </span>
+          <span class="meta__dato">
+            <i class="fa-solid fa-clock" aria-hidden="true"></i>
+            {{ mins(i.capsule.duration_sec) }} min
+          </span>
+          @if (videoArchivo() || videoUrl()) {
+            <span class="meta__dato">
+              <i class="fa-solid fa-circle-play" aria-hidden="true"></i>
+              Con video
+            </span>
+          }
+        </p>
         <h1 class="titulo">{{ i.capsule.title ?? etiqueta(i.capsule.topic) }}</h1>
+        <!-- El video va primero: es lo más fácil de seguir; el texto completo queda en el acordeón. -->
         @if (videoArchivo(); as v) {
           <cima-video-propio [url]="v.url" [titulo]="v.title"
                              [leccion]="i.capsule.title ?? etiqueta(i.capsule.topic)"
@@ -75,24 +103,50 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
             </div>
           }
         }
-        <!-- Acordeón nativo (details/summary): accesible por teclado y sin JavaScript extra. -->
-        <details class="acordeon" open>
-          <summary class="acordeon__titulo">Lea la lección</summary>
-          <div class="acordeon__contenido">
-            @for (p of i.capsule.paragraphs; track $index) {
-              <p class="parrafo">{{ p }}</p>
-            }
-          </div>
-        </details>
+        @if (i.capsule.summary) {
+          <p class="resumen">{{ i.capsule.summary }}</p>
+        }
         @if (i.capsule.key_points.length > 0) {
-          <details class="acordeon">
-            <summary class="acordeon__titulo">Lo más importante</summary>
-            <div class="acordeon__contenido">
-              <ul>
-                @for (k of i.capsule.key_points; track $index) {
-                  <li>{{ k }}</li>
-                }
-              </ul>
+          <section class="puntos" aria-labelledby="puntos-titulo">
+            <h2 id="puntos-titulo" class="puntos__titulo">
+              <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+              Lo más importante
+            </h2>
+            <ul class="puntos__lista">
+              @for (k of i.capsule.key_points; track $index) {
+                <li class="puntos__item">
+                  <i class="fa-solid fa-circle-check puntos__icono" aria-hidden="true"></i>
+                  <span>{{ k }}</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        @if (i.capsule.paragraphs.length > 0) {
+          <!-- Acordeón del sistema de diseño (details/summary nativo: accesible y sin JS).
+               Arranca cerrado; se abre de entrada solo si no hay nada más que leer arriba. -->
+          <details class="sb-ui-accordion sb-ui-accordion--primary sb-ui-accordion--no-action mas"
+                   [open]="textoAbierto()" (toggle)="alCambiarAcordeon($event)">
+            <summary class="sb-ui-accordion__header">
+              <span class="sb-ui-accordion__icon-start"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
+              <span class="sb-ui-accordion__label">¿Quiere conocer más?</span>
+              <span class="sb-ui-accordion__icon-end"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+            </summary>
+            <div class="sb-ui-accordion__content">
+              @if (lector.disponible) {
+                <!-- Lee en voz alta solo el texto de este acordeón (Req 13.4, 14.3). -->
+                <button type="button" data-no-leer
+                        class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke escuchar"
+                        [attr.aria-pressed]="leyendoTexto()"
+                        (click)="alternarLecturaTexto(i.capsule.paragraphs)">
+                  <i class="fa-solid {{ leyendoTexto() ? 'fa-circle-stop' : 'fa-volume-high' }} icono-boton"
+                     aria-hidden="true"></i>
+                  {{ leyendoTexto() ? 'Detener la lectura' : 'Escuchar este texto' }}
+                </button>
+              }
+              @for (p of i.capsule.paragraphs; track $index) {
+                <p class="parrafo" [class.cima-leyendo]="leyendoTexto() && lector.segmento() === $index">{{ p }}</p>
+              }
             </div>
           </details>
         }
@@ -106,6 +160,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
         } @else if (i.status === 'next') {
           <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke enlace"
                   [disabled]="enviando()" (click)="terminar(i)">
+            <i class="fa-solid fa-check icono-boton" aria-hidden="true"></i>
             {{ enviando() ? 'Guardando...' : 'Terminé la lección' }}
           </button>
           @if (errorEnvio()) {
@@ -114,22 +169,34 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
             </div>
           }
         }
-        <a routerLink="/mi-ruta" class="volver">Volver a mi ruta</a>
+        <a routerLink="/mi-ruta" class="volver">
+          <i class="fa-solid fa-arrow-left icono-boton" aria-hidden="true"></i>
+          Volver a mi ruta
+        </a>
       }
     </article>
   `,
   styles: [
     `
       .leccion { padding: 1rem; max-width: 680px; margin: 0 auto; font-size: 1.125rem; line-height: 1.6; }
-      .tema { font-weight: 700; color: var(--cima-verde-oscuro); }
-      .titulo { margin: 0.25rem 0 1rem; font-size: 1.6rem; }
-      .parrafo { margin: 0 0 1rem; }
+      .meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 0; font-weight: 700; color: var(--cima-verde-oscuro); }
+      .meta__dato { display: inline-flex; align-items: center; gap: 0.4rem; }
+      .titulo { margin: 0.25rem 0 1rem; font-size: 1.6rem; line-height: 1.25; }
+      /* Texto menos denso: línea más corta, más interlineado y más espacio entre párrafos. */
+      .resumen { margin: 0 0 1.25rem; font-size: 1.2rem; max-width: 60ch; }
+      /* Dentro del acordeón el sistema de diseño usa 18 px y gris claro (#757575); el
+         texto de la lección se lee con el tamaño y el color oscuro del resto (Req 13.2). */
+      .parrafo { margin: 0 0 1.25rem; max-width: 60ch; line-height: 1.75; font-size: 1.125rem; color: var(--cima-texto); }
+      .mas { display: block; margin-bottom: 1.5rem; }
+      .escuchar { display: inline-flex; align-items: center; min-height: 48px; margin: 0.25rem 0 1rem; }
+      .icono-boton { margin-right: 0.5rem; }
       .video { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: var(--cima-radio); margin-bottom: 1rem; }
       .video--archivo { aspect-ratio: auto; max-height: 70vh; background: #000; display: block; }
-      .acordeon { border: 1px solid var(--cima-verde); border-radius: var(--cima-radio); margin-bottom: 1rem; overflow: hidden; }
-      .acordeon__titulo { cursor: pointer; padding: 0.75rem 1rem; min-height: 44px; font-weight: 700; color: var(--cima-verde-oscuro); background: var(--cima-verde-claro); }
-      .acordeon__contenido { padding: 1rem 1rem 0; }
-      .acordeon__contenido ul { margin-top: 0; }
+      .puntos { background: var(--cima-verde-claro); border-left: 6px solid var(--cima-verde); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; }
+      .puntos__titulo { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; font-size: 1.25rem; color: var(--cima-verde-oscuro); }
+      .puntos__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+      .puntos__item { display: flex; align-items: flex-start; gap: 0.6rem; }
+      .puntos__icono { flex: none; margin-top: 0.3rem; color: var(--cima-verde-oscuro); }
       .enlace { display: inline-flex; align-items: center; justify-content: center; width: 100%; margin: 0.5rem 0; text-decoration: none; }
       .volver { display: inline-flex; align-items: center; color: var(--cima-verde-oscuro); font-weight: 600; }
       .celebra { text-align: center; background: var(--cima-verde-oscuro); color: #fff; border-radius: var(--cima-radio); padding: 1.5rem; }
@@ -143,6 +210,10 @@ export class LessonPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly sanitizer = inject(DomSanitizer);
   protected readonly red = inject(NetworkStatusService);
+  protected readonly lector = inject(LectorVozService);
+
+  /** Verdadero mientras se lee en voz alta el texto del acordeón de esta lección. */
+  readonly leyendoTexto = computed(() => this.lector.leyendo() === ID_LECTURA_TEXTO);
 
   private readonly pathId = this.route.snapshot.paramMap.get('pathId') ?? '';
   private readonly capsuleId = this.route.snapshot.paramMap.get('capsuleId') ?? '';
@@ -170,8 +241,43 @@ export class LessonPageComponent {
     return PATRON_EMBED.test(url) ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
   });
 
+  /** Si el texto completo arranca abierto: solo cuando no hay nada más que leer arriba. */
+  readonly textoAbierto = computed<boolean>(() => {
+    const capsula = this.item()?.capsule;
+    return abrirTextoDeEntrada({
+      tieneVideo: this.videoArchivo() !== null || this.videoUrl() !== null,
+      resumen: capsula?.summary,
+      puntosClave: capsula?.key_points ?? [],
+    });
+  });
+
   constructor() {
+    // Al salir de la lección se calla: el texto que se leía ya no está en pantalla.
+    inject(DestroyRef).onDestroy(() => this.detenerLecturaTexto());
     void this.cargar();
+  }
+
+  /** Lee en voz alta solo los párrafos del acordeón, o detiene la lectura si ya leía. */
+  alternarLecturaTexto(parrafos: readonly string[]): void {
+    if (this.leyendoTexto()) {
+      this.lector.detener();
+      return;
+    }
+    this.lector.leerPorPartes(ID_LECTURA_TEXTO, parrafos);
+  }
+
+  /** Si la persona cierra el acordeón mientras se lee, la lectura se detiene. */
+  alCambiarAcordeon(evento: Event): void {
+    const acordeon = evento.target as HTMLDetailsElement | null;
+    if (acordeon && !acordeon.open) {
+      this.detenerLecturaTexto();
+    }
+  }
+
+  private detenerLecturaTexto(): void {
+    if (this.leyendoTexto()) {
+      this.lector.detener();
+    }
   }
 
   async cargar(): Promise<void> {
@@ -218,5 +324,9 @@ export class LessonPageComponent {
 
   mins(segundos: number): number {
     return minutos(segundos);
+  }
+
+  icono(topic: string): string {
+    return iconoTema(topic);
   }
 }
