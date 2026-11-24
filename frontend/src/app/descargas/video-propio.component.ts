@@ -16,10 +16,10 @@ import { formatoMegas } from './descargas';
 import { DescargasService, ErrorDescarga, MotivoFalla } from './descargas.service';
 
 const MENSAJES_FALLA: Readonly<Record<MotivoFalla, string>> = {
-  sin_soporte: 'Este navegador no permite descargar videos. Puedes verlo con internet.',
+  sin_soporte: 'Este navegador no permite descargar videos. Puede verlo con internet.',
   no_permitido: 'Este video no se puede descargar.',
-  espacio: 'No hay espacio suficiente en tu celular. Borra alguna descarga e intenta de nuevo.',
-  red: 'Se cortó la descarga. Revisa tu conexión e intenta de nuevo.',
+  espacio: 'No hay espacio suficiente en su celular. Borre alguna descarga e intente de nuevo.',
+  red: 'Se cortó la descarga. Revise su conexión e intente de nuevo.',
 };
 
 /**
@@ -40,7 +40,7 @@ const MENSAJES_FALLA: Readonly<Record<MotivoFalla, string>> = {
                [attr.aria-label]="'Video: ' + titulo()" (ended)="alTerminar()"></video>
       } @else if (!red.online()) {
         <div class="sb-ui-alert sb-ui-alert--info" role="status">
-          Este video necesita internet porque no lo has descargado. Puedes leer la lección sin conexión.
+          Este video necesita internet porque no lo ha descargado. Puede leer la lección sin conexión.
         </div>
       }
 
@@ -170,7 +170,7 @@ export class VideoPropioComponent {
         },
         this.borrarAlTerminar(),
       );
-      this.mensaje.set('Listo. Ya puedes ver este video sin internet.');
+      this.mensaje.set('Listo. Ya puede ver este video sin internet.');
     } catch (error) {
       if (error instanceof ErrorDescarga) {
         this.error.set(MENSAJES_FALLA[error.motivo]);
@@ -186,14 +186,14 @@ export class VideoPropioComponent {
 
   protected async borrar(): Promise<void> {
     await this.descargas.borrar(this.url());
-    this.mensaje.set('Borramos el video de tu celular.');
+    this.mensaje.set('Borramos el video de su celular.');
   }
 
   /** Si la persona lo pidió, borra la descarga apenas termina de ver el video. */
   protected async alTerminar(): Promise<void> {
     if (this.descarga()?.borrarAlTerminar) {
       await this.descargas.borrar(this.url());
-      this.mensaje.set('Borramos el video de tu celular porque ya lo terminaste de ver.');
+      this.mensaje.set('Borramos el video de su celular porque ya lo terminó de ver.');
     }
   }
 
