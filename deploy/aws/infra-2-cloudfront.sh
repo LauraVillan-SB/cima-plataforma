@@ -11,8 +11,11 @@ ESTADO=~/.cima-hackaton.env
 AQUI=$(cd "$(dirname "$0")" && pwd)
 NOMBRE=cima-hackaton
 
+# `set -a` exporta lo que se lee del estado: distribucion.py lo toma del entorno.
+set -a
 # shellcheck disable=SC1090
 source "$ESTADO"
+set +a
 : "${BUCKET:?Corra primero infra-1-servidor.sh}" "${INSTANCIA:?Corra primero infra-1-servidor.sh}"
 guardar() { echo "$1=$2" >> "$ESTADO"; export "$1=$2"; }
 CUENTA=$(aws sts get-caller-identity --query Account --output text)
