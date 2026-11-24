@@ -1,0 +1,15 @@
+# Fuera de la imagen: entornos, secretos, pruebas, medios y cachés.
+.env
+.env.*
+!.env.example
+.venv*/
+venv/
+media/
+tests/
+scripts/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
