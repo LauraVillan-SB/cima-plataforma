@@ -8,8 +8,51 @@ import {
   esEstadoFinal,
   extensionDeMime,
   faseDeChat,
+  rutaDeAccion,
   textoValido,
 } from './chat';
+
+describe('rutaDeAccion', () => {
+  const RUTA = '11111111-2222-4333-8444-555555555555';
+  const CAPSULA = '66666666-7777-4888-9999-000000000000';
+
+  it('lleva a las pantallas de la allowlist', () => {
+    expect(rutaDeAccion({ tipo: 'ir', etiqueta: 'x', destino: 'mi_ruta' })).toEqual(['/mi-ruta']);
+    expect(rutaDeAccion({ tipo: 'ir', etiqueta: 'x', destino: 'perfil' })).toEqual(['/perfil']);
+    expect(rutaDeAccion({ tipo: 'ir', etiqueta: 'x', destino: 'cambiar_clave' })).toEqual([
+      '/clave',
+    ]);
+    expect(rutaDeAccion({ tipo: 'ir', etiqueta: 'x', destino: 'descargas' })).toEqual([
+      '/descargas',
+    ]);
+  });
+
+  it.each(['admin', 'https://evil.example', '/perfil', 'toString', '__proto__', ''])(
+    'no navega a un destino fuera de la allowlist: %s',
+    (destino) => {
+      expect(rutaDeAccion({ tipo: 'ir', etiqueta: 'x', destino })).toBeNull();
+    },
+  );
+
+  it('continuar arma la ruta de la lección con los IDs del backend', () => {
+    expect(
+      rutaDeAccion({ tipo: 'continuar', etiqueta: 'x', path_id: RUTA, capsule_id: CAPSULA }),
+    ).toEqual(['/aprendizaje/leccion', RUTA, CAPSULA]);
+  });
+
+  it('continuar con IDs que no son UUID no navega', () => {
+    expect(
+      rutaDeAccion({ tipo: 'continuar', etiqueta: 'x', path_id: '../admin', capsule_id: CAPSULA }),
+    ).toBeNull();
+    expect(rutaDeAccion({ tipo: 'continuar', etiqueta: 'x', path_id: RUTA })).toBeNull();
+  });
+
+  it('proponer_perfil y una acción vacía no son navegación', () => {
+    expect(rutaDeAccion({ tipo: 'proponer_perfil', etiqueta: 'x', zona: 'Tolima' })).toBeNull();
+    expect(rutaDeAccion(null)).toBeNull();
+    expect(rutaDeAccion(undefined)).toBeNull();
+  });
+});
 
 /**
  * Pruebas de la lógica pura del chat (Tarea 23.2, Req 3.2, 3.4, 3.7, 3.8).

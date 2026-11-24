@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
-import { extensionDeMime } from './chat';
+import { AccionAgente, extensionDeMime } from './chat';
 
 /** Acuse 202 tras encolar un mensaje (Req 3.5). */
 export interface MensajeAceptado {
@@ -23,6 +23,8 @@ export interface ResultadoMensaje {
   readonly input_channel: string;
   readonly response_text: string | null;
   readonly response_audio_ref: string | null;
+  /** Acción propuesta por el asistente y validada por el backend, si la hay. */
+  readonly accion?: AccionAgente | null;
 }
 
 /** Entrada del historial; el texto ya viene con la PII redactada (Req 3.8). */
@@ -32,6 +34,7 @@ export interface EntradaHistorial {
   readonly input_channel: string;
   readonly input_redacted: string;
   readonly response_text: string | null;
+  readonly accion?: AccionAgente | null;
 }
 
 export interface Historial {

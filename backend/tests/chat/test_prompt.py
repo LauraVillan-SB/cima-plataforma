@@ -101,7 +101,7 @@ def test_las_instrucciones_piden_trato_de_usted_sin_genero() -> None:
         '"recuerde:"',
     ]:
         assert frase in instrucciones
-    assert PROMPT_VERSION == "cima-prompt-v3"
+    assert PROMPT_VERSION == "cima-prompt-v4"
 
 
 @pytest.mark.parametrize(

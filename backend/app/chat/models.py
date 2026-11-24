@@ -13,7 +13,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, Text, func
+from sqlalchemy import JSON, DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.chat.constants import ESTADO_ENCOLADO
@@ -54,6 +54,10 @@ class AiInteraction(Base):
     # permitido | bloqueo_entrada | salida_no_validada | derivado_humano | kill_switch.
     guardrail_decision: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
+    # Acción que el asistente propuso y el servidor resolvió contra la allowlist
+    # (ver `app.chat.acciones`); nula si no propuso ninguna. Solo trae el tipo,
+    # la etiqueta fija y IDs del catálogo o valores ya validados, sin PII.
+    action: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
     # Correlation-ID del evento, para trazabilidad sin PII (Req 3.9).
     correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
 

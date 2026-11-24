@@ -18,11 +18,14 @@ from __future__ import annotations
 
 import logging
 import uuid
+from dataclasses import asdict
 
+from pydantic import ValidationError
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.chat import audit, guardrails
+from app.chat import acciones, audit, guardrails
 from app.chat.constants import (
     CANAL_VOZ,
     ESTADO_ENCOLADO,
@@ -41,6 +44,7 @@ from app.chat.constants import (
     STT_CONFIDENCE_THRESHOLD,
 )
 from app.chat.dto import (
+    AccionOut,
     ChatHistory,
     ChatHistoryItem,
     ChatMessageAccepted,
@@ -294,7 +298,10 @@ async def procesar_inferencia(
     # El Perfil se lee una sola vez, del `profile_id` guardado en el servidor
     # (anti-BOLA): sirve para el contexto del prompt y para validar ofertas.
     perfil = await db.get(Profile, interaccion.profile_id)
-    contexto = _contexto_del_usuario(perfil, interaccion)
+    # Rutas pendientes del mismo titular, leídas en el servidor: el modelo solo
+    # recibe sus títulos numerados y la acción `continuar:N` se resuelve aquí.
+    rutas = await _rutas_pendientes(db, interaccion.profile_id) if perfil else []
+    contexto = _contexto_del_usuario(perfil, interaccion, rutas)
     try:
         prompt = construir_prompt(texto_redactado, contexto=contexto)
     except RedaccionPiiError:
@@ -323,12 +330,32 @@ async def procesar_inferencia(
 
     # Validación de salida y derivación (Req 16.2, 16.3). Las ofertas solo se
     # permiten si están respaldadas por el catálogo del Usuario (Req 5.4).
-    decision = _evaluar_salida(perfil, resultado.text)
+    # Los marcadores de acción se quitan antes de validar y de mostrar: el
+    # Usuario nunca los ve y los guardrails evalúan solo el texto visible.
+    texto_visible, marcador = acciones.separar(resultado.text)
+    decision = (
+        _evaluar_salida(perfil, texto_visible) if texto_visible else GUARDRAIL_SALIDA_NO_VALIDADA
+    )
     if decision != GUARDRAIL_PERMITIDO:
         await _finalizar_con_respaldo(db, interaccion, tts, decision, resultado.model_version)
         return
 
-    interaccion.response_text = guardrails.marcar_como_ia(resultado.text)
+    accion = acciones.resolver(
+        marcador,
+        rutas,
+        perfil.activity_type if perfil else None,
+        perfil.geo_zone if perfil else None,
+    )
+    interaccion.action = _accion_a_json(accion)
+    if marcador is not None:
+        # Solo el tipo y si se aceptó: nunca el valor propuesto por el modelo.
+        log_event(
+            logger,
+            "chat_accion_propuesta",
+            interaction_id=str(interaccion.id),
+            tipo=accion.tipo if accion else "descartada",
+        )
+    interaccion.response_text = guardrails.marcar_como_ia(texto_visible)
     interaccion.model_version = resultado.model_version
     interaccion.guardrail_decision = GUARDRAIL_PERMITIDO
     interaccion.response_audio_ref = await _sintetizar_respuesta(
@@ -339,23 +366,74 @@ async def procesar_inferencia(
     audit.registrar_auditoria(interaccion)
 
 
-def _contexto_del_usuario(perfil: Profile | None, interaccion: AiInteraction) -> str | None:
+async def _rutas_pendientes(
+    db: AsyncSession, profile_id: uuid.UUID
+) -> list[acciones.RutaPendiente]:
+    """Rutas sin terminar del titular, en el orden de "Mi ruta" (anti-BOLA).
+
+    Usa `list_routes` del Learning Service con el `profile_id` guardado en el
+    servidor, así que el avance es el del propio Usuario. Si la consulta falla,
+    el asistente responde igual, solo que sin rutas para proponer.
+    """
+    # Import diferido: evita acoplar la carga del chat a la del Learning Service.
+    from app.learning.service import list_routes
+
+    try:
+        respuesta = await list_routes(db, profile_id)
+    except SQLAlchemyError:
+        log_event(logger, "chat_rutas_no_disponibles")
+        return []
+    pendientes = [
+        acciones.RutaPendiente(r.path_id, r.next_microcapsule_id, r.title)
+        for r in respuesta.routes
+        if not r.completed and r.next_microcapsule_id is not None and r.title
+    ]
+    return pendientes[: acciones.MAX_RUTAS_PENDIENTES]
+
+
+def _accion_a_json(accion: acciones.AccionAgente | None) -> dict[str, object] | None:
+    """Convierte la acción resuelta al JSON que se guarda, validado con el DTO."""
+    if accion is None:
+        return None
+    return AccionOut(**asdict(accion)).model_dump(mode="json", exclude_none=True)
+
+
+def _accion_de(valor: object) -> AccionOut | None:
+    """Lee la acción guardada; si no cumple el contrato, no se muestra."""
+    if not isinstance(valor, dict):
+        return None
+    try:
+        return AccionOut.model_validate(valor)
+    except ValidationError:
+        log_event(logger, "chat_accion_guardada_invalida")
+        return None
+
+
+def _contexto_del_usuario(
+    perfil: Profile | None,
+    interaccion: AiInteraction,
+    rutas: list[acciones.RutaPendiente] | None = None,
+) -> str | None:
     """Arma el contexto del Perfil para el modelo (Req 4.8, 6.7), sin PII.
 
     `perfil` es el del `profile_id` de la interacción guardada en el servidor,
     nunca un dato del cliente (anti-BOLA). Solo usa el tipo de actividad y la
-    zona; el teléfono no sale de aquí. Si no hay Perfil, el prompt sale sin
+    zona; el teléfono no sale de aquí. Agrega la lista numerada de rutas
+    pendientes (solo títulos del catálogo). Si no hay Perfil, el prompt sale sin
     contexto. El registro solo indica qué campos se incluyeron, no sus valores.
     """
     if perfil is None:
         return None
     contexto = contexto_del_perfil(perfil.activity_type, perfil.geo_zone)
+    con_zona = "zona:" in contexto
+    contexto = f"{contexto} {acciones.contexto_de_rutas(rutas or [])}"
     log_event(
         logger,
         "chat_contexto_perfil",
         interaction_id=str(interaccion.id),
         con_actividad=perfil.activity_type in ETIQUETAS_ACTIVIDAD,
-        con_zona="zona:" in contexto,
+        con_zona=con_zona,
+        rutas_pendientes=len(rutas or []),
     )
     return contexto
 
@@ -478,6 +556,7 @@ async def obtener_resultado(
         status=interaccion.status,
         input_channel=interaccion.input_channel,
         response_text=interaccion.response_text,
+        accion=_accion_de(interaccion.action),
     )
 
 
@@ -508,6 +587,7 @@ async def obtener_historial(
             input_channel=i.input_channel,
             input_redacted=i.input_redacted,
             response_text=i.response_text,
+            accion=_accion_de(i.action),
         )
         for i in rows.all()
     ]
