@@ -21,6 +21,7 @@ import {
 } from './learning.service';
 import { LectorVozService } from '../voz/lector-voz.service';
 import { abrirTextoDeEntrada } from './leccion';
+import { RUTA_TECNOLOGIA_ID, SigaAprendiendoComponent } from './siga-aprendiendo.component';
 import { etiquetaTema, iconoTema, minutos } from './temas';
 
 /** Identificador de la lectura en voz alta del texto del acordeón. */
@@ -44,7 +45,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
 @Component({
   selector: 'cima-lesson-page',
   standalone: true,
-  imports: [RouterLink, VideoPropioComponent],
+  imports: [RouterLink, VideoPropioComponent, SigaAprendiendoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="leccion">
@@ -149,6 +150,9 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
             </div>
           </details>
         }
+        @if (esRutaTecnologia()) {
+          <cima-siga-aprendiendo />
+        }
         @if (i.status === 'pending') {
           <div class="sb-ui-alert sb-ui-alert--info" role="status">
             Complete primero la microcápsula anterior de esta ruta.
@@ -225,6 +229,8 @@ export class LessonPageComponent {
   readonly item = computed<ItemRuta | null>(
     () => this.ruta()?.items.find((i) => i.capsule.id === this.capsuleId) ?? null,
   );
+  /** Las lecciones de la ruta de tecnología muestran "Siga aprendiendo" con enlaces oficiales. */
+  readonly esRutaTecnologia = computed<boolean>(() => this.ruta()?.path_id === RUTA_TECNOLOGIA_ID);
   /** Video propio; solo si la dirección es la del backend (relativa y con el prefijo fijo). */
   readonly videoArchivo = computed<VideoArchivo | null>(() => {
     const video = this.item()?.capsule.video_file ?? null;
