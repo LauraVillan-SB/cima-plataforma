@@ -729,6 +729,7 @@ _FINANZAS_GOTA_A_GOTA = CapsuleSpec(
         "Compare por lo menos dos opciones: cooperativas, microcrédito, comité de cafeteros.",
         "Ahorre un poquito de cada venta o cosecha: es su defensa contra el gota a gota.",
     ),
+    video_file="gota-a-gota.mp4",
 )
 
 # --------------------------------------------------------------------------- #
