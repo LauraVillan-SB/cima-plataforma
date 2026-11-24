@@ -39,8 +39,9 @@ coverage/
 npm-debug.log*
 yarn-error.log*
 
-# ===== Videos de las microcápsulas (pesados; en prod van a almacenamiento de objetos) =====
-backend/media/
+# ===== Videos de las microcápsulas =====
+# backend/media/ SE VERSIONA a propósito para que todo el equipo tenga los videos al clonar
+# (GitHub rechaza archivos de más de 100 MB). En prod irán a almacenamiento de objetos.
 docs/Capsulas/
 
 # ===== Logs =====
