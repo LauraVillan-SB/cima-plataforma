@@ -224,7 +224,20 @@ Para cargar uno:
 
 Pendiente de otros equipos: el front debe mostrar el contenido y el video, y la política de
 seguridad de contenido (`frame-src`) tiene que permitir `https://www.youtube-nocookie.com`.
-Hoy ninguna cápsula trae video: no se cargó ninguno porque no se pudo verificar uno.
+Hoy ninguna cápsula trae video de YouTube: no se cargó ninguno porque no se pudo verificar uno.
+
+### Videos propios (`backend/media/`)
+
+Una cápsula también puede llevar un video propio en `.mp4` (`video_file` en `catalog.py`). Los
+archivos van en `backend/media/` y **sí se versionan** en el repositorio para que todo el equipo
+los tenga al clonar. Reglas:
+
+- El nombre solo admite minúsculas, números y guiones, y termina en `.mp4`
+  (`^[a-z0-9][a-z0-9-]{0,62}\.mp4$`); cualquier otro nombre se rechaza con 404.
+- GitHub rechaza archivos de más de 100 MB y el historial conserva cada versión subida: comprime
+  el video (H.264, pocos MB) antes de subirlo y no lo reemplaces con frecuencia.
+- Solo se entrega a quien tiene sesión (`GET /api/v1/aprendizaje/medios/{nombre}`).
+- En stage y producción irán a almacenamiento de objetos con CDN (pendiente con TI).
 
 ## Tecnologías
 
