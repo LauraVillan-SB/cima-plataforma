@@ -158,7 +158,9 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
       .titulo { margin: 0.25rem 0 1rem; font-size: 1.6rem; line-height: 1.25; }
       /* Texto menos denso: línea más corta, más interlineado y más espacio entre párrafos. */
       .resumen { margin: 0 0 1.25rem; font-size: 1.2rem; max-width: 60ch; }
-      .parrafo { margin: 0 0 1.25rem; max-width: 60ch; line-height: 1.75; }
+      /* Dentro del acordeón el sistema de diseño usa 18 px y gris claro (#757575); el
+         texto de la lección se lee con el tamaño y el color oscuro del resto (Req 13.2). */
+      .parrafo { margin: 0 0 1.25rem; max-width: 60ch; line-height: 1.75; font-size: 1.125rem; color: var(--cima-texto); }
       .mas { display: block; margin-bottom: 1.5rem; }
       .icono-boton { margin-right: 0.5rem; }
       .video { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: var(--cima-radio); margin-bottom: 1rem; }
