@@ -229,6 +229,16 @@ Convenciones:
     - **Validates: Requirements 3.9, 16.4**
     - Nota: en `tests/chat/test_propiedades_chat.py`. Encontró que la respuesta del modelo se registraba sin redactar (un celular o correo en la salida llegaba al log). `audit._sin_pii` ahora redacta entrada y salida; si la redacción falla, registra `[CONTENIDO_OMITIDO]`.
 
+  - [x] 11.13 Implementar acciones propuestas por el asistente dentro de la app
+    - Marcadores `[[accion:continuar:N]]`, `[[accion:ir:DESTINO]]` y `[[accion:perfil:ACTIVIDAD|ZONA]]`, resueltos en el servidor contra una lista permitida y contra las rutas pendientes del titular (`app/chat/acciones.py`). Columna `ai_interactions.action` (migración `0018_chat_accion`), DTO `AccionOut`, prompt `cima-prompt-v4`. En el chat, botón con etiqueta fija y confirmación antes de cambiar el Perfil (`rutaDeAccion` en `chat/chat.ts`). El asistente explica cómo cambiar la Clave sin pedirla.
+    - _Requirements: 3.12, 3.13, 16.7, 9.1, 9.2, 9.6_
+    - Nota (rama `feature/agente-acciones`, PR #111): pruebas por ejemplos en `tests/chat/test_acciones.py` (marcadores bien y mal formados, índices fuera de rango o con IDs, destinos y actividades fuera de la allowlist, zonas con dirección o teléfono, contexto sin IDs, anti-BOLA y acción guardada inválida). Se verificó con Gemini real en local: rutas pendientes, continuar, cambiar clave y proponer perfil. Antes (PR #105) el prompt pasó a "usted" sin asumir género (Req 13.7).
+
+  - [ ]* 11.14 Escribir test de propiedad para las acciones del asistente
+    - **Property 45: Acciones del asistente acotadas a la lista permitida y al titular**
+    - **Validates: Requirements 3.12, 16.7**
+    - Hoy solo hay pruebas por ejemplos (11.13); falta la versión con Hypothesis que genere respuestas y listas de rutas arbitrarias.
+
 - [ ] 12. Checkpoint — Verificar pipeline de IA voz-first con dependencias mockeadas
   - Ensure all tests pass, ask the user if questions arise.
 
@@ -272,6 +282,14 @@ Convenciones:
     - **Validates: Requirements 4.7, 8.4**
     - Nota: el registro de `microcapsula_completada` y `ruta_completada` reintenta hasta 3 veces y luego conserva el evento en `learning_event_outbox` (migración `0013`); `drain_outbox` lo recupera. Prueba en `tests/learning/test_resilience.py` (Hypothesis sobre secuencias de fallos; el límite está fijado en la prueba, no derivado del código). **Pendiente:** no hay un worker que drene la cola de todos los usuarios (hoy drena cada usuario al finalizar); el evento `ruta_completada` solo se emite en la transición, por lo que no se recupera si ni la cola pudo guardarse; los reintentos son inmediatos, sin espera.
 
+  - [x] 13.11 Ampliar el catálogo de microcápsulas y sus videos
+    - Contenido en "usted" que abre con una pregunta y cierra con "Recuerde: …" (Req 13.7). Cada cápsula queda entre 3 y 5 minutos (Req 4.1) y en uno de los tres temas (Req 4.2), y se carga con `python -m app.learning.seed`.
+    - _Requirements: 4.1, 4.2, 4.3, 13.7_
+    - Nota (PR #106): las 24 cápsulas y 17 rutas pasaron a "usted", con pregunta inicial y "Recuerde".
+    - Nota (PR #108): ruta "La plata digital de su negocio" para comercios (billeteras digitales, Bre-B y llaves, fraudes con pagos digitales). El video `tienda-videos.mp4` se amplió a todos los comercios de barrio.
+    - Nota (PR #112 y #113): la carpeta `backend/media/` se versiona en el repositorio, y la cápsula del gota a gota ganó `gota-a-gota.mp4`. Los videos `gemini_generated_video_*` no los usa ninguna cápsula y su nombre no pasa la allowlist `MEDIA_FILE_PATTERN`.
+    - Nota (PR #117): "Ruta: la tecnología a su favor", para todas las actividades (la nube y la IA usadas con cuidado; el celular como herramienta de trabajo), con la sección "Siga aprendiendo" y enlaces fijos a AWS, MinTIC y SENA en una allowlist del código, que abren en otra pestaña con `rel="noopener noreferrer"`. **Pendiente:** el contenido debe aprobarlo la Escuela y los enlaces se revisan cada año.
+
 - [x] 14. Assessment Service — Evaluaciones (Req 7)
   - [x] 14.1 Implementar presentación de evaluación y validación de respuestas en servidor
     - `GET /api/v1/evaluaciones/{rutaId}`; `POST .../respuestas` valida tipo, formato y rango antes de calcular; respuesta inválida → rechazo sin puntaje
@@ -290,6 +308,11 @@ Convenciones:
   - [x]* 14.5 Escribir test de propiedad para validación de respuestas en servidor
     - **Property 25: Validación de respuestas de evaluación en servidor**
     - **Validates: Requirements 7.6, 7.7**
+
+  - [x] 14.6 Mostrar con claridad el resultado de la evaluación
+    - Si aprueba: "¡Felicitaciones, aprobó!", los aciertos y los accesos al certificado y a los microseguros. Si no: "Le falta repasar un poco más" (en dorado, no en rojo), los aciertos, los intentos que quedan o la hora de Colombia en que podrá volver a intentarlo, y los botones "Repasar las lecciones" e "Intentar de nuevo". La aprobación, los intentos y el enfriamiento los decide el servidor. No se indica cuáles preguntas falló, para no revelar la clave de respuestas.
+    - _Requirements: 7.3, 7.4, 7.5, 7.6_
+    - Nota (rama `feature/resultado-evaluacion`, PR #116): también se corrigió que la evaluación no se podía enviar desde la app (`(ngSubmit)` sin `FormsModule`); ahora usa el evento `submit` nativo. Verificado a 360 px con el servidor real.
 
 - [x] 15. Certification Service — Certificación (Req 6)
   - [x] 15.1 Implementar emisión de certificado condicionada e idempotente
@@ -350,6 +373,11 @@ Convenciones:
     - **Property 42: Autorización por propiedad en consulta de reconocimientos**
     - **Validates: Requirements 19.7, 19.8**
     - Nota: cubierta en `tests/gamification/test_query.py` con Hypothesis: de 2 a 5 Perfiles con Insignias y puntos generados. Cada titular ve solo lo suyo; pedir un Perfil ajeno, exista o no, da 403 sin consultar la BD, con el mismo mensaje y sin el id pedido. Se comprobó que falla si se quita la verificación de titular.
+
+  - [x] 17.5 Ranking seudónimo con el nombre propio en la fila del Usuario
+    - `GET /api/v1/gamificacion/ranking` entrega solo alias (`Participante 2699`). En la fila propia, el cliente muestra el nombre que la persona guardó en su dispositivo ("doña Patricia (usted)", `gamificacion/ranking.ts`); las demás filas siguen con su alias.
+    - _Requirements: 19.9, 13.8, 9.1_
+    - Nota (rama `feature/leccion-acordeon-iconos`, PR #114): pruebas en `gamificacion/ranking.spec.ts`; verificado en Chrome sin interfaz con dos usuarias de prueba.
 
 - [x] 18. Metrics Service + Tablero ODS (Req 8, Req 15)
   - [x] 18.1 Implementar registro de eventos con asignación de zona idempotente
@@ -455,6 +483,27 @@ Convenciones:
     - Nota: budgets de bundle cubiertos con `npm run presupuesto` (≤ 500 kB inicial, ≤ 50 kB visita posterior, medido sobre el build real y con pruebas en `scripts/presupuesto-carga.spec.cjs`). **Falta:** axe-core/Lighthouse para contraste, roles y objetivos táctiles, y TTI ≤ 3 s con throttling 3G (Req 2.2), que requieren un navegador.
     - Nota (rama `fix/accesibilidad-pantallas`, PR #100): se auditaron las 13 pantallas con Chrome a 360 y 320 px (árbol de accesibilidad, contraste calculado, objetivos táctiles, `lang`, `title`, encabezados y desborde) y se corrigió el contraste de los botones principales y del filtro activo; con el código final no quedan hallazgos. **Falta:** una auditoría automática en CI (axe-core o Lighthouse desde JFrog), el foco con teclado, lectores de pantalla reales y el TTI en 3G.
 
+  - [x] 23.6 Tratar de "usted" en toda la interfaz, sin asumir género
+    - _Requirements: 13.5, 13.7_
+    - Nota (PR #104 y #109): textos de la app y de "Mis descargas" en "usted". La parte del asistente va en el PR #105 (11.13) y la del contenido en el PR #106 (13.11). En el PR #114 se corrigió "Lo que aprendes" por "Lo que aprende".
+
+  - [x] 23.7 Implementar "¿Cómo quiere que le digamos?" con el nombre solo en el dispositivo
+    - Trato (don, doña o solo el nombre) en `localStorage` (`cima-trato-v1`), validado al escribirlo y al leerlo (`core/trato.ts`). Saludo en el inicio ("Hola, doña Rosa"). Nunca va al backend, a los registros ni al asistente.
+    - _Requirements: 13.8, 9.1, 3.10_
+    - Nota (rama `feature/saludo-don-dona`, PR #107): primera versión, que borraba el nombre en cada cambio de sesión.
+    - Nota (rama `feature/leccion-acordeon-iconos`, PR #114): ahora el nombre se guarda con una huella SHA-256 del Perfil (`huellaDePerfil`). Al entrar se conserva si es la misma persona y se borra si es otra (`conservarTratoSiEsDe`); al cerrar sesión ya no se borra. Pruebas en `core/trato.spec.ts`. Verificado en Chrome sin interfaz: Patricia cierra sesión y vuelve a entrar con el nombre; entra Rosa y el nombre se borra.
+
+  - [ ]* 23.8 Escribir test de propiedad para la preferencia de trato
+    - **Property 46: Preferencia de trato conservada solo para su dueño**
+    - **Validates: Requirements 13.8, 19.9**
+    - Hoy solo hay pruebas por ejemplos (23.7); falta la versión con fast-check sobre identificadores y contenidos del almacenamiento arbitrarios.
+
+  - [x] 23.9 Rediseñar la lección: video arriba, resumen y puntos clave, y texto desplegable con lectura en voz alta
+    - Orden: tema y duración, título, video, resumen, "Lo más importante" con íconos y el acordeón cerrado "¿Quiere conocer más?" (`sb-ui-accordion`). Dentro del acordeón, "Escuchar este texto" lee solo esos párrafos y resalta el que va diciendo. Íconos de Font Awesome del sistema de diseño en la lección, "Mi ruta" y el inicio. Letra del texto de 20 px, oscura y con más aire.
+    - _Requirements: 13.9, 13.2, 13.4, 14.3, 4.1_
+    - Nota (PR #113): primera versión, con "Lea la lección" abierto y "Lo más importante" en otro acordeón.
+    - Nota (rama `feature/leccion-acordeon-iconos`, PR #114): reemplazó ese diseño por el pedido del equipo y agregó que, en pantallas de menos de 640 px, el globo del asistente va encima del botón CIMA para no tapar "Leer esta página". Pruebas en `aprendizaje/leccion.spec.ts`. Verificado en Chrome sin interfaz a 412 px (orden de la lección, acordeón cerrado al llegar, letra de 20 px, botón de lectura y botones flotantes sin cruzarse). **Falta:** probar en celulares reales y con lector de pantalla.
+
 - [ ] 24. Integración y cableado final
   - [~] 24.1 Cablear API Gateway, headers de seguridad y OpenAPI
     - Enrutar `/api/v1/*` por el gateway con TLS, rate limiting y Correlation-ID; headers HSTS, CSP, nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy; exponer OpenAPI como contrato
@@ -467,6 +516,16 @@ Convenciones:
     - Flujo voz STT → redacción → guardrails → LLM → TTS; SSO WordPress y restauración de sesión; todas las dependencias externas mockeadas
     - _Requirements: 3.1, 10.1, 10.2, 11.5_
 
+  - [x] 24.4 Desplegar un ambiente de desarrollo en AWS para la hackatón
+    - CloudFront (HTTPS; `/api/*` va al servidor y lo demás a S3), S3 privado con OAC para la PWA y el paquete, y EC2 con Docker para el backend y PostgreSQL con pgvector, administrado por SSM (sin SSH), con los secretos en Parameter Store. Scripts en `deploy/aws/`: `empaquetar.ps1`, `infra-1-servidor.sh`, `infra-2-cloudfront.sh` y `publicar.sh`. Las migraciones se aplican al arrancar.
+    - _Requirements: 2.1, 9.6, 11.1, 12.3_
+    - Nota (rama `deploy/aws-hackaton`, PR #110): cuenta personal con plan gratuito y solo datos ficticios; el ambiente oficial sigue siendo el garden corporativo. Se publica a mano (zip a S3 y `publicar.sh` en CloudShell). **Pendiente:** CI/CD con el pipeline estándar de la compañía (`WorkflowFile.json`) en cuentas institucionales; TLS o red privada entre CloudFront y el servidor; imágenes base desde JFrog.
+
+  - [x] 24.5 Dejar listos los usuarios de prueba del ambiente local
+    - `python -m app.dev.usuarios_locales` crea o actualiza a Patricia (café, Huila) y a Rosa Ruiz (tienda de barrio, Bogotá D.C.). La Clave se toma de `CIMA_CLAVE_DEMO`, se guarda solo como hash y quita bloqueos por intentos fallidos. El script se niega a correr fuera de `dev`, `local` y `test`.
+    - _Requirements: 1.5, 9.1_
+    - Nota (rama `feature/ruta-plata-digital`, PR #108).
+
 - [ ] 25. Checkpoint final — Asegurar cobertura y calidad
   - Ensure all tests pass, ask the user if questions arise. Verificar cobertura ≥ 80% en lógica de negocio, cero issues críticos/bloqueantes (SonarQube) y colecciones Postman por operación en `postmanCollections/`.
 
@@ -474,7 +533,7 @@ Convenciones:
 
 - Las tareas marcadas con `*` son opcionales (pruebas unitarias, de propiedad, integración, accesibilidad y performance) y pueden omitirse para un MVP más rápido; el núcleo funcional nunca se marca opcional.
 - Cada tarea referencia requisitos específicos (`_Requirements:_`) y, cuando aplica, las propiedades de correctitud que valida (`_Properties:_`).
-- Las 44 propiedades de correctitud se implementan una por sub-tarea con Hypothesis (backend) o fast-check (frontend), mínimo 100 iteraciones, etiquetadas **Feature: cima-plataforma, Property {n}**.
+- Las 46 propiedades de correctitud (la 45 y la 46 se agregaron con los Req 3.12, 13.8, 16.7 y 19.9) se implementan una por sub-tarea con Hypothesis (backend) o fast-check (frontend), mínimo 100 iteraciones, etiquetadas **Feature: cima-plataforma, Property {n}**.
 - Todas las dependencias externas (LLM, STT/TTS, pagos, core de pólizas, GraphQL) se mockean en pruebas; ningún test consume backends reales.
 - Los checkpoints aseguran validación incremental en cortes razonables.
 

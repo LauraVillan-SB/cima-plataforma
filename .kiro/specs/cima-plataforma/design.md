@@ -167,6 +167,19 @@ Responsabilidad: shell de la aplicación, caché de recursos, detección de cone
 - **Precarga:** siguiente microcápsula de la ruta cuando hay red (Req 18.3).
 - **Accesibilidad:** contraste y tamaños WCAG 2.1 AA; objetivos táctiles ≥ 44×44 px CSS; operable a 320 px y 3G; mínimo de pasos (Req 13).
 - **Voz-first:** modo primario por voz con texto como alternativa en el mismo flujo; controles de voz ≥ 44×44 px operables con una mano (Req 14.1, 14.4).
+- **Trato de "usted":** todos los textos de la interfaz, de las Microcápsulas y del asistente tratan de "usted", sin tuteo y con frases que no obligan a escoger género (Req 13.5, 13.7).
+- **Presentación de la lección (Req 13.9, 13.4, 14.3):** en `aprendizaje/lesson-page.component.ts` el orden es:
+  1. Tema, duración y si tiene video.
+  2. Título y video de apoyo, si existe.
+  3. Resumen corto y "Lo más importante" con un ícono por punto.
+  4. El texto completo en el acordeón cerrado "¿Quiere conocer más?", hecho con `sb-ui-accordion` del sistema de diseño (`details`/`summary` nativo: accesible y sin JavaScript). Si la cápsula no trae video, resumen ni puntos clave, arranca abierto (`abrirTextoDeEntrada`).
+
+  Dentro del acordeón, "Escuchar este texto" lee solo esos párrafos con la voz del dispositivo (Web Speech API, `LectorVozService`), resalta el que va diciendo y se detiene al cerrar el acordeón o salir de la lección. El texto usa 20 px, color oscuro, interlineado 1.75 y líneas de máximo 60 caracteres. El contenido no se recorta, porque la duración de 3 a 5 minutos sale del número de palabras (Req 4.1).
+- **Íconos:** Font Awesome, incluido en el sistema de diseño de Seguros Bolívar, sin librerías nuevas. Se usan en la lección, en "Mi ruta" (completada, le toca y pendiente) y en el inicio. Son decorativos (`aria-hidden`), porque el texto siempre los acompaña, y sus clases salen de listas fijas (`iconoTema`, `iconoDeEstado`).
+- **Nombre en el dispositivo (Req 13.8, 9.1):** "¿Cómo quiere que le digamos?" guarda el trato (don, doña o solo el nombre) en `localStorage` (`cima-trato-v1`), validado al escribirlo y al leerlo (solo letras, hasta 30 caracteres). Va con una huella SHA-256 del identificador del Perfil, calculada en el dispositivo y nunca enviada (`huellaDePerfil`).
+  - Al entrar, registrarse o restaurar la sesión, `conservarTratoSiEsDe` compara la huella. Si es la misma persona, el nombre se conserva; si es otra, o el nombre no tiene dueño o fue alterado, se borra antes de marcar la sesión.
+  - Al cerrar sesión no se borra, porque sin sesión no se muestra. El nombre nunca viaja al backend, a los registros ni al asistente (Req 3.10).
+- **Botones flotantes:** en pantallas de menos de 640 px, el globo de saludo del asistente va encima del botón CIMA para no tapar "Leer esta página" (`shell/assistant-fab.component.ts`).
 
 ### 3. Conversational Agent Service — IA responsable y voz-first (Req 3, Req 14, Req 16)
 
@@ -186,6 +199,18 @@ Detalles:
 - **Transparencia:** indica de forma reconocible que es un asistente de IA (Req 16.5).
 - **Registro auditable:** entrada redactada, salida, versión del modelo y decisión de guardrail, sin PII, con Correlation-ID (Req 3.9, 16.4).
 - **Kill switch:** permite desactivar/degradar el agente ante incidente, con respuesta de respaldo segura (Req 16.6).
+- **Trato y versión del prompt:** las instrucciones piden tratar de "usted", sin tuteo ni palabras de género, y cerrar con "Recuerde: …" cuando la respuesta enseñe algo (Req 13.7). La versión del prompt (`cima-prompt-v4`) queda en el registro auditable (Req 16.4).
+- **Acciones propuestas (Req 3.12, 3.13, 16.7; OWASP LLM06/LLM08):** el modelo solo **propone**, con un marcador al final de la respuesta: `[[accion:continuar:N]]`, `[[accion:ir:DESTINO]]` o `[[accion:perfil:ACTIVIDAD|ZONA]]` (`app/chat/acciones.py`).
+  - El contexto que recibe el modelo trae una lista numerada de hasta 5 títulos de Rutas_de_Aprendizaje pendientes del titular, leídas con `list_routes` y el `profile_id` guardado en el servidor. La lista no lleva IDs.
+  - El servidor quita del texto visible todo marcador (también los mal formados) y resuelve solo el primero contra una lista permitida:
+    - `continuar:N` toma `path_id` y `capsule_id` de la posición N de esa lista (anti-BOLA, el modelo nunca entrega IDs).
+    - `ir:` solo acepta `mi_ruta`, `perfil`, `cambiar_clave` y `descargas`.
+    - `perfil:` exige una actividad de la allowlist del Perfil y una zona apta (`zona_apta`: sin dígitos ni PII), y omite lo que no cambia.
+  - Cualquier otra propuesta se descarta. Una respuesta que solo trae el marcador usa la respuesta segura de respaldo.
+  - La etiqueta del botón es un texto fijo del servidor. El registro anota solo el tipo de acción, nunca el valor propuesto.
+  - La acción resuelta se guarda en `ai_interactions.action` (migración `0018_chat_accion`), se revalida con el DTO `AccionOut` al leerla y sale como `accion` en `GET /api/v1/chat/mensajes/{id}` y en el historial.
+  - En el cliente, navegar solo va a destinos conocidos y a IDs con forma de UUID (`rutaDeAccion`). Cambiar el Perfil pide "Sí, cambiarlo / No, dejarlo como está" y pasa por `PUT /api/v1/perfiles/{id}`, que vuelve a validar todo (Req 9.1, 9.2, 9.6).
+  - Para cambiar la Clave, el asistente explica los pasos y ofrece ir a `/clave`; las instrucciones le prohíben pedir o repetir la Clave (Req 3.13).
 
 ### 4. Learning Service — Micro-aprendizaje y adaptativo (Req 4, Req 17)
 
@@ -297,6 +322,10 @@ Responsabilidad: otorgamiento idempotente de Insignias y puntos al completar una
 |----------|--------|-------------|-----|
 | `/api/v1/gamificacion/reconocimientos` | POST | Otorga Insignia/puntos al completar Microcápsula o Ruta_de_Aprendizaje; idempotente por `client_event_id` e Insignia; reintentos ≤ 3 conservando el evento sin pérdida | 19.1, 19.2, 19.3, 19.5, 19.6 |
 | `/api/v1/gamificacion/reconocimientos` | GET | Lista las Insignias y el total de puntos del titular autenticado | 19.7, 19.8 |
+| `/api/v1/gamificacion/resumen` | GET | Puntos, nivel, días de racha e Insignias del titular, anclado a la sesión | 19.7 |
+| `/api/v1/gamificacion/ranking?tamano=N` | GET | Top N (1 a 50) con alias seudónimo (`Participante 2699`) y la posición del titular aunque quede fuera del top; nunca teléfono, nombre, zona ni id | 19.9 |
+
+- **Nombre propio en el ranking (Req 19.9, 13.8):** el servidor solo entrega alias. En la fila propia (`is_me`), el cliente muestra el nombre que la persona guardó en su dispositivo, por ejemplo "doña Patricia (usted)" (`gamificacion/ranking.ts`). Las demás filas siguen con su alias, porque el servidor no guarda nombres (Req 9.1).
 
 Detalles:
 - **Enganche con el flujo de completitud:** el Learning Service, al registrar la finalización de una Microcápsula o al marcar una Ruta_de_Aprendizaje como completada (Req 4.6, 4.10), dispara el otorgamiento en este servicio con el `client_event_id` del evento origen; el reconocimiento se refleja de forma visible al Usuario en ≤ 5 s (Req 19.1).
@@ -394,7 +423,7 @@ Campos adicionales en la solicitud → rechazo (Req 9.1). Respuestas vía DTO co
 
 ### InteracciónIA (`ai_interactions`)
 
-`id`, `correlation_id`, `redacted_input`, `output`, `model_version`, `guardrail_decision`, `stt_confidence`, `created_at`. **Nunca** PII (Req 3.9, 16.4). Audio conservado solo durante la transcripción y luego eliminado/anonimizado (Req 14.6).
+`id`, `correlation_id`, `redacted_input`, `output`, `model_version`, `guardrail_decision`, `stt_confidence`, `action`, `created_at`. **Nunca** PII (Req 3.9, 16.4). Audio conservado solo durante la transcripción y luego eliminado/anonimizado (Req 14.6). `action` (JSON, opcional, migración `0018_chat_accion`) guarda la acción ya resuelta por el servidor: tipo, etiqueta fija, IDs del catálogo o actividad y zona validadas. Nunca guarda el texto del modelo (Req 3.12, 16.7).
 
 ### Cola de sincronización offline (cliente)
 
@@ -635,6 +664,14 @@ Cada propiedad se implementará con un único test basado en propiedades (proper
 *Para toda* Ruta_de_Aprendizaje y Usuario, una vez que la encuesta ha sido respondida u omitida explícitamente, no se vuelve a presentar ni se registra una respuesta duplicada para esa misma ruta y Usuario.
 **Validates: Requirements 20.6**
 
+### Property 45: Acciones del asistente acotadas a la lista permitida y al titular
+*Para toda* respuesta del modelo (con marcadores bien formados, mal formados, repetidos o inexistentes) y toda lista de Rutas_de_Aprendizaje pendientes del titular, el texto visible no contiene ningún marcador de acción, y la acción resuelta es nula o pertenece a la lista permitida. Si es `continuar`, sus IDs son exactamente los de una ruta de esa lista. Si es `ir`, el destino es uno de los permitidos. Si es `proponer_perfil`, la actividad está en la allowlist del Perfil y la zona es apta (sin dígitos ni PII). Ningún ID que venga del modelo llega a la acción.
+**Validates: Requirements 3.12, 16.7**
+
+### Property 46: Preferencia de trato conservada solo para su dueño
+*Para todo* par de identificadores de Perfil A y B y todo contenido del almacenamiento local (incluso alterado), después de que A ingresa queda guardada una preferencia de trato solo si era de A (misma huella). Cuando B ≠ A ingresa, no queda ninguna preferencia de A. La preferencia nunca forma parte de una petición al backend.
+**Validates: Requirements 13.8, 19.9**
+
 ## Error Handling
 
 Principio: **errores genéricos al cliente, detalle completo solo interno.** Ningún error expone PII, secretos ni trazas de pila al Usuario (Req 9.4, 11.6).
@@ -658,7 +695,7 @@ El sistema combina pruebas basadas en propiedades (lógica de negocio con propie
 - No se implementa PBT desde cero; se usan las librerías anteriores.
 - **Mínimo 100 iteraciones** por propiedad.
 - Cada test etiquetado con comentario **Feature: cima-plataforma, Property {n}: {texto}** y referenciando el requisito validado.
-- Un test de propiedades por cada propiedad de la sección anterior (Property 1–44).
+- Un test de propiedades por cada propiedad de la sección anterior (Property 1–46).
 - Dependencias externas (LLM, STT/TTS, pagos, core de pólizas) se **mockean** para aislar la lógica y abaratar las 100+ iteraciones.
 
 ### Pruebas unitarias (por ejemplo)
@@ -708,3 +745,13 @@ Controles adicionales:
 ## Trazabilidad de requisitos
 
 Los 20 requisitos quedan cubiertos por el diseño: la arquitectura y los componentes de dominio (Secciones Arquitectura y Componentes) cubren Req 1–20 —la gamificación se cubre con el Gamification Service (componente 12, Req 19) y la encuesta de satisfacción con el Survey Service (componente 13, Req 20)—; los modelos de datos soportan Req 1, 4–9, 14, 18, 19, 20 (`badges`, `user_badges`, `user_points` para Req 19; `surveys`, `survey_responses` para Req 20); las 44 propiedades de correctitud validan los criterios testeables de Req 1, 3–11, 14, 15, 16, 18, 19, 20 (Property 41–42 para Req 19.5, 19.7, 19.8; Property 43–44 para Req 20.3, 20.6); el manejo de errores cubre Req 2, 3, 4, 5, 8, 11, 16, 18, 19, 20 (reintentos ≤ 3 y autorización en reconocimientos, Req 19.6/19.8; reintentos ≤ 3 en registro de encuesta, Req 20.6); y las consideraciones de seguridad cubren Req 1, 3, 6, 8, 9, 10, 11, 15, 16, 19, 20 (reglas en backend y autorización por propiedad, Req 19.3/19.4/19.7/19.8; registro sin PII y k-anonimato de la encuesta, Req 20.4/20.5/20.7/20.8). Los criterios no amenables a PBT (performance Req 2.2/2.3/2.4/10.3, accesibilidad Req 13, resiliencia de infraestructura Req 11.5/11.6/12.3) se cubren con pruebas de budget, accesibilidad e integración según la Estrategia de pruebas.
+
+Criterios agregados después de la versión inicial, con su cobertura:
+
+| Criterio | Qué pide | Diseño | Propiedad |
+|---|---|---|---|
+| Req 3.12, 3.13, 16.7 | El asistente propone una sola acción (continuar ruta, ir a pantalla o cambiar actividad o zona) validada en el backend; nunca pide la Clave | Componente 3, "Acciones propuestas"; `ai_interactions.action` | Property 45 |
+| Req 13.7 | Trato de "usted", sin tuteo ni género | Componentes 2 y 3 | — (revisión de contenido) |
+| Req 13.8 | Nombre guardado solo en el dispositivo, se conserva para la misma persona | Componente 2, "Nombre en el dispositivo" | Property 46 |
+| Req 13.9 | Lección: video primero, resumen y puntos clave, texto desplegable con lectura en voz alta | Componente 2, "Presentación de la lección" | — (prueba de interfaz) |
+| Req 19.9 | Ranking seudónimo; nombre propio solo en la fila propia | Componente 12, endpoints de resumen y ranking | Property 46 |
