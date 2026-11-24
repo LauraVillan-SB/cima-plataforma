@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
@@ -12,8 +19,12 @@ import {
   Ruta,
   VideoArchivo,
 } from './learning.service';
+import { LectorVozService } from '../voz/lector-voz.service';
 import { abrirTextoDeEntrada } from './leccion';
 import { etiquetaTema, iconoTema, minutos } from './temas';
+
+/** Identificador de la lectura en voz alta del texto del acordeón. */
+const ID_LECTURA_TEXTO = 'leccion-texto';
 
 /** Tope de tiempo reportado, igual al del backend (24 h). */
 const MAX_ELAPSED_SEC = 86400;
@@ -114,15 +125,26 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
           <!-- Acordeón del sistema de diseño (details/summary nativo: accesible y sin JS).
                Arranca cerrado; se abre de entrada solo si no hay nada más que leer arriba. -->
           <details class="sb-ui-accordion sb-ui-accordion--primary sb-ui-accordion--no-action mas"
-                   [open]="textoAbierto()">
+                   [open]="textoAbierto()" (toggle)="alCambiarAcordeon($event)">
             <summary class="sb-ui-accordion__header">
               <span class="sb-ui-accordion__icon-start"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
               <span class="sb-ui-accordion__label">¿Quiere conocer más?</span>
               <span class="sb-ui-accordion__icon-end"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
             </summary>
             <div class="sb-ui-accordion__content">
+              @if (lector.disponible) {
+                <!-- Lee en voz alta solo el texto de este acordeón (Req 13.4, 14.3). -->
+                <button type="button" data-no-leer
+                        class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke escuchar"
+                        [attr.aria-pressed]="leyendoTexto()"
+                        (click)="alternarLecturaTexto(i.capsule.paragraphs)">
+                  <i class="fa-solid {{ leyendoTexto() ? 'fa-circle-stop' : 'fa-volume-high' }} icono-boton"
+                     aria-hidden="true"></i>
+                  {{ leyendoTexto() ? 'Detener la lectura' : 'Escuchar este texto' }}
+                </button>
+              }
               @for (p of i.capsule.paragraphs; track $index) {
-                <p class="parrafo">{{ p }}</p>
+                <p class="parrafo" [class.cima-leyendo]="leyendoTexto() && lector.segmento() === $index">{{ p }}</p>
               }
             </div>
           </details>
@@ -162,6 +184,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
          texto de la lección se lee con el tamaño y el color oscuro del resto (Req 13.2). */
       .parrafo { margin: 0 0 1.25rem; max-width: 60ch; line-height: 1.75; font-size: 1.125rem; color: var(--cima-texto); }
       .mas { display: block; margin-bottom: 1.5rem; }
+      .escuchar { display: inline-flex; align-items: center; min-height: 48px; margin: 0.25rem 0 1rem; }
       .icono-boton { margin-right: 0.5rem; }
       .video { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: var(--cima-radio); margin-bottom: 1rem; }
       .video--archivo { aspect-ratio: auto; max-height: 70vh; background: #000; display: block; }
@@ -183,6 +206,10 @@ export class LessonPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly sanitizer = inject(DomSanitizer);
   protected readonly red = inject(NetworkStatusService);
+  protected readonly lector = inject(LectorVozService);
+
+  /** Verdadero mientras se lee en voz alta el texto del acordeón de esta lección. */
+  readonly leyendoTexto = computed(() => this.lector.leyendo() === ID_LECTURA_TEXTO);
 
   private readonly pathId = this.route.snapshot.paramMap.get('pathId') ?? '';
   private readonly capsuleId = this.route.snapshot.paramMap.get('capsuleId') ?? '';
@@ -219,7 +246,32 @@ export class LessonPageComponent {
   });
 
   constructor() {
+    // Al salir de la lección se calla: el texto que se leía ya no está en pantalla.
+    inject(DestroyRef).onDestroy(() => this.detenerLecturaTexto());
     void this.cargar();
+  }
+
+  /** Lee en voz alta solo los párrafos del acordeón, o detiene la lectura si ya leía. */
+  alternarLecturaTexto(parrafos: readonly string[]): void {
+    if (this.leyendoTexto()) {
+      this.lector.detener();
+      return;
+    }
+    this.lector.leerPorPartes(ID_LECTURA_TEXTO, parrafos);
+  }
+
+  /** Si la persona cierra el acordeón mientras se lee, la lectura se detiene. */
+  alCambiarAcordeon(evento: Event): void {
+    const acordeon = evento.target as HTMLDetailsElement | null;
+    if (acordeon && !acordeon.open) {
+      this.detenerLecturaTexto();
+    }
+  }
+
+  private detenerLecturaTexto(): void {
+    if (this.leyendoTexto()) {
+      this.lector.detener();
+    }
   }
 
   async cargar(): Promise<void> {
