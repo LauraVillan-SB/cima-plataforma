@@ -57,9 +57,6 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
       } @else if (item(); as i) {
         <span class="tema">{{ etiqueta(i.capsule.topic) }} · {{ mins(i.capsule.duration_sec) }} min</span>
         <h1 class="titulo">{{ i.capsule.title ?? etiqueta(i.capsule.topic) }}</h1>
-        @for (p of i.capsule.paragraphs; track $index) {
-          <p class="parrafo">{{ p }}</p>
-        }
         @if (videoArchivo(); as v) {
           <cima-video-propio [url]="v.url" [titulo]="v.title"
                              [leccion]="i.capsule.title ?? etiqueta(i.capsule.topic)"
@@ -77,15 +74,26 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
             </div>
           }
         }
+        <!-- Acordeón nativo (details/summary): accesible por teclado y sin JavaScript extra. -->
+        <details class="acordeon" open>
+          <summary class="acordeon__titulo">Lea la lección</summary>
+          <div class="acordeon__contenido">
+            @for (p of i.capsule.paragraphs; track $index) {
+              <p class="parrafo">{{ p }}</p>
+            }
+          </div>
+        </details>
         @if (i.capsule.key_points.length > 0) {
-          <section class="puntos" aria-labelledby="puntos-titulo">
-            <h2 id="puntos-titulo">Lo más importante</h2>
-            <ul>
-              @for (k of i.capsule.key_points; track $index) {
-                <li>{{ k }}</li>
-              }
-            </ul>
-          </section>
+          <details class="acordeon">
+            <summary class="acordeon__titulo">Lo más importante</summary>
+            <div class="acordeon__contenido">
+              <ul>
+                @for (k of i.capsule.key_points; track $index) {
+                  <li>{{ k }}</li>
+                }
+              </ul>
+            </div>
+          </details>
         }
         @if (i.status === 'pending') {
           <div class="sb-ui-alert sb-ui-alert--info" role="status">
@@ -114,7 +122,10 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
       .parrafo { margin: 0 0 1rem; }
       .video { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: var(--cima-radio); margin-bottom: 1rem; }
       .video--archivo { aspect-ratio: auto; max-height: 70vh; background: #000; display: block; }
-      .puntos { background: var(--cima-verde-claro); border-left: 6px solid var(--cima-verde); border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 1.5rem; }
+      .acordeon { border: 1px solid var(--cima-verde); border-radius: var(--cima-radio); margin-bottom: 1rem; overflow: hidden; }
+      .acordeon__titulo { cursor: pointer; padding: 0.75rem 1rem; min-height: 44px; font-weight: 700; color: var(--cima-verde-oscuro); background: var(--cima-verde-claro); }
+      .acordeon__contenido { padding: 1rem 1rem 0; }
+      .acordeon__contenido ul { margin-top: 0; }
       .enlace { display: inline-flex; align-items: center; justify-content: center; width: 100%; margin: 0.5rem 0; text-decoration: none; }
       .volver { display: inline-flex; align-items: center; color: var(--cima-verde-oscuro); font-weight: 600; }
       .celebra { text-align: center; background: var(--cima-verde-oscuro); color: #fff; border-radius: var(--cima-radio); padding: 1.5rem; }
