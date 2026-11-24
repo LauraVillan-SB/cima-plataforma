@@ -166,6 +166,18 @@ let saludoYaCerrado = false;
         color: var(--cima-texto);
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
       }
+      /* En celular el globo va ENCIMA del botón, no a su izquierda: así queda más
+         arriba que el botón "Leer esta página" (abajo a la izquierda) y no lo tapa. */
+      @media (max-width: 639.98px) {
+        .widget {
+          flex-direction: column;
+          align-items: flex-end;
+        }
+        .saludo {
+          max-width: min(18rem, calc(100vw - 2rem));
+          margin-bottom: 0;
+        }
+      }
       .saludo__barra {
         align-self: stretch;
         flex: none;

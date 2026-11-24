@@ -1,11 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
+import { UserContextService } from '../core/user-context.service';
 import { GamificationService, Ranking } from './gamification.service';
+import { nombreEnRanking } from './ranking';
 
 /**
  * Ranking: tabla con las primeras posiciones y la posición del Usuario aunque
- * quede fuera del top. Solo muestra alias seudónimos; nunca teléfono, nombre
- * ni zona de otras personas. Las posiciones las calcula el backend.
+ * quede fuera del top. De las demás personas solo muestra alias seudónimos;
+ * nunca su teléfono, nombre ni zona. En la fila propia muestra el nombre que la
+ * persona escribió en "Mi perfil", que vive solo en su celular y no sale de ahí
+ * (`ranking.ts`). Las posiciones las calcula el backend.
  */
 @Component({
   selector: 'cima-ranking-page',
@@ -41,7 +45,7 @@ import { GamificationService, Ranking } from './gamification.service';
                 <tr [class.yo]="f.is_me">
                   <td>{{ f.rank }}</td>
                   <td>
-                    {{ f.alias }}@if (f.is_me) { (usted) }
+                    {{ nombre(f.alias, f.is_me) }}
                     <span class="nivel-movil">{{ f.level_name }}</span>
                   </td>
                   <td class="col-nivel">{{ f.level_name }}</td>
@@ -87,6 +91,12 @@ import { GamificationService, Ranking } from './gamification.service';
 })
 export class RankingPageComponent {
   private readonly gamificacion = inject(GamificationService);
+  private readonly contexto = inject(UserContextService);
+
+  /** Nombre propio (solo de este celular) en la fila de la persona; alias en las demás. */
+  nombre(alias: string, esUsted: boolean): string {
+    return nombreEnRanking(alias, esUsted, this.contexto.comoLlamar());
+  }
 
   readonly cargando = signal<boolean>(true);
   readonly error = signal<boolean>(false);

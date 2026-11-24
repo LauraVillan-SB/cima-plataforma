@@ -24,7 +24,8 @@ import {
  *
  * La única excepción es cómo quiere la persona que le digan ("doña Rosa"), que
  * ella misma escribe y se guarda solo en este celular (`core/trato.ts`): nunca
- * se envía al backend ni al asistente, y se borra al cambiar la sesión.
+ * se envía al backend ni al asistente. Se conserva si vuelve a entrar la misma
+ * persona y se borra si entra otra (ver `conservarTratoSiEsDe`).
  */
 @Injectable({ providedIn: 'root' })
 export class UserContextService {
@@ -81,7 +82,8 @@ export class UserContextService {
    */
   guardarTrato(preferencia: PreferenciaTrato): boolean {
     this.trato.set(preferencia);
-    return guardarTrato(almacenLocal(), preferencia);
+    // Con la huella de quien tiene la sesión: así se conserva cuando vuelva a entrar.
+    return guardarTrato(almacenLocal(), preferencia, this.auth.huellaSesion());
   }
 
   /** Borra del celular cómo quiere que le digan; la app vuelve a decir solo "usted". */

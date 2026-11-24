@@ -7,9 +7,11 @@
  * celular (`localStorage`): nunca viaja al servidor, a los registros ni al
  * asistente (Req 3.10). Es opcional; sin ella la app habla de "usted".
  *
- * Al cambiar la sesión de manos (salir, entrar, registrarse o expirar) se borra
- * junto con los demás datos locales, porque en un celular compartido el
- * siguiente que entre no debe ver el nombre de otra persona.
+ * Se guarda con una huella (SHA-256) del Perfil que lo escribió. Al entrar, si es
+ * la misma persona se conserva y no tiene que escribirlo otra vez; si es otra,
+ * se borra antes de mostrar nada (`conservarTratoSiEsDe`), porque en un celular
+ * compartido el siguiente que entre no debe ver el nombre de otra persona. Al
+ * salir o al vencer la sesión no se borra: sin sesión la app no lo muestra.
  */
 
 /** Clave en `localStorage`. La versión permite cambiar el formato sin leer datos viejos. */
@@ -136,14 +138,18 @@ export function leerTrato(almacen: AlmacenClaveValor | undefined): PreferenciaTr
 export function guardarTrato(
   almacen: AlmacenClaveValor | undefined,
   preferencia: PreferenciaTrato,
+  huellaDueno: string | null = null,
 ): boolean {
   if (!almacen) {
     return false;
   }
+  // Sin huella válida se guarda sin dueño: sirve mientras dure la sesión y se
+  // borra en el próximo ingreso, como antes.
+  const dueno = huellaDueno !== null && HUELLA_VALIDA.test(huellaDueno) ? huellaDueno : undefined;
   try {
     almacen.setItem(
       CLAVE_TRATO,
-      JSON.stringify({ trato: preferencia.trato, nombre: preferencia.nombre }),
+      JSON.stringify({ trato: preferencia.trato, nombre: preferencia.nombre, dueno }),
     );
     return true;
   } catch (error: unknown) {
@@ -157,4 +163,76 @@ export function guardarTrato(
 /** Borra la preferencia del celular. */
 export function borrarTrato(almacen: AlmacenClaveValor | undefined): void {
   almacen?.removeItem(CLAVE_TRATO);
+}
+
+/** Huella válida: SHA-256 en hexadecimal (64 caracteres). */
+const HUELLA_VALIDA = /^[0-9a-f]{64}$/;
+
+/**
+ * Huella del Perfil dueño del nombre: SHA-256 de su identificador, en hexadecimal.
+ *
+ * Sirve solo para saber si quien entra es la misma persona que guardó el nombre;
+ * no se envía a ninguna parte y del resultado no se puede sacar el identificador.
+ *
+ * @returns la huella, o `null` si el navegador no tiene criptografía web (en ese
+ *   caso no se puede comparar y el nombre se borra al entrar, como antes).
+ */
+export async function huellaDePerfil(
+  idPerfil: string,
+  sutil: SubtleCrypto | null = globalThis.crypto?.subtle ?? null,
+): Promise<string | null> {
+  if (!sutil || !idPerfil) {
+    return null;
+  }
+  let bytes: ArrayBuffer;
+  try {
+    bytes = await sutil.digest('SHA-256', new TextEncoder().encode(idPerfil));
+  } catch (error: unknown) {
+    // Si el navegador no deja calcularla, el ingreso sigue: solo se pierde el nombre.
+    if (error instanceof DOMException) {
+      return null;
+    }
+    throw error;
+  }
+  return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Huella guardada junto al nombre, o `null` si no hay o no es válida. */
+export function duenoDelTrato(almacen: AlmacenClaveValor | undefined): string | null {
+  const crudo = almacen?.getItem(CLAVE_TRATO);
+  if (!crudo) {
+    return null;
+  }
+  try {
+    const dato: unknown = JSON.parse(crudo);
+    const dueno = typeof dato === 'object' && dato !== null ? (dato as Record<string, unknown>)['dueno'] : null;
+    return typeof dueno === 'string' && HUELLA_VALIDA.test(dueno) ? dueno : null;
+  } catch (error: unknown) {
+    if (error instanceof SyntaxError) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Al entrar: conserva el nombre solo si lo guardó la misma persona; si no, lo borra.
+ *
+ * Así quien vuelve a entrar no tiene que escribirlo otra vez, y en un celular
+ * compartido la siguiente persona nunca ve el nombre de otra: se borra antes de
+ * que la app muestre nada con sesión. Un nombre sin dueño (guardado antes de este
+ * cambio) o una huella que no se pudo calcular cuentan como de otra persona.
+ *
+ * @returns `true` si el nombre se conservó.
+ */
+export function conservarTratoSiEsDe(
+  almacen: AlmacenClaveValor | undefined,
+  huella: string | null,
+): boolean {
+  const dueno = duenoDelTrato(almacen);
+  if (huella !== null && dueno !== null && dueno === huella) {
+    return true;
+  }
+  borrarTrato(almacen);
+  return false;
 }
