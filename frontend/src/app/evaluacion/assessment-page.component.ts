@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { mensajeDeError } from '../core/mensaje-error';
 import {
   AssessmentService,
   Evaluacion,
@@ -29,10 +30,16 @@ import {
 
       @if (cargando()) {
         <p class="estado" role="status" aria-live="polite">Cargando la evaluación...</p>
-      } @else if (errorCarga()) {
-        <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-          No pudimos cargar la evaluación. Revise su conexión e intente de nuevo.
-        </div>
+      } @else if (errorCarga(); as e) {
+        <div class="sb-ui-alert sb-ui-alert--error" role="alert">{{ e.texto }}</div>
+        @if (e.conEnlace) {
+          <a
+            class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large accion"
+            routerLink="/mi-ruta"
+          >
+            Ir a Mi ruta
+          </a>
+        }
       } @else if (resultado(); as r) {
         <section
           class="resultado"
@@ -121,10 +128,16 @@ import {
           >
             {{ enviando() ? 'Enviando...' : 'Enviar respuestas' }}
           </button>
-          @if (errorEnvio()) {
-            <div class="sb-ui-alert sb-ui-alert--error" role="alert">
-              No pudimos enviar sus respuestas. Intente de nuevo.
-            </div>
+          @if (errorEnvio(); as e) {
+            <div class="sb-ui-alert sb-ui-alert--error" role="alert">{{ e.texto }}</div>
+            @if (e.conEnlace) {
+              <a
+                class="sb-ui-button sb-ui-button--primary sb-ui-button--fill sb-ui-button--large accion"
+                routerLink="/mi-ruta"
+              >
+                Ir a Mi ruta
+              </a>
+            }
           }
         </form>
       }
@@ -228,8 +241,10 @@ export class AssessmentPageComponent {
   private readonly seleccion = new Map<number, number>();
 
   readonly cargando = signal<boolean>(true);
-  readonly errorCarga = signal<boolean>(false);
-  readonly errorEnvio = signal<boolean>(false);
+  /** Motivo por el que no se pudo cargar la evaluación (misma forma que `errorEnvio`). */
+  readonly errorCarga = signal<{ texto: string; conEnlace: boolean } | null>(null);
+  /** Motivo por el que no se pudo enviar; `conEnlace` ofrece ir a Mi ruta en rechazos del servidor. */
+  readonly errorEnvio = signal<{ texto: string; conEnlace: boolean } | null>(null);
   readonly enviando = signal<boolean>(false);
   readonly evaluacion = signal<Evaluacion | null>(null);
   readonly resultado = signal<ResultadoIntento | null>(null);
@@ -245,11 +260,17 @@ export class AssessmentPageComponent {
 
   async cargar(): Promise<void> {
     this.cargando.set(true);
-    this.errorCarga.set(false);
+    this.errorCarga.set(null);
     try {
       this.evaluacion.set(await this.assessment.obtenerEvaluacion(this.rutaId));
-    } catch {
-      this.errorCarga.set(true);
+    } catch (fallo) {
+      this.errorCarga.set({
+        texto: mensajeDeError(
+          fallo,
+          'No pudimos cargar la evaluación. Revise su conexión e intente de nuevo.',
+        ),
+        conEnlace: this.esRechazoDelServidor(fallo),
+      });
     } finally {
       this.cargando.set(false);
     }
@@ -269,15 +290,18 @@ export class AssessmentPageComponent {
       return;
     }
     this.enviando.set(true);
-    this.errorEnvio.set(false);
+    this.errorEnvio.set(null);
     const answers = ev.questions.map((q) => ({
       question_id: q.id,
       selected_option: this.seleccion.get(q.id) as number,
     }));
     try {
       this.resultado.set(await this.assessment.enviarRespuestas(this.rutaId, answers));
-    } catch {
-      this.errorEnvio.set(true);
+    } catch (fallo) {
+      this.errorEnvio.set({
+        texto: mensajeDeError(fallo, 'No pudimos enviar sus respuestas. Intente de nuevo.'),
+        conEnlace: this.esRechazoDelServidor(fallo),
+      });
     } finally {
       this.enviando.set(false);
     }
@@ -298,8 +322,23 @@ export class AssessmentPageComponent {
   /** Vuelve al formulario con las preguntas limpias para un nuevo intento. */
   protected intentarDeNuevo(): void {
     this.seleccion.clear();
-    this.errorEnvio.set(false);
+    this.errorEnvio.set(null);
     this.resultado.set(null);
+  }
+
+  /**
+   * Indica si el servidor rechazó el envío por el estado de la persona (409:
+   * evaluación ya aprobada o ruta sin terminar; 429: demasiados intentos). En
+   * esos casos reintentar no sirve y conviene llevarla a Mi ruta.
+   * @param fallo error recibido del cliente HTTP
+   * @returns verdadero si el estado HTTP es 409 o 429
+   */
+  private esRechazoDelServidor(fallo: unknown): boolean {
+    const estado =
+      typeof fallo === 'object' && fallo !== null && 'status' in fallo
+        ? (fallo as { status: unknown }).status
+        : null;
+    return estado === 409 || estado === 429;
   }
 
   /**
