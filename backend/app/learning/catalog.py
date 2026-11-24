@@ -853,7 +853,8 @@ _AGRO_RIESGOS = CapsuleSpec(
 _TIENDA_VIDEOS = CapsuleSpec(
     slug="tienda-tu-negocio-en-video",
     topic=TOPIC_FINANZAS,
-    tags=("tienda_barrio", "fruteria"),
+    # Todos los comercios de barrio (pymes): el video del tendero aplica a cualquiera.
+    tags=("tienda_barrio", "panaderia", "miscelanea", "fruteria"),
     relevance=8.6,
     title="Muestre su negocio en video sin miedo a la cámara",
     summary="Cómo grabar videos sencillos con su celular para que más clientes conozcan "
