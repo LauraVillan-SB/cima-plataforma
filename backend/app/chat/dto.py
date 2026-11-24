@@ -110,11 +110,33 @@ class ChatMessageAccepted(BaseModel):
     input_redacted: str | None = None
 
 
+class AccionOut(BaseModel):
+    """Acción propuesta por el asistente y resuelta en el servidor (OWASP LLM06).
+
+    Allowlist estricta: solo tres tipos y cuatro destinos. Los IDs son de la ruta y
+    la cápsula del catálogo, tomados por el servidor de las rutas del propio
+    Usuario; la etiqueta es un texto fijo del servidor. El cliente solo muestra el
+    botón: navegar es inocuo y cambiar el Perfil pide confirmación y pasa por
+    `PUT /api/v1/perfiles/{id}`, que vuelve a validar todo (Req 9.1, 9.2).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    tipo: Literal["continuar", "ir", "proponer_perfil"]
+    etiqueta: str = Field(min_length=1, max_length=200)
+    destino: Literal["mi_ruta", "perfil", "cambiar_clave", "descargas"] | None = None
+    path_id: uuid.UUID | None = None
+    capsule_id: uuid.UUID | None = None
+    actividad: str | None = Field(default=None, max_length=32)
+    zona: str | None = Field(default=None, max_length=60)
+
+
 class ChatMessageResult(BaseModel):
     """Estado o resultado de una inferencia encolada (Req 3.6, 3.7, 3.8).
 
     `response_text` solo viene cuando `status == "listo"`; mientras tanto es
     None. No incluye PII: el contenido ya fue redactado antes de persistir.
+    `accion` es la acción que el asistente propuso, si la hubo.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -124,6 +146,7 @@ class ChatMessageResult(BaseModel):
     input_channel: str
     response_text: str | None = None
     response_audio_ref: str | None = None
+    accion: AccionOut | None = None
 
 
 class ChatHistoryItem(BaseModel):
@@ -136,6 +159,7 @@ class ChatHistoryItem(BaseModel):
     input_channel: str
     input_redacted: str
     response_text: str | None = None
+    accion: AccionOut | None = None
 
 
 class ChatHistory(BaseModel):

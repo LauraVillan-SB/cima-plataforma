@@ -1,14 +1,18 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { mensajeDeError } from '../core/mensaje-error';
+import { ProfileService } from '../profile/profile.service';
 import { LectorVozService } from '../voz/lector-voz.service';
 import { NotaGrabada, VozControlComponent } from '../voz/voz-control.component';
 import {
+  AccionAgente,
   ESTADO_LISTO,
   FaseChat,
   TIEMPO_MAXIMO_SEGUNDOS,
   esEstadoFinal,
   faseDeChat,
+  rutaDeAccion,
 } from './chat';
 import { ChatService, MensajeAceptado } from './chat.service';
 
@@ -22,6 +26,8 @@ interface Mensaje {
   readonly entrada: string;
   readonly estado: string;
   readonly respuesta: string | null;
+  /** Acción que propuso el asistente, ya validada por el backend. */
+  readonly accion: AccionAgente | null;
   /** Segundos pasados desde el envío, para el indicador de espera (Req 3.7). */
   readonly segundos: number;
   /** Segundos tras los cuales mostrar el indicador (`processing_after_seconds`). */
@@ -99,6 +105,42 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
                     >
                       {{ lector.leyendo() === m.id ? '⏹ Detener' : '🔊 Escuchar' }}
                     </button>
+                  }
+                }
+                @if (m.accion; as a) {
+                  @if (a.tipo === 'proponer_perfil') {
+                    @switch (estadoPerfil()[m.id]) {
+                      @case ('confirmando') {
+                        <div class="sb-ui-alert sb-ui-alert--info confirmar" role="group"
+                             aria-label="Confirmar cambio de perfil">
+                          <p>¿Quiere cambiar su perfil así? {{ a.etiqueta }}</p>
+                          <div class="botones">
+                            <button type="button" class="sb-ui-button sb-ui-button--primary"
+                                    (click)="aplicarPerfil(m.id, a)">Sí, cambiarlo</button>
+                            <button type="button" class="sb-ui-button sb-ui-button--secondary"
+                                    (click)="cancelarPerfil(m.id)">No, dejarlo como está</button>
+                          </div>
+                        </div>
+                      }
+                      @case ('guardando') {
+                        <p class="estado" role="status">Guardando su perfil...</p>
+                      }
+                      @case ('listo') {
+                        <p class="sb-ui-alert sb-ui-alert--success" role="status">
+                          Listo, su perfil quedó actualizado.
+                        </p>
+                      }
+                      @default {
+                        <button type="button" class="sb-ui-button sb-ui-button--secondary boton-accion"
+                                (click)="pedirConfirmacion(m.id)">{{ a.etiqueta }}</button>
+                      }
+                    }
+                    @if (errorPerfil()[m.id]; as msg) {
+                      <div class="sb-ui-alert sb-ui-alert--error" role="alert">{{ msg }}</div>
+                    }
+                  } @else if (rutaDe(a)) {
+                    <button type="button" class="sb-ui-button sb-ui-button--primary boton-accion"
+                            (click)="irA(a)">{{ a.etiqueta }}</button>
                   }
                 }
               }
@@ -206,8 +248,20 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
       .quien {
         font-weight: 600;
       }
-      .boton-escuchar {
+      .boton-escuchar,
+      .boton-accion {
         align-self: flex-start;
+        min-height: 44px;
+      }
+      .confirmar p {
+        margin: 0 0 0.5rem;
+      }
+      .botones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .botones button {
         min-height: 44px;
       }
     `,
@@ -215,6 +269,8 @@ function entradaVisible(canal: string, texto: string | null | undefined): string
 })
 export class ChatPageComponent {
   private readonly chat = inject(ChatService);
+  private readonly perfiles = inject(ProfileService);
+  private readonly router = inject(Router);
   protected readonly lector = inject(LectorVozService);
 
   readonly mensajes = signal<readonly Mensaje[]>([]);
@@ -222,6 +278,70 @@ export class ChatPageComponent {
   readonly errorHistorial = signal<string | null>(null);
   readonly errorEnvio = signal<string | null>(null);
   readonly enviando = signal<boolean>(false);
+  /** Estado del cambio de perfil propuesto por el asistente, por id de mensaje. */
+  readonly estadoPerfil = signal<Readonly<Record<string, 'confirmando' | 'guardando' | 'listo'>>>(
+    {},
+  );
+  readonly errorPerfil = signal<Readonly<Record<string, string>>>({});
+
+  /** Ruta de navegación de la acción, o null si no es de navegación o no es válida. */
+  rutaDe(accion: AccionAgente): readonly string[] | null {
+    return rutaDeAccion(accion);
+  }
+
+  /** Lleva a la pantalla propuesta; solo a destinos de la allowlist del cliente. */
+  async irA(accion: AccionAgente): Promise<void> {
+    const ruta = rutaDeAccion(accion);
+    if (ruta) {
+      await this.router.navigate([...ruta]);
+    }
+  }
+
+  pedirConfirmacion(id: string): void {
+    this.fijarErrorPerfil(id, null);
+    this.estadoPerfil.update((e) => ({ ...e, [id]: 'confirmando' }));
+  }
+
+  cancelarPerfil(id: string): void {
+    this.estadoPerfil.update((e) => {
+      const resto = { ...e };
+      delete resto[id];
+      return resto;
+    });
+  }
+
+  /**
+   * Aplica el cambio de perfil que la persona confirmó (OWASP LLM06: el modelo
+   * solo propone). Lee el Perfil propio para conservar lo que no cambia y lo envía
+   * por el endpoint normal; el backend verifica titularidad y valida actividad y
+   * zona (Req 9.1, 9.2, 9.6).
+   */
+  async aplicarPerfil(id: string, accion: AccionAgente): Promise<void> {
+    this.estadoPerfil.update((e) => ({ ...e, [id]: 'guardando' }));
+    this.fijarErrorPerfil(id, null);
+    try {
+      const actual = await this.perfiles.obtenerMiPerfil();
+      await this.perfiles.actualizar(actual.id, {
+        activity_type: accion.actividad ?? actual.activity_type,
+        geo_zone: accion.zona ?? actual.geo_zone,
+      });
+      this.estadoPerfil.update((e) => ({ ...e, [id]: 'listo' }));
+    } catch (error) {
+      this.cancelarPerfil(id);
+      this.fijarErrorPerfil(
+        id,
+        mensajeDeError(error, 'No pudimos cambiar su perfil. Intente de nuevo en un rato.'),
+      );
+    }
+  }
+
+  private fijarErrorPerfil(id: string, mensaje: string | null): void {
+    this.errorPerfil.update((e) => {
+      const resto = { ...e };
+      delete resto[id];
+      return mensaje ? { ...resto, [id]: mensaje } : resto;
+    });
+  }
 
   private readonly temporizadores = new Map<string, ReturnType<typeof setTimeout>>();
   private destruido = false;
@@ -252,6 +372,7 @@ export class ChatPageComponent {
         entrada: entradaVisible(i.input_channel, i.input_redacted),
         estado: i.status,
         respuesta: i.response_text,
+        accion: i.accion ?? null,
         segundos: 0,
         umbral: 15,
         textoParaReintento: null,
@@ -307,6 +428,7 @@ export class ChatPageComponent {
           id: acuse.id,
           estado: acuse.status,
           respuesta: null,
+          accion: null,
           segundos: 0,
           umbral: acuse.processing_after_seconds,
         },
@@ -345,6 +467,7 @@ export class ChatPageComponent {
         this.actualizar(id, {
           estado: resultado.status,
           respuesta: resultado.response_text,
+          accion: resultado.accion ?? null,
         });
         if (esEstadoFinal(resultado.status)) {
           this.leerSiFueVoz(id);

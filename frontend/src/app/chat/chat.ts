@@ -103,6 +103,56 @@ export function elegirMimeAudio(esSoportado: (mime: string) => boolean): string 
   return null;
 }
 
+/**
+ * Acción que el asistente propuso y el backend ya resolvió contra su allowlist
+ * (OWASP LLM06). El cliente solo la muestra como botón: navegar es inocuo y un
+ * cambio de perfil pide confirmación y lo valida otra vez el backend (Req 9.1).
+ */
+export interface AccionAgente {
+  readonly tipo: 'continuar' | 'ir' | 'proponer_perfil';
+  readonly etiqueta: string;
+  readonly destino?: string | null;
+  readonly path_id?: string | null;
+  readonly capsule_id?: string | null;
+  readonly actividad?: string | null;
+  readonly zona?: string | null;
+}
+
+/** Pantallas a las que el asistente puede llevar (misma allowlist del backend). */
+const RUTAS_DESTINO: Readonly<Record<string, readonly string[]>> = {
+  mi_ruta: ['/mi-ruta'],
+  perfil: ['/perfil'],
+  cambiar_clave: ['/clave'],
+  descargas: ['/descargas'],
+};
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Ruta del cliente para una acción de navegación, o null si no aplica o no es
+ * válida. Defensa en profundidad: aunque el backend ya validó, el cliente solo
+ * navega a destinos conocidos y a IDs con forma de UUID; nunca a una URL libre.
+ */
+export function rutaDeAccion(accion: AccionAgente | null | undefined): readonly string[] | null {
+  if (!accion) {
+    return null;
+  }
+  if (accion.tipo === 'ir') {
+    const destino = accion.destino ?? '';
+    return Object.prototype.hasOwnProperty.call(RUTAS_DESTINO, destino)
+      ? RUTAS_DESTINO[destino]
+      : null;
+  }
+  if (accion.tipo === 'continuar') {
+    const ruta = accion.path_id ?? '';
+    const capsula = accion.capsule_id ?? '';
+    return UUID.test(ruta) && UUID.test(capsula)
+      ? ['/aprendizaje/leccion', ruta, capsula]
+      : null;
+  }
+  return null;
+}
+
 /** Extensión de archivo para el formato elegido (solo informativa para el servidor). */
 export function extensionDeMime(mime: string): string {
   if (mime.startsWith('audio/mp4')) {
