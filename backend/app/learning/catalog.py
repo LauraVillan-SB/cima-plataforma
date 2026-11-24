@@ -853,7 +853,8 @@ _AGRO_RIESGOS = CapsuleSpec(
 _TIENDA_VIDEOS = CapsuleSpec(
     slug="tienda-tu-negocio-en-video",
     topic=TOPIC_FINANZAS,
-    tags=("tienda_barrio", "fruteria"),
+    # Todos los comercios de barrio (pymes): el video del tendero aplica a cualquiera.
+    tags=("tienda_barrio", "panaderia", "miscelanea", "fruteria"),
     relevance=8.6,
     title="Muestre su negocio en video sin miedo a la cámara",
     summary="Cómo grabar videos sencillos con su celular para que más clientes conozcan "
@@ -1393,6 +1394,161 @@ _MISCELANEA_FIADO = CapsuleSpec(
     ),
 )
 
+# --------------------------------------------------------------------------- #
+# Ruta de comercio: la plata digital del negocio (billeteras, Bre-B y fraudes).
+# Fuentes: Banco de la República (Bre-B), Fogafín (Seguro de Depósitos) y
+# Superintendencia Financiera (alertas de fraude). Sin marcas comerciales.
+# --------------------------------------------------------------------------- #
+_COMERCIO: Final[tuple[str, ...]] = ("tienda_barrio", "panaderia", "miscelanea", "fruteria")
+
+_PLATA_BILLETERAS = CapsuleSpec(
+    slug="comercio-billeteras-digitales",
+    topic=TOPIC_FINANZAS,
+    tags=_COMERCIO,
+    relevance=8.0,
+    title="Billeteras digitales: cómo usarlas en su negocio con confianza",
+    summary="Qué son, quién las vigila y cómo aprovecharlas para cobrar y ordenar la plata "
+    "de su negocio sin correr riesgos.",
+    paragraphs=(
+        "¿Le ha pasado que un cliente le pregunta si le puede pagar con el celular? Cada "
+        "vez más personas en Colombia pagan y reciben plata con billeteras digitales, que "
+        "son aplicaciones del celular donde se guarda dinero, se envía y se recibe. Muchas "
+        "funcionan como un depósito de bajo monto o como una cuenta de ahorros, y para el "
+        "negocio pueden ser una gran ayuda si se usan con orden.",
+        "Antes de abrir una, averigüe quién la respalda. Las billeteras de bancos y de "
+        "otras entidades financieras están vigiladas por la Superintendencia Financiera de "
+        "Colombia, que es la que pone las reglas y atiende las quejas. Desconfíe de "
+        "aplicaciones que prometen ganancias altas, que nadie conoce o que le piden pagar "
+        "para abrir la cuenta.",
+        "También vale la pena saber que existe el Seguro de Depósitos de Fogafín. Si una "
+        "entidad inscrita en Fogafín llega a liquidarse, ese seguro le devuelve sus "
+        "ahorros hasta 50 millones de pesos por persona en cada entidad. En la página de "
+        "Fogafín puede revisar si la entidad de su billetera está inscrita. No tiene que "
+        "pagar nada: viene incluido por tener el producto.",
+        "¿Qué gana su negocio? Puede cobrar sin manejar tanto efectivo, y menos plata en "
+        "la caja es menos riesgo de robo y de equivocarse con las vueltas. Además, la "
+        "aplicación guarda cada movimiento con fecha y valor, y eso le sirve para saber "
+        "cuánto vendió en el día sin tener que contar billetes.",
+        "Use una billetera solo para el negocio. Si en la misma le llegan las ventas, la "
+        "plata de la casa y lo que le mandan los familiares, se le mezcla todo y no sabe "
+        "cuánto deja el negocio. Con una para el negocio y otra para la casa, cada peso "
+        "tiene su lugar. Y cuide la clave como cuida la llave del local: no la anote en el "
+        "celular ni se la diga a nadie, ni siquiera a quien le ayuda en el mostrador.",
+        "Esta semana mire qué billetera usan más sus clientes, revise que su entidad esté "
+        "vigilada por la Superintendencia Financiera y decida cuál va a ser la billetera "
+        "del negocio. Al cerrar cada día, compare lo que dice la aplicación con lo que "
+        "anotó en su cuaderno. Recuerde: una billetera digital le sirve al negocio si la "
+        "usa separada de la plata de la casa y con la clave bien guardada.",
+    ),
+    key_points=(
+        "Use billeteras de entidades vigiladas por la Superintendencia Financiera.",
+        "El Seguro de Depósitos de Fogafín protege hasta 50 millones de pesos por persona "
+        "en cada entidad inscrita.",
+        "Tenga una billetera solo para el negocio y otra para la casa.",
+        "Su clave no se le dice a nadie, ni siquiera a quien le ayuda en el negocio.",
+    ),
+)
+
+_PLATA_BRE_B = CapsuleSpec(
+    slug="comercio-bre-b-y-llaves",
+    topic=TOPIC_FINANZAS,
+    tags=_COMERCIO,
+    relevance=7.5,
+    title="Bre-B y las llaves: reciba pagos al instante en su negocio",
+    summary="Cómo funciona el sistema de pagos inmediatos del Banco de la República, cómo "
+    "registrar la llave de su negocio y cómo confirmar cada pago.",
+    paragraphs=(
+        "¿Sabe usted qué es Bre-B? Es el sistema de pagos inmediatos del Banco de la "
+        "República. Con él la plata pasa al instante de una cuenta a otra, aunque estén en "
+        "entidades distintas, a cualquier hora y también los fines de semana y festivos. "
+        "Para un negocio de barrio eso significa que el cliente le puede pagar desde su "
+        "banco o su billetera y usted ve la plata enseguida en la suya.",
+        "Para recibir pagos necesita una llave. La llave es un dato que identifica su "
+        "cuenta o depósito, para que la gente le pueda mandar plata sin pedirle el número "
+        "de la cuenta. Puede ser su número de celular, su número de documento, su correo o "
+        "un código que le da su entidad. Los comercios también pueden usar el código de "
+        "comercio que les asigna la entidad. Cada llave va a una sola cuenta, pero una "
+        "cuenta puede tener varias llaves.",
+        "La llave se registra en la aplicación o en la página web de la entidad donde tiene "
+        "su cuenta, en la zona marcada como Bre-B. El registro no tiene costo, no necesita "
+        "intermediarios y no hay que descargar otra aplicación. Tenga presente que la llave "
+        "no es la contraseña: la llave se comparte con quien le va a pagar, la contraseña "
+        "no se comparte con nadie.",
+        "En el negocio puede tener la llave escrita en un letrero o el código QR que le da "
+        "su entidad, para que el cliente lo escanee y pague. Si prefiere no darle su "
+        "celular personal a todo el mundo, use como llave el código que le genera la "
+        "entidad o el código de comercio.",
+        "Antes de entregar la mercancía, confirme el pago en su propia aplicación. No basta "
+        "con que el cliente le muestre la pantalla de su celular: mire que la plata sí le "
+        "llegó y por el valor correcto. Cuando sea usted quien paga, revise el nombre que "
+        "aparece antes de confirmar. Su entidad le informa cuál es el tope por "
+        "transacción, y puede ponerle un límite menor por seguridad.",
+        "Esta semana entre a la aplicación de su entidad, busque la zona Bre-B y registre "
+        "la llave del negocio. Haga una prueba con un familiar: que le mande una cantidad "
+        "pequeña y mire cuánto tarda en llegar. Después anote en su cuaderno cada venta "
+        "que le pagan por llave. Recuerde: la llave se comparte, la contraseña nunca, y la "
+        "venta se entrega cuando la plata ya está en su cuenta.",
+    ),
+    key_points=(
+        "Bre-B, del Banco de la República, pasa la plata al instante entre entidades "
+        "distintas.",
+        "La llave identifica su cuenta: celular, documento, correo o un código de su "
+        "entidad.",
+        "Registrar la llave no cuesta y se hace en la aplicación de su entidad.",
+        "Entregue la mercancía cuando vea el pago en su propia aplicación.",
+    ),
+)
+
+_PLATA_FRAUDES = CapsuleSpec(
+    slug="comercio-fraudes-pagos-digitales",
+    topic=TOPIC_FINANZAS,
+    tags=_COMERCIO,
+    relevance=7.0,
+    title="Que no le roben por el celular: fraudes con pagos digitales",
+    summary="Cómo reconocer comprobantes falsos y mensajes o llamadas que se hacen pasar "
+    "por su entidad, y qué hacer si cae en un engaño.",
+    paragraphs=(
+        "¿Le ha llegado un mensaje que dice que su cuenta está bloqueada y que entre a un "
+        "enlace para arreglarlo? Con los pagos digitales también llegaron nuevos engaños. "
+        "Los delincuentes no necesitan entrar al negocio: buscan que usted les entregue "
+        "mercancía sin pagar o que les dé sus claves. La buena noticia es que casi todos "
+        "los engaños se repiten y se pueden reconocer.",
+        "El primero es el comprobante falso. Alguien le muestra la pantalla o le manda un "
+        "pantallazo con la transferencia, y se va con la mercancía. Pero la plata nunca "
+        "llegó: la imagen era falsa o la transferencia fue a otra cuenta. Por eso la regla "
+        "es siempre la misma: confirme el pago en su propia aplicación antes de entregar. "
+        "Aunque haya mucha gente o el cliente tenga prisa, tómese el minuto de revisar.",
+        "El segundo es la suplantación. Llega un mensaje de texto, un correo o una llamada "
+        "de alguien que dice ser de su banco, de su billetera o de una entidad del Estado. "
+        "Le piden la clave, el código que le acaba de llegar al celular o que entre a un "
+        "enlace. Ninguna entidad seria le pide eso. La Superintendencia Financiera ha "
+        "advertido que no ofrece créditos ni otros productos por llamadas, y el Banco de la "
+        "República recomienda no poner sus datos en páginas que le llegan por mensaje.",
+        "Si tiene dudas, cuelgue y llame usted a su entidad por el número que aparece en "
+        "su aplicación o en su tarjeta, nunca al que le dieron en el mensaje. No descargue "
+        "aplicaciones que le pidan por teléfono y no deje que otra persona maneje su "
+        "celular para ayudarle con una transferencia. La Superintendencia Financiera tiene "
+        "un espacio llamado Protégete de los fraudes, donde explica cómo funcionan estos "
+        "engaños.",
+        "Si cae en un engaño, actúe rápido. Llame de inmediato a su entidad por sus canales "
+        "oficiales para bloquear la cuenta, cambie sus claves y denuncie ante las "
+        "autoridades. Guarde los mensajes y los números que le escribieron. Entre más "
+        "rápido avise, más posibilidades hay de frenar el daño. Y tenga presente que CIMA "
+        "nunca le va a pedir sus claves ni plata.",
+        "Esta semana repase estas tres reglas con quien le ayuda en el negocio y péguelas "
+        "cerca de la caja: el pago se confirma en la aplicación, la clave y los códigos no "
+        "se le dan a nadie, y ante la duda se cuelga y se llama a la entidad. Recuerde: si "
+        "alguien le pide su clave o un código, es un engaño, aunque diga que llama de su "
+        "banco.",
+    ),
+    key_points=(
+        "Un pantallazo no es un pago: confírmelo en su propia aplicación.",
+        "Ninguna entidad le pide su clave ni los códigos que le llegan al celular.",
+        "Ante la duda, cuelgue y llame usted a su entidad por el número oficial.",
+        "Si cae en un engaño, bloquee, cambie sus claves y denuncie de inmediato.",
+    ),
+)
+
 CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _GENERAL_CLIMA,
     _GENERAL_AGUA,
@@ -1418,6 +1574,9 @@ CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _HORTALIZAS_HUERTA,
     _PANADERIA_COSTOS,
     _MISCELANEA_FIADO,
+    _PLATA_BILLETERAS,
+    _PLATA_BRE_B,
+    _PLATA_FRAUDES,
 )
 
 PATHS: Final[tuple[PathSpec, ...]] = (
@@ -1532,6 +1691,46 @@ PATHS: Final[tuple[PathSpec, ...]] = (
                     "Mezclar varios productos",
                 ),
                 0,
+            ),
+        ),
+    ),
+    PathSpec(
+        slug="ruta-comercio-plata-digital",
+        title="Ruta: la plata digital de su negocio",
+        summary=(
+            "Aprenda a usar billeteras digitales y Bre-B para cobrar en su negocio, y a "
+            "reconocer los fraudes más comunes con pagos por celular."
+        ),
+        capsule_slugs=(_PLATA_BILLETERAS.slug, _PLATA_BRE_B.slug, _PLATA_FRAUDES.slug),
+        questions=(
+            QuestionSpec(
+                "¿Qué es una llave de Bre-B?",
+                (
+                    "La contraseña de su cuenta",
+                    "Un dato, como su celular, que identifica su cuenta para recibir plata",
+                    "Una aplicación que hay que descargar aparte",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "Un cliente le muestra un pantallazo de su transferencia. ¿Qué hace antes de "
+                "entregarle la mercancía?",
+                (
+                    "Revisar en su propia aplicación que la plata sí llegó",
+                    "Entregarla, porque el pantallazo es suficiente",
+                    "Pedirle que le reenvíe el pantallazo",
+                ),
+                0,
+            ),
+            QuestionSpec(
+                "Recibe una llamada de alguien que dice ser de su banco y le pide el código "
+                "que le llegó al celular. ¿Qué conviene hacer?",
+                (
+                    "Darlo rápido para que no le bloqueen la cuenta",
+                    "Darlo solo si la persona sabe su nombre",
+                    "No darlo, colgar y llamar usted a su entidad por el número oficial",
+                ),
+                2,
             ),
         ),
     ),

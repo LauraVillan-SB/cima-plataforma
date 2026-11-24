@@ -1,0 +1,7 @@
+# Scripts y archivos que se ejecutan en Linux: siempre con saltos de línea LF,
+# aunque el repositorio se clone en Windows (core.autocrlf=true).
+*.sh text eol=lf
+Dockerfile text eol=lf
+deploy/aws/*.py text eol=lf
+deploy/aws/*.js text eol=lf
+deploy/aws/*.yml text eol=lf
