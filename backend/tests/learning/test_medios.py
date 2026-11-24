@@ -199,5 +199,10 @@ def test_el_catalogo_rechaza_un_nombre_de_video_invalido() -> None:
 def test_las_capsulas_con_video_propio_usan_nombres_de_la_allowlist() -> None:
     con_video = [c for c in CAPSULES if c.video_file]
 
-    assert {c.video_file for c in con_video} == {"agro-sostenible.mp4", "agro-riesgos.mp4", "tienda-videos.mp4"}
+    assert {c.video_file for c in con_video} == {
+        "agro-sostenible.mp4",
+        "agro-riesgos.mp4",
+        "tienda-videos.mp4",
+        "gota-a-gota.mp4",
+    }
     assert all(media.nombre_valido(c.video_file) for c in con_video)

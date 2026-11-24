@@ -1550,6 +1550,104 @@ _PLATA_FRAUDES = CapsuleSpec(
     ),
 )
 
+# --------------------------------------------------------------------------- #
+# Ruta de tecnología para todas las actividades (campo y comercio). Va en el tema de
+# gestión de riesgos: cuidar la información y no perderla. Sin enlaces en el texto; la
+# página gratuita de AWS se nombra para que la persona la busque. Sin marcas de apps.
+# --------------------------------------------------------------------------- #
+_TODAS: Final[tuple[str, ...]] = (*_CAMPO, *_COMERCIO)
+
+_TECNOLOGIA_NUBE_IA = CapsuleSpec(
+    slug="tecnologia-nube-e-inteligencia-artificial",
+    topic=TOPIC_GESTION_RIESGOS,
+    tags=_TODAS,
+    relevance=6.0,
+    title="La nube y la inteligencia artificial: qué son y cómo le ayudan",
+    summary="Qué es la nube, qué es AWS de Amazon y cómo usar un asistente de inteligencia "
+    "artificial con cuidado, sin entregar sus datos.",
+    paragraphs=(
+        "¿Ha oído decir que algo está guardado en la nube? La nube no está en el cielo. Son "
+        "computadores muy grandes, guardados en edificios seguros, que prestan su espacio y "
+        "su fuerza por internet. Cuando usted manda una foto por el celular, mira un video o "
+        "usa la aplicación de su banco, casi siempre está usando la nube sin darse cuenta. "
+        "Lo que guarda ahí no se pierde si se le daña o se le moja el celular, porque una "
+        "copia queda en esos computadores.",
+        "Hay empresas que se dedican a prestar ese servicio. Una de las más grandes es "
+        "Amazon, con su nube llamada AWS, que quiere decir Amazon Web Services. Muchas "
+        "aplicaciones que usted conoce funcionan sobre nubes como esa. La ventaja es que un "
+        "negocio pequeño o una escuela no tiene que comprar computadores costosos: paga solo "
+        "por lo que usa, como quien paga el agua por lo que gastó en el mes.",
+        "La inteligencia artificial es otra herramienta que funciona en la nube. Es un "
+        "programa que aprendió de muchísimos textos, y por eso puede contestar preguntas, "
+        "resumir o explicar con palabras sencillas. El asistente de CIMA funciona así: usted "
+        "le escribe o le habla, y él le responde. Pero no es una persona y se puede "
+        "equivocar. Por eso conviene comparar lo que le dice con alguien de confianza antes "
+        "de tomar una decisión grande con su plata o con su cosecha.",
+        "Para usarla con cuidado, siga unas reglas sencillas. No le escriba su cédula, sus "
+        "claves ni los números de sus cuentas a ningún asistente, tampoco al de CIMA. "
+        "Pregunte cosas concretas, por ejemplo cómo llevar las cuentas del fiado o qué hacer "
+        "si llueve mucho. Y si la respuesta no le queda clara, pídale que se la explique otra "
+        "vez con un ejemplo de su negocio o de su finca.",
+        "Si le gustó el tema y quiere aprender más, AWS tiene en su página una introducción "
+        "gratuita y en español llamada Introducción a los conceptos básicos de nube de AWS, "
+        "que se puede leer sin registrarse. Búsquela por ese nombre en internet. Recuerde: "
+        "la nube guarda una copia de lo suyo para que no se pierda, y la inteligencia "
+        "artificial le ayuda, pero la decisión siempre es suya.",
+    ),
+    key_points=(
+        "La nube son computadores grandes que guardan y trabajan por internet.",
+        "AWS, de Amazon, es una de las nubes más grandes del mundo.",
+        "La inteligencia artificial ayuda, pero se puede equivocar: compare antes de decidir.",
+        "Nunca le escriba su cédula, sus claves ni sus cuentas a un asistente.",
+    ),
+)
+
+_TECNOLOGIA_CELULAR = CapsuleSpec(
+    slug="tecnologia-celular-herramienta-de-trabajo",
+    topic=TOPIC_GESTION_RIESGOS,
+    tags=_TODAS,
+    relevance=5.5,
+    title="Su celular, su mejor herramienta de trabajo",
+    summary="Cómo respaldar sus cuentas y contactos, ponerle seguro al celular y mantenerlo "
+    "al día para que un daño o una pérdida no le cueste su negocio.",
+    paragraphs=(
+        "¿Qué pasaría si mañana se le pierde o se le daña el celular? Para muchos negocios y "
+        "fincas el celular ya es la caja, el cuaderno y la vitrina al mismo tiempo. Ahí están "
+        "los contactos de los clientes, las fotos de los pedidos y a veces las cuentas. Por "
+        "eso vale la pena cuidarlo y, sobre todo, cuidar lo que guarda, para que un "
+        "accidente no le cueste las cuentas de varios meses.",
+        "Lo primero es tener una copia. Si lleva las cuentas en un cuaderno, tómele una foto "
+        "a la página cada noche, antes de cerrar. Si un día se moja o se pierde el cuaderno, "
+        "las fotos le ayudan a recuperar quién le debe y cuánto. Active también el respaldo "
+        "en la nube que trae su celular, en la configuración, para que las fotos y los "
+        "contactos se guarden solos cuando tenga wifi.",
+        "Lo segundo es ponerle seguro. Configure un bloqueo de pantalla con un patrón, un "
+        "número o su huella, y no se lo diga a nadie. Así, si se le pierde, nadie puede "
+        "entrar a sus aplicaciones ni a su plata. Y si alguien le pide el celular para "
+        "ayudarle con una transferencia o una aplicación, no lo entregue: pida que le "
+        "expliquen y hágalo usted mismo.",
+        "Lo tercero es mantenerlo al día. Cuando el celular le avise que hay una "
+        "actualización, instálela, porque muchas veces trae arreglos de seguridad. Descargue "
+        "aplicaciones solo de la tienda oficial de su celular y desconfíe de las que le "
+        "mandan por mensaje. En el wifi público, como el de una plaza o un terminal de buses, "
+        "evite entrar a su banco o a su billetera.",
+        "Cuide también la batería y el cargador, porque un celular apagado no le sirve para "
+        "cobrar ni para avisarle a un cliente. Si trabaja en el campo o sale mucho, cargue "
+        "el celular en la noche y, si puede, lleve una batería de repuesto. Y si se le moja, "
+        "apáguelo de inmediato y no lo conecte hasta que esté bien seco.",
+        "Esta semana haga tres cosas: active el respaldo en la nube, ponga el bloqueo de "
+        "pantalla y tómele foto a su cuaderno de cuentas. Son unos pocos minutos que le "
+        "pueden ahorrar muchos problemas más adelante. Recuerde: lo que tiene copia no se "
+        "pierde, y un celular con clave y actualizado protege su negocio.",
+    ),
+    key_points=(
+        "Tómele foto a su cuaderno de cuentas cada noche.",
+        "Active el respaldo en la nube de su celular.",
+        "Use bloqueo de pantalla y no preste su celular para transferencias.",
+        "Instale las actualizaciones y descargue aplicaciones solo de la tienda oficial.",
+    ),
+)
+
 CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _GENERAL_CLIMA,
     _GENERAL_AGUA,
@@ -1578,9 +1676,50 @@ CAPSULES: Final[tuple[CapsuleSpec, ...]] = (
     _PLATA_BILLETERAS,
     _PLATA_BRE_B,
     _PLATA_FRAUDES,
+    _TECNOLOGIA_NUBE_IA,
+    _TECNOLOGIA_CELULAR,
 )
 
 PATHS: Final[tuple[PathSpec, ...]] = (
+    PathSpec(
+        slug="ruta-tecnologia-a-su-favor",
+        title="Ruta: la tecnología a su favor",
+        summary=(
+            "Entienda qué son la nube y la inteligencia artificial, y aprenda a cuidar su "
+            "celular y a respaldar sus cuentas para que no se pierdan."
+        ),
+        capsule_slugs=(_TECNOLOGIA_NUBE_IA.slug, _TECNOLOGIA_CELULAR.slug),
+        questions=(
+            QuestionSpec(
+                "¿Qué es la nube?",
+                (
+                    "Un lugar en el cielo donde se guardan las fotos",
+                    "Computadores grandes que guardan y trabajan por internet",
+                    "Una aplicación que hay que pagar cada mes",
+                ),
+                1,
+            ),
+            QuestionSpec(
+                "El asistente de inteligencia artificial le da una respuesta sobre su plata. "
+                "¿Qué conviene hacer?",
+                (
+                    "Hacer lo que dice sin preguntarle a nadie",
+                    "Mandarle su cédula para que le responda mejor",
+                    "Compararla con alguien de confianza antes de decidir",
+                ),
+                2,
+            ),
+            QuestionSpec(
+                "¿Qué le ayuda a no perder las cuentas si se le moja el cuaderno?",
+                (
+                    "Tomarle foto cada noche y tener el respaldo en la nube",
+                    "Guardar el cuaderno debajo del mostrador",
+                    "Llevar las cuentas solo de memoria",
+                ),
+                0,
+            ),
+        ),
+    ),
     PathSpec(
         slug="ruta-campo-sostenibilidad-y-riesgos",
         title="Ruta del campo: sostenibilidad y riesgos",
