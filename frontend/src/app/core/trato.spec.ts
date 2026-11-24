@@ -4,11 +4,79 @@ import {
   MAX_NOMBRE,
   borrarTrato,
   comoLlamar,
+  conservarTratoSiEsDe,
   crearPreferencia,
+  duenoDelTrato,
   guardarTrato,
+  huellaDePerfil,
   leerTrato,
   normalizarNombre,
 } from './trato';
+
+describe('nombre que se conserva para la misma persona', () => {
+  const patricia = { trato: 'dona', nombre: 'Patricia' } as const;
+  // Identificadores inventados para la prueba.
+  const ID_A = '11111111-1111-4111-8111-111111111111';
+  const ID_B = '22222222-2222-4222-8222-222222222222';
+
+  it('la huella es un SHA-256 estable que no muestra el identificador', async () => {
+    const a = await huellaDePerfil(ID_A);
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
+    expect(await huellaDePerfil(ID_A)).toBe(a);
+    expect(await huellaDePerfil(ID_B)).not.toBe(a);
+    expect(a).not.toContain('11111111');
+  });
+
+  it('sin criptografía o sin id no hay huella', async () => {
+    expect(await huellaDePerfil(ID_A, null)).toBeNull();
+    expect(await huellaDePerfil('')).toBeNull();
+  });
+
+  it('si el navegador falla al calcularla, no hay huella y el ingreso sigue', async () => {
+    const falla = {
+      digest: () => Promise.reject(new DOMException('no', 'NotSupportedError')),
+    } as unknown as SubtleCrypto;
+    expect(await huellaDePerfil(ID_A, falla)).toBeNull();
+  });
+
+  it('la misma persona conserva su nombre al volver a entrar', async () => {
+    const almacen = new AlmacenFalso();
+    const huella = await huellaDePerfil(ID_A);
+    guardarTrato(almacen, patricia, huella);
+    expect(duenoDelTrato(almacen)).toBe(huella);
+    expect(conservarTratoSiEsDe(almacen, await huellaDePerfil(ID_A))).toBe(true);
+    expect(leerTrato(almacen)).toEqual(patricia);
+  });
+
+  it('si entra otra persona, el nombre se borra antes de mostrarlo', async () => {
+    const almacen = new AlmacenFalso();
+    guardarTrato(almacen, patricia, await huellaDePerfil(ID_A));
+    expect(conservarTratoSiEsDe(almacen, await huellaDePerfil(ID_B))).toBe(false);
+    expect(leerTrato(almacen)).toBeNull();
+  });
+
+  it('un nombre sin dueño, con dueño alterado o sin huella al entrar se borra', async () => {
+    const huella = await huellaDePerfil(ID_A);
+    const sinDueno = new AlmacenFalso();
+    guardarTrato(sinDueno, patricia);
+    expect(conservarTratoSiEsDe(sinDueno, huella)).toBe(false);
+
+    const alterado = new AlmacenFalso();
+    alterado.setItem(CLAVE_TRATO, JSON.stringify({ ...patricia, dueno: 'cualquier-cosa' }));
+    expect(duenoDelTrato(alterado)).toBeNull();
+    expect(conservarTratoSiEsDe(alterado, huella)).toBe(false);
+
+    const conDueno = new AlmacenFalso();
+    guardarTrato(conDueno, patricia, huella);
+    expect(conservarTratoSiEsDe(conDueno, null)).toBe(false);
+  });
+
+  it('una huella inválida no se guarda como dueño', () => {
+    const almacen = new AlmacenFalso();
+    guardarTrato(almacen, patricia, 'no-es-una-huella');
+    expect(duenoDelTrato(almacen)).toBeNull();
+  });
+});
 
 /**
  * Pruebas de "¿Cómo quiere que le digamos?" (Req 13.1). El nombre solo vive en
