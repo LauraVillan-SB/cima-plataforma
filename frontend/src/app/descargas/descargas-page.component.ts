@@ -28,17 +28,17 @@ import { DescargasService } from './descargas.service';
 
       @if (!servicio.disponible) {
         <div class="sb-ui-alert sb-ui-alert--info" role="status">
-          Este navegador no permite descargar videos. Puedes verlos en las lecciones cuando tengas internet.
+          Este navegador no permite descargar videos. Puede verlos en las lecciones cuando tenga internet.
         </div>
       } @else if (servicio.lista().length === 0) {
         <p class="texto">
-          Todavía no tienes videos descargados. En las lecciones con video verás el botón
+          Todavía no tiene videos descargados. En las lecciones con video verá el botón
           "Descargar para ver sin conexión".
         </p>
         <a class="sb-ui-button sb-ui-button--secondary sb-ui-button--stroke boton" routerLink="/mi-ruta">Ir a mi ruta</a>
       } @else {
         <p class="texto">
-          Ocupan {{ megas(servicio.bytesUsados()) }} en tu celular.
+          Ocupan {{ megas(servicio.bytesUsados()) }} en su celular.
           @if (libre(); as l) {
             Quedan unos {{ megas(l) }} libres para descargas.
           }
@@ -80,7 +80,7 @@ import { DescargasService } from './descargas.service';
 
         @if (confirmando()) {
           <div class="sb-ui-alert sb-ui-alert--warning confirmar" role="alert">
-            <p>¿Seguro que quieres borrar todos los videos descargados?</p>
+            <p>¿Seguro que quiere borrar todos los videos descargados?</p>
             <div class="acciones">
               <button type="button" class="sb-ui-button sb-ui-button--secondary sb-ui-button--fill boton"
                       (click)="borrarTodas()">Sí, borrar todos</button>
@@ -151,7 +151,7 @@ export class DescargasPageComponent {
     this.mensaje.set(null);
     const local = await this.servicio.urlLocal(d.url);
     if (!local) {
-      this.mensaje.set('No encontramos este video en tu celular. Descárgalo de nuevo desde la lección.');
+      this.mensaje.set('No encontramos este video en su celular. Descárguelo de nuevo desde la lección.');
       await this.servicio.borrar(d.url);
       return;
     }
@@ -169,14 +169,14 @@ export class DescargasPageComponent {
       this.cerrar();
     }
     await this.servicio.borrar(d.url);
-    this.mensaje.set('Borramos el video de tu celular.');
+    this.mensaje.set('Borramos el video de su celular.');
   }
 
   protected async alTerminar(d: Descarga): Promise<void> {
     if (d.borrarAlTerminar) {
       this.cerrar();
       await this.servicio.borrar(d.url);
-      this.mensaje.set('Borramos el video de tu celular porque ya lo terminaste de ver.');
+      this.mensaje.set('Borramos el video de su celular porque ya lo terminó de ver.');
     }
   }
 
@@ -184,7 +184,7 @@ export class DescargasPageComponent {
     this.cerrar();
     await this.servicio.borrarTodas();
     this.confirmando.set(false);
-    this.mensaje.set('Borramos todos los videos de tu celular.');
+    this.mensaje.set('Borramos todos los videos de su celular.');
   }
 
   private liberar(): void {

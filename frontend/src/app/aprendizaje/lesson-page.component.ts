@@ -73,7 +73,7 @@ const PATRON_EMBED = /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-
           } @else {
             <!-- YouTube no permite guardar sus videos; sin conexión se avisa y la lección se lee igual. -->
             <div class="sb-ui-alert sb-ui-alert--info" role="status">
-              Este video es de YouTube y necesita internet. Puedes leer la lección sin conexión.
+              Este video es de YouTube y necesita internet. Puede leer la lección sin conexión.
             </div>
           }
         }
