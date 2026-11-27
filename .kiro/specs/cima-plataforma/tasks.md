@@ -234,10 +234,10 @@ Convenciones:
     - _Requirements: 3.12, 3.13, 16.7, 9.1, 9.2, 9.6_
     - Nota (rama `feature/agente-acciones`, PR #111): pruebas por ejemplos en `tests/chat/test_acciones.py` (marcadores bien y mal formados, índices fuera de rango o con IDs, destinos y actividades fuera de la allowlist, zonas con dirección o teléfono, contexto sin IDs, anti-BOLA y acción guardada inválida). Se verificó con Gemini real en local: rutas pendientes, continuar, cambiar clave y proponer perfil. Antes (PR #105) el prompt pasó a "usted" sin asumir género (Req 13.7).
 
-  - [ ]* 11.14 Escribir test de propiedad para las acciones del asistente
+  - [x]* 11.14 Escribir test de propiedad para las acciones del asistente
     - **Property 45: Acciones del asistente acotadas a la lista permitida y al titular**
     - **Validates: Requirements 3.12, 16.7**
-    - Hoy solo hay pruebas por ejemplos (11.13); falta la versión con Hypothesis que genere respuestas y listas de rutas arbitrarias.
+    - Nota (rama `test/propiedades-45-46`): `tests/chat/test_property_45_acciones.py` con Hypothesis (500 ejemplos por prueba) sobre `separar` y `resolver`, con respuestas que mezclan texto libre y marcadores bien formados, mal formados, repetidos o con IDs inventados, y listas de rutas pendientes arbitrarias. Prueba de mutación: detectó las dos fallas simuladas (no limpiar los marcadores mal formados y aceptar cualquier destino en `ir`).
 
 - [ ] 12. Checkpoint — Verificar pipeline de IA voz-first con dependencias mockeadas
   - Ensure all tests pass, ask the user if questions arise.
@@ -493,10 +493,10 @@ Convenciones:
     - Nota (rama `feature/saludo-don-dona`, PR #107): primera versión, que borraba el nombre en cada cambio de sesión.
     - Nota (rama `feature/leccion-acordeon-iconos`, PR #114): ahora el nombre se guarda con una huella SHA-256 del Perfil (`huellaDePerfil`). Al entrar se conserva si es la misma persona y se borra si es otra (`conservarTratoSiEsDe`); al cerrar sesión ya no se borra. Pruebas en `core/trato.spec.ts`. Verificado en Chrome sin interfaz: Patricia cierra sesión y vuelve a entrar con el nombre; entra Rosa y el nombre se borra.
 
-  - [ ]* 23.8 Escribir test de propiedad para la preferencia de trato
+  - [x]* 23.8 Escribir test de propiedad para la preferencia de trato
     - **Property 46: Preferencia de trato conservada solo para su dueño**
     - **Validates: Requirements 13.8, 19.9**
-    - Hoy solo hay pruebas por ejemplos (23.7); falta la versión con fast-check sobre identificadores y contenidos del almacenamiento arbitrarios.
+    - Nota (rama `test/propiedades-45-46`): `frontend/src/app/core/trato.propiedad.spec.ts` con fast-check (200 ejecuciones por prueba). Con cualquier contenido previo del almacenamiento, el nombre queda solo si es de quien entra. Si A guardó su nombre, A lo conserva y B lo borra. Lo guardado nunca contiene el identificador del Perfil. Prueba de mutación: si `conservarTratoSiEsDe` no borra el nombre de otra persona, las dos pruebas fallan. Que el nombre nunca viaje al backend no lo cubre esta prueba: lo garantiza el diseño, porque `core/trato.ts` es lógica pura sin HTTP.
 
   - [x] 23.9 Rediseñar la lección: video arriba, resumen y puntos clave, y texto desplegable con lectura en voz alta
     - Orden: tema y duración, título, video, resumen, "Lo más importante" con íconos y el acordeón cerrado "¿Quiere conocer más?" (`sb-ui-accordion`). Dentro del acordeón, "Escuchar este texto" lee solo esos párrafos y resalta el que va diciendo. Íconos de Font Awesome del sistema de diseño en la lección, "Mi ruta" y el inicio. Letra del texto de 20 px, oscura y con más aire.
